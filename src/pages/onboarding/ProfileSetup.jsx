@@ -147,7 +147,9 @@ function ProfileCard({
               onSelectSingle('treatmentDetail', event.target.value, true)
             }
           />
-          <label className="inline-flex min-w-max items-center gap-2 overflow-visible whitespace-nowrap font-[Arial,sans-serif] text-[14px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44]">
+          <label
+            className={`inline-flex min-w-max items-center gap-2 overflow-visible whitespace-nowrap text-[12px] font-[590] leading-[18px] tracking-[-0.64px] text-[#3a506b] ${headingFontClass}`}
+          >
             <input
               className="peer sr-only"
               type="checkbox"
@@ -157,7 +159,7 @@ function ProfileCard({
               }
             />
             <span
-              className="relative h-5 w-5 rounded-full border-[1.276px] border-[#eceef2] bg-white after:absolute after:left-1/2 after:top-1/2 after:hidden after:h-[10px] after:w-[10px] after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-[#f5a623] peer-checked:border-[#f5a623] peer-checked:bg-[#fff8eb] peer-checked:after:block"
+              className="h-[18px] w-[18px] shrink-0 rounded-[20px] border-[1.276px] border-[#eceef2] bg-white shadow-[0_2px_6px_0_rgba(29,43,68,0.04)] peer-checked:border-[#f5a623] peer-checked:bg-[#f5a623] peer-checked:shadow-none"
               aria-hidden="true"
             />
             최근 한 달 내

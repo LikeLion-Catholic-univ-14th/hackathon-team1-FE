@@ -1,4 +1,4 @@
-import statusBarImage from '../assets/status-bar-iphone.png'
+import statusBarImage from '../assets/status-bar.svg'
 
 function OnboardingStatusBar() {
   return (

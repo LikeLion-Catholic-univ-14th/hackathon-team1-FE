@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
+import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
 import SunscreenSetup from './pages/onboarding/SunscreenSetup.jsx'
 
 const initialOnboardingData = {
@@ -23,7 +24,10 @@ const initialOnboardingData = {
     },
     products: [],
   },
-  schedule: {},
+  schedule: {
+    files: [],
+    schedules: [],
+  },
 }
 
 function App() {
@@ -48,6 +52,17 @@ function App() {
         value={onboardingData.sunscreen}
         onChange={(sunscreen) => updateOnboardingData('sunscreen', sunscreen)}
         onBack={() => setOnboardingStep('profile')}
+        onComplete={() => setOnboardingStep('schedule')}
+      />
+    )
+  }
+
+  if (onboardingStep === 'schedule') {
+    return (
+      <ScheduleSetup
+        value={onboardingData.schedule}
+        onChange={(schedule) => updateOnboardingData('schedule', schedule)}
+        onBack={() => setOnboardingStep('sunscreen')}
       />
     )
   }
