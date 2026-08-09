@@ -46,7 +46,7 @@ function ScheduleField({
   onActivate,
   onChange,
 }) {
-  const baseClass = `box-border inline-flex h-[25px] ${isEditing ? 'px-[3px]' : 'w-auto px-0'} items-center justify-center rounded-[5px] border bg-white text-center outline-none`
+  const baseClass = `box-border inline-flex h-[25px] ${isEditing ? 'px-[3px]' : 'px-0'} items-center justify-center rounded-[5px] border bg-white text-center outline-none`
   const textClass = field.airport
     ? `text-[12px] font-[510] leading-[21px] tracking-[-0.4px] ${headingFontClass}`
     : `text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`
@@ -57,13 +57,9 @@ function ScheduleField({
       : 'border-transparent bg-transparent'
   const fieldStyle = {
     ...(field.airport ? { color: '#3F8AE1' } : {}),
-    ...(isEditing
-      ? {
-          width: `${field.width}px`,
-          minWidth: `${field.width}px`,
-          maxWidth: `${field.width}px`,
-        }
-      : {}),
+    width: `${field.width}px`,
+    minWidth: `${field.width}px`,
+    maxWidth: `${field.width}px`,
   }
 
   if (!isEditing) {
@@ -129,7 +125,7 @@ function ScheduleRow({
         {renderField(editableScheduleFields[4])}
       </span>
       <button
-        className="ml-auto flex h-[24px] w-[22px] items-center justify-center border-0 bg-transparent p-0"
+        className="ml-auto flex h-[24px] w-[22px] items-center justify-center border-0 bg-transparent p-0 outline-none focus:outline-none focus-visible:outline-none"
         type="button"
         aria-label={`${schedule.date} 일정 수정`}
         onClick={() => onStartEdit(schedule.id)}
@@ -153,16 +149,21 @@ function ScheduleConfirmModal({
   onStartEdit,
   onActivateField,
   onFieldChange,
+  onDismiss,
   onSave,
 }) {
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6">
+    <div
+      className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6"
+      onClick={onDismiss}
+    >
       <div
         className="relative box-border w-full max-w-[340px] overflow-hidden rounded-[24px] bg-white px-5 pb-6 pt-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
         style={{
           borderRadius: '24px',
           boxShadow: '0 20px 60px 0 rgba(29, 43, 68, 0.5)',
         }}
+        onClick={(event) => event.stopPropagation()}
       >
         <h2
           className={`m-0 text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
@@ -177,7 +178,7 @@ function ScheduleConfirmModal({
             aria-hidden="true"
           />
           <span
-            className={`overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-bold leading-[18px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+            className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
           >
             {fileName}
           </span>
@@ -219,19 +220,23 @@ function ScheduleConfirmModal({
   )
 }
 
-function NoticeModal({ message, onDismiss }) {
+function NoticeModal({ message, compact = false, onDismiss }) {
+  const cardClass = compact
+    ? 'box-border flex h-[173px] w-[298px] flex-col items-center justify-center gap-4 rounded-2xl bg-white px-6 py-5 shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]'
+    : 'flex h-[173px] w-full max-w-[340px] flex-col items-center justify-center rounded-[24px] bg-white shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]'
+
   return (
     <div
       className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 px-6"
       onClick={onDismiss}
     >
       <div
-        className="flex h-[173px] w-full max-w-[340px] flex-col items-center justify-center rounded-[24px] bg-white shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
+        className={cardClass}
         onClick={(event) => event.stopPropagation()}
       >
         <img className="h-10 w-10" src={checkIcon} alt="" />
         <p
-          className={`mt-[26px] text-center text-[16px] font-bold leading-[23px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+          className={`${compact ? 'm-0' : 'mt-[26px]'} text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
         >
           {message}
         </p>
@@ -242,6 +247,7 @@ function NoticeModal({ message, onDismiss }) {
 
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
+  const editNoticeTimerRef = useRef(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [showEditNotice, setShowEditNotice] = useState(false)
@@ -344,9 +350,14 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const startScheduleEdit = (scheduleId) => {
+    if (editingScheduleId === scheduleId) {
+      setEditingScheduleId('')
+      setActiveFieldKey('')
+      return
+    }
+
     setEditingScheduleId(scheduleId)
     setActiveFieldKey('')
-    setHasEditedSchedule(true)
   }
 
   const activateScheduleField = (scheduleId, fieldKey) => {
@@ -376,6 +387,12 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     if (hasEditedSchedule || editingScheduleId) {
       setShowEditNotice(true)
+      window.clearTimeout(editNoticeTimerRef.current)
+      editNoticeTimerRef.current = window.setTimeout(() => {
+        setShowEditNotice(false)
+        setShowScheduleModal(false)
+        editNoticeTimerRef.current = null
+      }, 2000)
       return
     }
 
@@ -383,7 +400,13 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const dismissEditNotice = () => {
+    window.clearTimeout(editNoticeTimerRef.current)
+    editNoticeTimerRef.current = null
     setShowEditNotice(false)
+    setShowScheduleModal(false)
+  }
+
+  const dismissScheduleModal = () => {
     setShowScheduleModal(false)
   }
 
@@ -493,7 +516,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
                       aria-hidden="true"
                     />
                     <span
-                      className={`overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-bold leading-[18px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+                      className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
                     >
                       {file.name}
                     </span>
@@ -541,6 +564,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
             fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
             schedules={displaySchedules}
             onActivateField={activateScheduleField}
+            onDismiss={dismissScheduleModal}
             onFieldChange={updateScheduleField}
             onSave={saveConfirmedSchedules}
             onStartEdit={startScheduleEdit}
@@ -549,7 +573,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
         {showEditNotice && (
           <NoticeModal
-            message="비행 일정이 수정되었어요!"
+            compact
+            message="비행 일정이 수정됐어요!"
             onDismiss={dismissEditNotice}
           />
         )}
