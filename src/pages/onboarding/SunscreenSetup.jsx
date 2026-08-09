@@ -113,7 +113,13 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
     onChange?.(nextSunscreen)
   }
 
-  const canAddProduct = Boolean(form.productName.trim())
+  const canAddProduct = Boolean(
+    form.productName.trim() &&
+      form.type &&
+      form.blockingMethod &&
+      form.spf.trim() &&
+      form.pa,
+  )
   const canContinue = products.length > 0
 
   const updateForm = (field, value) => {
@@ -140,7 +146,7 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
       return
     }
 
-    const productSpf = form.spf.trim() || '50'
+    const productSpf = form.spf.trim()
     const randomIcon =
       sunscreenIcons[Math.floor(Math.random() * sunscreenIcons.length)]
 
