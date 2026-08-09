@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
 import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
 import SunscreenSetup from './pages/onboarding/SunscreenSetup.jsx'
+import MyPage from './pages/mypage/MyPage.jsx'
 
 const initialOnboardingData = {
   profile: {
@@ -30,7 +32,7 @@ const initialOnboardingData = {
   },
 }
 
-function App() {
+function OnboardingFlow() {
   const [showSplash, setShowSplash] = useState(true)
   const [onboardingStep, setOnboardingStep] = useState('profile')
   const [onboardingData, setOnboardingData] = useState(initialOnboardingData)
@@ -73,6 +75,23 @@ function App() {
       onChange={(profile) => updateOnboardingData('profile', profile)}
       onComplete={() => setOnboardingStep('sunscreen')}
     />
+  )
+}
+
+function AppLayout() {
+  return <Outlet />
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<OnboardingFlow />} />
+          <Route path="/mypage" element={<MyPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 
