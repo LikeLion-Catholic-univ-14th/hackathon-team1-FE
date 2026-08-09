@@ -5,6 +5,16 @@ import './onboarding.css'
 const sunscreenTypes = ['선크림', '선스틱', '선스프레이']
 const blockingMethods = ['유기자차', '무기자차', '혼합자차']
 const paGrades = ['PA+', 'PA++', 'PA+++', 'PA++++']
+const emptySunscreen = {
+  form: {
+    productName: '',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '',
+    pa: 'PA+',
+  },
+  products: [],
+}
 
 function DropdownField({
   id,
@@ -51,24 +61,35 @@ function DropdownField({
   )
 }
 
-function SunscreenSetup({ onBack, onComplete }) {
+function SunscreenSetup({ value, onChange, onBack, onComplete }) {
   const [openDropdown, setOpenDropdown] = useState('')
-  const [products, setProducts] = useState([])
-  const [form, setForm] = useState({
-    productName: '',
-    type: '선크림',
-    blockingMethod: '유기자차',
-    spf: '50',
-    pa: 'PA+',
-  })
+  const [isSpfFocused, setIsSpfFocused] = useState(false)
+  const [localSunscreen, setLocalSunscreen] = useState(emptySunscreen)
+  const sunscreen = value ?? localSunscreen
+  const form = sunscreen.form
+  const products = sunscreen.products
+
+  const updateSunscreen = (updater) => {
+    const nextSunscreen =
+      typeof updater === 'function' ? updater(sunscreen) : updater
+
+    if (value === undefined) {
+      setLocalSunscreen(nextSunscreen)
+    }
+
+    onChange?.(nextSunscreen)
+  }
 
   const canAddProduct = Boolean(form.productName.trim())
   const canContinue = products.length > 0
 
   const updateForm = (field, value) => {
-    setForm((prevForm) => ({
-      ...prevForm,
-      [field]: value,
+    updateSunscreen((prevSunscreen) => ({
+      ...prevSunscreen,
+      form: {
+        ...prevSunscreen.form,
+        [field]: value,
+      },
     }))
   }
 
@@ -86,17 +107,23 @@ function SunscreenSetup({ onBack, onComplete }) {
       return
     }
 
-    setProducts((prevProducts) => [
-      ...prevProducts,
-      {
-        id: crypto.randomUUID(),
-        ...form,
-        productName: form.productName.trim(),
+    const productSpf = form.spf.trim() || '50'
+
+    updateSunscreen((prevSunscreen) => ({
+      ...prevSunscreen,
+      form: {
+        ...prevSunscreen.form,
+        productName: '',
       },
-    ])
-    setForm((prevForm) => ({
-      ...prevForm,
-      productName: '',
+      products: [
+        ...prevSunscreen.products,
+        {
+          id: crypto.randomUUID(),
+          ...form,
+          productName: form.productName.trim(),
+          spf: productSpf,
+        },
+      ],
     }))
     setOpenDropdown('')
   }
@@ -186,11 +213,16 @@ function SunscreenSetup({ onBack, onComplete }) {
                   SPF
                 </label>
                 <input
-                  className="sunscreen-field"
+                  className={`sunscreen-field${
+                    form.spf ? ' has-value' : ''
+                  }`}
                   id="sunscreen-spf"
                   inputMode="numeric"
                   type="text"
                   value={form.spf}
+                  placeholder={isSpfFocused ? '' : '50'}
+                  onFocus={() => setIsSpfFocused(true)}
+                  onBlur={() => setIsSpfFocused(false)}
                   onChange={(event) => updateForm('spf', event.target.value)}
                 />
               </div>
@@ -219,20 +251,32 @@ function SunscreenSetup({ onBack, onComplete }) {
               <div className="sunscreen-products" aria-label="추가한 차단제">
                 {products.map((product) => (
                   <div className="sunscreen-product-card" key={product.id}>
-                    <div>
-                      <strong>{product.productName}</strong>
-                      <span>
-                        {product.type} · {product.blockingMethod} · SPF{' '}
-                        {product.spf} · {product.pa}
-                      </span>
+                    <span
+                      className="sunscreen-product-card__thumbnail"
+                      aria-hidden="true"
+                    />
+                    <div className="sunscreen-product-card__body">
+                      <strong className="sunscreen-product-card__title">
+                        {product.productName}
+                      </strong>
+                      <div className="sunscreen-product-card__tags">
+                        <span>{product.type}</span>
+                        <span>{product.blockingMethod}</span>
+                        <span>SPF {product.spf}</span>
+                        <span>{product.pa}</span>
+                      </div>
                     </div>
                     <button
+                      className="sunscreen-product-card__remove"
                       type="button"
                       aria-label={`${product.productName} 삭제`}
                       onClick={() =>
-                        setProducts((prevProducts) =>
-                          prevProducts.filter((item) => item.id !== product.id),
-                        )
+                        updateSunscreen((prevSunscreen) => ({
+                          ...prevSunscreen,
+                          products: prevSunscreen.products.filter(
+                            (item) => item.id !== product.id,
+                          ),
+                        }))
                       }
                     >
                       ×

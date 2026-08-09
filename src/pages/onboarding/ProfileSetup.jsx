@@ -6,6 +6,15 @@ const baseAirports = ['인천', '김포']
 const skinTypes = ['건성', '지성', '복합성', '수부지', '민감성']
 const skinConcerns = ['기미', '잡티', '여드름', '홍조', '건조']
 const treatmentHistory = ['없음', '있음']
+const emptyProfile = {
+  name: '',
+  baseAirport: '',
+  skinType: '',
+  skinConcerns: [],
+  treatmentHistory: '',
+  treatmentDetail: '',
+  recentTreatment: false,
+}
 
 function OptionButton({ children, selected = false, onClick }) {
   return (
@@ -147,16 +156,20 @@ function ProfileCard({
   )
 }
 
-function ProfileSetup({ onComplete }) {
-  const [profile, setProfile] = useState({
-    name: '',
-    baseAirport: '',
-    skinType: '',
-    skinConcerns: [],
-    treatmentHistory: '',
-    treatmentDetail: '',
-    recentTreatment: false,
-  })
+function ProfileSetup({ value, onChange, onComplete }) {
+  const [localProfile, setLocalProfile] = useState(emptyProfile)
+  const profile = value ?? localProfile
+
+  const updateProfile = (updater) => {
+    const nextProfile =
+      typeof updater === 'function' ? updater(profile) : updater
+
+    if (value === undefined) {
+      setLocalProfile(nextProfile)
+    }
+
+    onChange?.(nextProfile)
+  }
 
   const isComplete = Boolean(
     profile.baseAirport &&
@@ -178,7 +191,7 @@ function ProfileSetup({ onComplete }) {
   }
 
   const selectSingleValue = (field, value, keepSameValue = false) => {
-    setProfile((prevProfile) => ({
+    updateProfile((prevProfile) => ({
       ...prevProfile,
       [field]:
         !keepSameValue && prevProfile[field] === value && typeof value === 'string'
@@ -188,7 +201,7 @@ function ProfileSetup({ onComplete }) {
   }
 
   const toggleConcern = (concern) => {
-    setProfile((prevProfile) => {
+    updateProfile((prevProfile) => {
       const hasConcern = prevProfile.skinConcerns.includes(concern)
 
       return {
@@ -234,7 +247,7 @@ function ProfileSetup({ onComplete }) {
               profile={profile}
               isComplete={isComplete}
               onNameChange={(name) =>
-                setProfile((prevProfile) => ({
+                updateProfile((prevProfile) => ({
                   ...prevProfile,
                   name,
                 }))

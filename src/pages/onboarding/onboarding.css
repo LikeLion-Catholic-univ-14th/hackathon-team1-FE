@@ -308,6 +308,7 @@ body:has(.splash) #root {
   flex: 1;
   border: 1.276px solid #eceef2;
   border-radius: 12px;
+  outline: 0;
   background: #f7f8fb;
   color: #1d2b44;
   font-family: Arial, sans-serif;
@@ -328,6 +329,7 @@ body:has(.splash) #root {
 .profile-treatment__input:focus,
 .profile-treatment__input.has-value {
   border-color: #f5a623;
+  box-shadow: none;
 }
 
 .profile-treatment__check {
@@ -367,6 +369,16 @@ body:has(.splash) #root {
 .sunscreen-setup__content {
   padding: 20px 24px 30px;
   box-sizing: border-box;
+}
+
+.sunscreen-setup {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sunscreen-setup::-webkit-scrollbar {
+  display: none;
 }
 
 .onboarding-back {
@@ -417,6 +429,7 @@ body:has(.splash) #root {
 .sunscreen-card {
   width: 100%;
   margin-top: 32px;
+  margin-bottom: 32px;
   padding: 20px;
   border-radius: 22px;
   background: #fff;
@@ -443,7 +456,7 @@ body:has(.splash) #root {
 }
 
 .sunscreen-product-input::placeholder {
-  color: rgba(29, 43, 68, 0.4);
+  color: rgba(29, 43, 68, 0.5);
   opacity: 1;
 }
 
@@ -471,8 +484,9 @@ body:has(.splash) #root {
     sans-serif;
   font-size: 14px;
   font-style: normal;
-  font-weight: 700;
-  line-height: 15px;
+  font-weight: 590;
+  line-height: 16.5px;
+  text-transform: uppercase;
 }
 
 .sunscreen-select-wrap {
@@ -492,13 +506,35 @@ body:has(.splash) #root {
   outline: 0;
   background: #fff;
   color: #1d2b44;
-  font-family: Arial, sans-serif;
-  font-size: 15px;
+  font-family:
+    "SF Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 13px;
   font-style: normal;
   font-weight: 400;
+  line-height: 19.5px;
+  letter-spacing: 0;
+  box-sizing: border-box;
+}
+
+.sunscreen-field {
+  color: rgba(29, 43, 68, 0.5);
+  font-family: Arial, sans-serif;
+  font-size: 15px;
   line-height: normal;
   letter-spacing: -0.64px;
-  box-sizing: border-box;
+}
+
+.sunscreen-field.has-value {
+  color: #1d2b44;
+}
+
+.sunscreen-field::placeholder {
+  color: rgba(29, 43, 68, 0.5);
+  opacity: 1;
 }
 
 .sunscreen-field:focus,
@@ -541,9 +577,17 @@ body:has(.splash) #root {
   background: #fff;
   color: #1d2b44;
   text-align: left;
-  font-family: Arial, sans-serif;
-  font-size: 15px;
-  letter-spacing: -0.64px;
+  font-family:
+    "SF Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 590;
+  line-height: 20px;
+  letter-spacing: -1px;
   cursor: pointer;
 }
 
@@ -561,7 +605,7 @@ body:has(.splash) #root {
   height: 53px;
   margin-top: 28px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #f0f2f6;
   color: #91a4bf;
   font-family:
@@ -589,51 +633,111 @@ body:has(.splash) #root {
 
 .sunscreen-products {
   display: grid;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: 28px;
 }
 
 .sunscreen-product-card {
-  display: flex;
+  position: relative;
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding: 11px 12px;
-  border-radius: 12px;
+  padding: 14px;
+  border: 1.276px solid #eceef2;
+  border-radius: 16px;
   background: #f7f8fb;
-  border: 1px solid #eceef2;
+  box-shadow: 0 4px 12px 0 rgba(29, 43, 68, 0.04);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.sunscreen-product-card strong,
-.sunscreen-product-card span {
+.sunscreen-product-card__thumbnail {
+  width: 50px;
+  height: 50px;
   display: block;
-  font-family: Arial, sans-serif;
-  letter-spacing: -0.64px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px 0 rgba(29, 43, 68, 0.08);
 }
 
-.sunscreen-product-card strong {
+.sunscreen-product-card__body {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sunscreen-product-card__title {
+  display: block;
   color: #1d2b44;
-  font-size: 13px;
+  font-family:
+    "SF Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 700;
+  line-height: 20px;
+  letter-spacing: -1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 26px;
 }
 
-.sunscreen-product-card span {
-  margin-top: 4px;
-  color: #8a9eb8;
+.sunscreen-product-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.sunscreen-product-card__tags span {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border: 1px solid #eceef2;
+  border-radius: 999px;
+  background: #fff;
+  color: #3a506b;
+  font-family:
+    "SF Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 11px;
+  font-style: normal;
+  font-weight: 510;
+  line-height: 16.5px;
+  letter-spacing: -0.64px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
-.sunscreen-product-card button {
+.sunscreen-product-card__remove {
+  position: absolute;
+  top: 18px;
+  right: 16px;
   width: 22px;
   height: 22px;
-  flex: 0 0 auto;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #8a9eb8;
-  font-size: 18px;
-  line-height: 20px;
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 22px;
   cursor: pointer;
 }
 
