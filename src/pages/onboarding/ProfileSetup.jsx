@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
-import './onboarding.css'
 
 const baseAirports = ['인천', '김포']
 const skinTypes = ['건성', '지성', '복합성', '수부지', '민감성']
@@ -16,10 +15,23 @@ const emptyProfile = {
   recentTreatment: false,
 }
 
-function OptionButton({ children, selected = false, onClick }) {
+const stageClass =
+  'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
+const screenClass =
+  'h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] max-[520px]:w-full'
+const headingFontClass =
+  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+const profileLabelClass = `mb-[11px] block text-[14px] font-bold leading-[15px] text-[#8a9eb8] ${headingFontClass}`
+const profileOptionBaseClass = `box-border flex h-[39px] min-w-0 cursor-pointer flex-row items-center justify-center whitespace-nowrap rounded-full border-[1.276px] px-[11px] py-[9px] text-[13px] font-bold leading-[15px] transition-colors ${headingFontClass}`
+
+function OptionButton({ children, selected = false, className = '', onClick }) {
   return (
     <button
-      className={`profile-option${selected ? ' is-selected' : ''}`}
+      className={`${profileOptionBaseClass} ${className} ${
+        selected
+          ? 'border-[#f6a51a] bg-[#fff8eb] text-[#f6a51a]'
+          : 'border-[#eceef2] bg-white text-[#8a9eb8]'
+      }`}
       type="button"
       aria-pressed={selected}
       onClick={onClick}
@@ -41,13 +53,15 @@ function ProfileCard({
   const shouldShowTreatmentInput = profile.treatmentHistory === '있음'
 
   return (
-    <form className="profile-card">
-      <div className="profile-field profile-field--name">
-        <label className="profile-label" htmlFor="profile-name">
+    <form className="box-border w-full rounded-[22px] bg-white px-6 pb-[22px] pt-[30px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+      <div className="mb-[29px]">
+        <label className={profileLabelClass} htmlFor="profile-name">
           이름
         </label>
         <input
-          className={`profile-name-input${profile.name ? ' has-value' : ''}`}
+          className={`box-border h-[34px] w-full rounded-none border-0 border-b-[1.276px] bg-transparent px-0 pb-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f6a51a] ${
+            profile.name ? 'border-[#f6a51a]' : 'border-[#eceef2]'
+          }`}
           id="profile-name"
           type="text"
           value={profile.name}
@@ -58,11 +72,12 @@ function ProfileCard({
         />
       </div>
 
-      <div className="profile-field">
-        <p className="profile-label">베이스 공항</p>
-        <div className="profile-options profile-options--airport">
+      <div className="mb-6">
+        <p className={profileLabelClass}>베이스 공항</p>
+        <div className="flex items-center gap-[10px]">
           {baseAirports.map((airport) => (
             <OptionButton
+              className="h-[43px] px-[18px]"
               key={airport}
               selected={profile.baseAirport === airport}
               onClick={() => onSelectSingle('baseAirport', airport)}
@@ -73,11 +88,12 @@ function ProfileCard({
         </div>
       </div>
 
-      <div className="profile-field">
-        <p className="profile-label">피부 타입</p>
-        <div className="profile-options profile-options--wrap profile-options--skin-type">
+      <div className="mb-6">
+        <p className={profileLabelClass}>피부 타입</p>
+        <div className="flex flex-nowrap items-center gap-[6px]">
           {skinTypes.map((type) => (
             <OptionButton
+              className="h-[38.55px] px-3 text-[13px] leading-[15px]"
               key={type}
               selected={profile.skinType === type}
               onClick={() => onSelectSingle('skinType', type)}
@@ -88,9 +104,9 @@ function ProfileCard({
         </div>
       </div>
 
-      <div className="profile-field">
-        <p className="profile-label">피부 고민</p>
-        <div className="profile-options profile-options--wrap">
+      <div className="mb-6">
+        <p className={profileLabelClass}>피부 고민</p>
+        <div className="flex flex-wrap items-center gap-2">
           {skinConcerns.map((concern) => (
             <OptionButton
               key={concern}
@@ -103,9 +119,9 @@ function ProfileCard({
         </div>
       </div>
 
-      <div className="profile-field">
-        <p className="profile-label">시술 이력</p>
-        <div className="profile-options">
+      <div className="mb-6">
+        <p className={profileLabelClass}>시술 이력</p>
+        <div className="flex items-center gap-2">
           {treatmentHistory.map((history) => (
             <OptionButton
               key={history}
@@ -119,10 +135,10 @@ function ProfileCard({
       </div>
 
       {shouldShowTreatmentInput && (
-        <div className="profile-treatment">
+        <div className="-mt-[6px] mb-6 grid grid-cols-[minmax(0,1fr)_max-content] items-center gap-x-4 overflow-visible">
           <input
-            className={`profile-treatment__input${
-              profile.treatmentDetail ? ' has-value' : ''
+            className={`box-border h-12 min-w-0 flex-1 rounded-xl border-[1.276px] bg-[#f7f8fb] px-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.4)] focus:border-[#f5a623] focus:shadow-none ${
+              profile.treatmentDetail ? 'border-[#f5a623]' : 'border-[#eceef2]'
             }`}
             type="text"
             value={profile.treatmentDetail}
@@ -131,13 +147,18 @@ function ProfileCard({
               onSelectSingle('treatmentDetail', event.target.value, true)
             }
           />
-          <label className="profile-treatment__check">
+          <label className="inline-flex min-w-max items-center gap-2 overflow-visible whitespace-nowrap font-[Arial,sans-serif] text-[14px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44]">
             <input
+              className="peer sr-only"
               type="checkbox"
               checked={profile.recentTreatment}
               onChange={(event) =>
                 onSelectSingle('recentTreatment', event.target.checked, true)
               }
+            />
+            <span
+              className="relative h-5 w-5 rounded-full border-[1.276px] border-[#eceef2] bg-white after:absolute after:left-1/2 after:top-1/2 after:hidden after:h-[10px] after:w-[10px] after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-[#f5a623] peer-checked:border-[#f5a623] peer-checked:bg-[#fff8eb] peer-checked:after:block"
+              aria-hidden="true"
             />
             최근 한 달 내
           </label>
@@ -145,7 +166,11 @@ function ProfileCard({
       )}
 
       <button
-        className="profile-submit"
+        className={`mt-[5px] box-border flex h-[53px] w-full items-center justify-center gap-[10px] rounded-2xl border-0 px-0 py-[15px] text-[15px] font-bold leading-[23px] ${headingFontClass} ${
+          isComplete
+            ? 'cursor-pointer bg-[#f5a623] text-white shadow-[0_4px_12px_0_rgba(245,166,35,0.32)]'
+            : 'cursor-default bg-[#f0f2f6] text-[#91a4bf]'
+        }`}
         type="button"
         disabled={!isComplete}
         onClick={onSubmit}
@@ -214,26 +239,30 @@ function ProfileSetup({ value, onChange, onComplete }) {
   }
 
   return (
-    <div className="onboarding-stage">
-      <section className="onboarding-screen profile-setup">
+    <div className={stageClass}>
+      <section className={screenClass}>
         <OnboardingStatusBar />
 
-        <div className="profile-setup__content">
-          <header className="profile-setup__header">
-            <h1 className="profile-setup__title">
+        <div className="px-6 pb-[30px] pt-[72px]">
+          <header className="mx-[15px]">
+            <h1
+              className={`m-0 text-[28px] font-bold leading-9 tracking-[-1px] text-[#1d2b44] ${headingFontClass}`}
+            >
               반가워요!
               <br />
               프로필을 만들어볼까요?
             </h1>
 
             <div
-              className="onboarding-progress"
+              className="mt-[29px] flex items-center justify-center gap-[5px]"
               aria-label="온보딩 진행 단계"
             >
               {Array.from({ length: 3 }, (_, index) => (
                 <span
-                  className={`onboarding-progress__item${
-                    index === 0 ? ' is-active' : ''
+                  className={`h-[6px] rounded-full border-0 p-0 transition-[width,background-color] ${
+                    index === 0
+                      ? 'w-5 bg-[#f6a51a]'
+                      : 'w-[6px] bg-[#edf1f6]'
                   }`}
                   key={index}
                   aria-hidden="true"
@@ -242,7 +271,7 @@ function ProfileSetup({ value, onChange, onComplete }) {
             </div>
           </header>
 
-          <div className="profile-carousel">
+          <div className="-mx-[10px] mt-[35px] overflow-hidden px-[10px] pb-[18px]">
             <ProfileCard
               profile={profile}
               isComplete={isComplete}

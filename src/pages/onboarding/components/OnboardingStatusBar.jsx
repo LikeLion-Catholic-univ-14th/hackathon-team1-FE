@@ -2,8 +2,15 @@ import statusBarImage from '../assets/status-bar-iphone.png'
 
 function OnboardingStatusBar() {
   return (
-    <div className="onboarding-status" aria-hidden="true">
-      <img src={statusBarImage} alt="" />
+    <div
+      className="flex h-[62px] w-full items-center justify-center bg-[#f5f7fb]"
+      aria-hidden="true"
+    >
+      <img
+        className="block h-[62px] w-[402px] max-w-full object-contain"
+        src={statusBarImage}
+        alt=""
+      />
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
 import SunscreenSetup from './pages/onboarding/SunscreenSetup.jsx'
-import './App.css'
 
 const initialOnboardingData = {
   profile: {
