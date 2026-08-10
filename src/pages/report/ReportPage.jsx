@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import AppHeader from '../../components/common/AppHeader.jsx'
 import TotalCard from './components/TotalCard.jsx'
 import RouteRanking from './components/RouteRanking.jsx'
 import InsightList from './components/InsightList.jsx'
 import NextMonthCard from './components/NextMonthCard.jsx'
+import ClinicCard from './components/ClinicCard.jsx'
 import { mockMonthlyReport } from './mocks/mockMonthlyReport.js'
 import chevronDown from './assets/chevron-down.svg'
-import AppHeader from '../../components/common/AppHeader.jsx'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
@@ -16,7 +17,6 @@ function ReportPage() {
   const [report, setReport] = useState(null)
 
   useEffect(() => {
-    // 지금은 목데이터. 나중에 여기만 API 호출로 바꾸면 됨 (PART 9)
     setReport(mockMonthlyReport)
   }, [])
 
@@ -28,6 +28,7 @@ function ReportPage() {
     <div className={stageClass}>
       <div className={screenClass}>
         <AppHeader />
+
         <header className="bg-white px-[20px] pb-[16px] drop-shadow-[0px_2px_6px_rgba(29,43,68,0.04)]">
           <div className="flex items-center justify-between pt-[11px]">
             <p className="text-[24px] leading-[25px] font-bold tracking-[-1px] text-[#1d2b44]">
@@ -48,11 +49,13 @@ function ReportPage() {
 
         <RouteRanking routeRanking={report.routeRanking} />
 
-        {/* 카드 3번(노출량 그래프)은 제일 오래 걸리니 마지막에 추가 */}
+        {/* 카드 3번(노출량 그래프) — 마지막에 여기 추가 */}
 
         <InsightList analysis={report.analysis} />
 
         <NextMonthCard month={report.month} forecast={report.nextMonthForecast} />
+
+        <ClinicCard month={report.month} clinic={report.clinic} />
       </div>
     </div>
   )

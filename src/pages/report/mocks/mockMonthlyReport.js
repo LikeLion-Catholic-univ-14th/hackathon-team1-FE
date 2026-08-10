@@ -87,8 +87,9 @@ export const mockMonthlyReport = {
 
   clinic: {
     exposureLevel: '상위 구간',
+    exposurePercentage: 75,        // ← 추가
     description:
-      '3개월 누적 노출이 상위 구간에 진입했습니다. 색소 관리 시점을 상담해보실 수 있습니다. 9/20-28 인천 대기 기간이 있어 시술 후 회복 기간을 확보할 수 있습니다.',
+      '3개월 누적 노출이 상위 구간에 진입했습니다...',
     reservationUrl: 'https://wellness-clinic...',
   },
 }
