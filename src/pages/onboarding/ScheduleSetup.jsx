@@ -247,14 +247,11 @@ function NoticeModal({ message, compact = false, onDismiss }) {
 
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
-  const editNoticeTimerRef = useRef(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [showEditNotice, setShowEditNotice] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState('')
   const [activeFieldKey, setActiveFieldKey] = useState('')
-  const [hasEditedSchedule, setHasEditedSchedule] = useState(false)
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
@@ -285,11 +282,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     setIsExtracting(true)
     setShowCompleteModal(false)
-    setShowEditNotice(false)
     setShowScheduleModal(false)
     setEditingScheduleId('')
     setActiveFieldKey('')
-    setHasEditedSchedule(false)
     setModalFileName(targetFiles[targetFiles.length - 1]?.name ?? '업로드한 일정 파일')
 
     let schedules
@@ -363,11 +358,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const activateScheduleField = (scheduleId, fieldKey) => {
     setEditingScheduleId(scheduleId)
     setActiveFieldKey(fieldKey)
-    setHasEditedSchedule(true)
   }
 
   const updateScheduleField = (scheduleId, fieldKey, nextValue) => {
-    setHasEditedSchedule(true)
     setDisplaySchedules((prevSchedules) =>
       prevSchedules.map((scheduleItem) =>
         scheduleItem.id === scheduleId
@@ -385,24 +378,6 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     updateSchedule(nextSchedule)
 
-    if (hasEditedSchedule || editingScheduleId) {
-      setShowEditNotice(true)
-      window.clearTimeout(editNoticeTimerRef.current)
-      editNoticeTimerRef.current = window.setTimeout(() => {
-        setShowEditNotice(false)
-        setShowScheduleModal(false)
-        editNoticeTimerRef.current = null
-      }, 2000)
-      return
-    }
-
-    setShowScheduleModal(false)
-  }
-
-  const dismissEditNotice = () => {
-    window.clearTimeout(editNoticeTimerRef.current)
-    editNoticeTimerRef.current = null
-    setShowEditNotice(false)
     setShowScheduleModal(false)
   }
 
@@ -568,14 +543,6 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
             onFieldChange={updateScheduleField}
             onSave={saveConfirmedSchedules}
             onStartEdit={startScheduleEdit}
-          />
-        )}
-
-        {showEditNotice && (
-          <NoticeModal
-            compact
-            message="비행 일정이 수정됐어요!"
-            onDismiss={dismissEditNotice}
           />
         )}
 

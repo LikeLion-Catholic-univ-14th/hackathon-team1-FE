@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import sunscreenIcon01 from '../../assets/sunscreen/sunscreen-icon-01.svg'
 import sunscreenIcon02 from '../../assets/sunscreen/sunscreen-icon-02.svg'
@@ -65,6 +65,15 @@ const normalizeProduct = (product, index) => ({
 
 const normalizeProducts = (products) =>
   Array.isArray(products) ? products.map(normalizeProduct) : []
+
+const getProductSnapshot = (product) =>
+  JSON.stringify({
+    productName: product.productName.trim(),
+    type: product.type,
+    blockingMethod: product.blockingMethod,
+    spf: product.spf.trim(),
+    pa: product.pa,
+  })
 
 function BackButton({ onClick }) {
   return (
@@ -138,37 +147,50 @@ function DropdownField({
   )
 }
 
-function PouchProduct({ product, onRemove }) {
+function PouchProduct({ product, selected, onSelect, onRemove }) {
   return (
-    <li className="relative grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border border-[#eceef2] bg-[#f7f8fb] px-[12px] py-[10px]">
-      <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
-        <img
-          className="h-[20px] w-[20px] object-contain"
-          src={product.icon}
-          alt=""
-          aria-hidden="true"
-        />
-      </span>
+    <li className="relative">
+      <button
+        className={`grid min-h-[68px] w-full grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border px-[12px] py-[10px] text-left transition-colors ${
+          selected
+            ? 'border-[#f5a623] bg-[#fff9ed]'
+            : 'border-[#eceef2] bg-[#f7f8fb]'
+        }`}
+        type="button"
+        onClick={onSelect}
+      >
+        <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
+          <img
+            className="h-[20px] w-[20px] object-contain"
+            src={product.icon}
+            alt=""
+            aria-hidden="true"
+          />
+        </span>
 
-      <div className="min-w-0 pr-6">
-        <strong
-          className={`block truncate text-[12px] font-bold leading-[18px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
-        >
-          {product.productName}
-        </strong>
-        <div className="mt-[5px] flex flex-wrap gap-[6px]">
-          {[product.type, product.blockingMethod, `SPF ${product.spf}`, product.pa].map(
-            (tag) => (
+        <div className="min-w-0 pr-6">
+          <strong
+            className={`block truncate text-[12px] font-bold leading-[18px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+          >
+            {product.productName}
+          </strong>
+          <div className="mt-[5px] flex flex-wrap gap-[6px]">
+            {[
+              product.type,
+              product.blockingMethod,
+              `SPF ${product.spf}`,
+              product.pa,
+            ].map((tag) => (
               <span
                 className={`inline-flex h-[20px] items-center rounded-full border border-[#eceef2] bg-white px-[7px] text-[10px] font-[510] leading-[15px] tracking-[-0.4px] text-[#3a506b] ${headingFontClass}`}
                 key={tag}
               >
                 {tag}
               </span>
-            ),
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      </button>
 
       <button
         className="absolute right-[14px] top-[14px] h-[18px] w-[18px] border-0 bg-transparent p-0 text-[22px] font-light leading-[18px] text-[#8a9eb8]"
@@ -184,12 +206,14 @@ function PouchProduct({ product, onRemove }) {
 
 function PouchEdit() {
   const navigate = useNavigate()
+  const formRef = useRef(null)
   const fallbackProducts = useMemo(
     () => normalizeProducts(getFallbackMyPageData().pouch),
     [],
   )
   const [products, setProducts] = useState(fallbackProducts)
   const [form, setForm] = useState(emptyForm)
+  const [editingProductId, setEditingProductId] = useState('')
   const [openDropdown, setOpenDropdown] = useState('')
   const [focusedInput, setFocusedInput] = useState('')
 
@@ -207,13 +231,21 @@ function PouchEdit() {
     }
   }, [])
 
-  const canAddProduct = Boolean(
+  const isEditing = Boolean(editingProductId)
+  const editingProduct = products.find(
+    (product) => product.id === editingProductId,
+  )
+  const hasFormChanges =
+    !isEditing ||
+    (editingProduct && getProductSnapshot(form) !== getProductSnapshot(editingProduct))
+  const isProductFormValid = Boolean(
     form.productName.trim() &&
       form.type &&
       form.blockingMethod &&
       form.spf.trim() &&
       form.pa,
   )
+  const canSubmitProduct = Boolean(isProductFormValid && hasFormChanges)
 
   const persistProducts = (nextProducts) => {
     setProducts(nextProducts)
@@ -236,8 +268,51 @@ function PouchEdit() {
     setOpenDropdown('')
   }
 
-  const handleAddProduct = () => {
-    if (!canAddProduct) {
+  const handleSelectProduct = (product) => {
+    if (editingProductId === product.id) {
+      setEditingProductId('')
+      setForm(emptyForm)
+      setOpenDropdown('')
+      return
+    }
+
+    setEditingProductId(product.id)
+    setForm({
+      productName: product.productName,
+      type: product.type,
+      blockingMethod: product.blockingMethod,
+      spf: product.spf,
+      pa: product.pa,
+    })
+    setOpenDropdown('')
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleSubmitProduct = () => {
+    if (!canSubmitProduct) {
+      return
+    }
+
+    const nextProductValues = {
+      ...form,
+      productName: form.productName.trim(),
+      spf: form.spf.trim(),
+    }
+
+    if (isEditing) {
+      const nextProducts = products.map((product) =>
+        product.id === editingProductId
+          ? {
+              ...product,
+              ...nextProductValues,
+            }
+          : product,
+      )
+
+      persistProducts(nextProducts)
+      setEditingProductId('')
+      setForm(emptyForm)
+      setOpenDropdown('')
       return
     }
 
@@ -247,9 +322,7 @@ function PouchEdit() {
       ...products,
       {
         id: crypto.randomUUID(),
-        ...form,
-        productName: form.productName.trim(),
-        spf: form.spf.trim(),
+        ...nextProductValues,
         icon: randomIcon,
       },
     ]
@@ -263,6 +336,11 @@ function PouchEdit() {
   }
 
   const handleRemoveProduct = (id) => {
+    if (editingProductId === id) {
+      setEditingProductId('')
+      setForm(emptyForm)
+    }
+
     persistProducts(products.filter((product) => product.id !== id))
   }
 
@@ -286,7 +364,10 @@ function PouchEdit() {
         </header>
 
         <main className="px-6 pb-10 pt-[32px]">
-          <form className="box-border rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+          <form
+            className="box-border rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]"
+            ref={formRef}
+          >
             <input
               className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] ${
                 focusedInput === 'productName' || form.productName
@@ -353,15 +434,15 @@ function PouchEdit() {
 
             <button
               className={`mt-[18px] flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 text-[15px] font-bold leading-[23px] transition-colors ${headingFontClass} ${
-                canAddProduct
+                canSubmitProduct
                   ? 'bg-[#1d2b44] text-white'
                   : 'bg-[#f0f2f6] text-[#91a4bf]'
               }`}
               type="button"
-              disabled={!canAddProduct}
-              onClick={handleAddProduct}
+              disabled={!canSubmitProduct}
+              onClick={handleSubmitProduct}
             >
-              + 추가하기
+              {isEditing ? '수정하기' : '+ 추가하기'}
             </button>
           </form>
 
@@ -378,6 +459,8 @@ function PouchEdit() {
                   <PouchProduct
                     key={product.id}
                     product={product}
+                    selected={product.id === editingProductId}
+                    onSelect={() => handleSelectProduct(product)}
                     onRemove={() => handleRemoveProduct(product.id)}
                   />
                 ))}
