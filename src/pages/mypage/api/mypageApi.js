@@ -37,15 +37,21 @@ export function normalizeMyPageData(payload) {
       skinConcerns: readArray(
         profileSource.skinConcerns ?? profileSource.concerns,
       ),
+      treatmentHistory: readString(profileSource.treatmentHistory),
+      treatmentDetail: readString(profileSource.treatmentDetail),
+      recentTreatment: Boolean(profileSource.recentTreatment),
     },
     pouch: pouchSource.map((item, index) => ({
       id: readString(item.id, `sunscreen-${index}`),
       productName: readString(item.productName ?? item.name, '선크림'),
+      type: readString(item.type, '선크림'),
       blockingMethod: readString(
         item.blockingMethod ?? item.method,
         '유기자차',
       ),
       spf: readString(item.spf, '50+++'),
+      pa: readString(item.pa, 'PA+'),
+      icon: readString(item.icon),
     })),
   }
 }

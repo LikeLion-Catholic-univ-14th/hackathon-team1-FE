@@ -34,6 +34,9 @@ export function normalizeStoredOnboardingProfile(profile) {
     skinConcerns: Array.isArray(profile?.skinConcerns)
       ? profile.skinConcerns.filter(Boolean)
       : [],
+    treatmentHistory: readText(profile?.treatmentHistory),
+    treatmentDetail: readText(profile?.treatmentDetail),
+    recentTreatment: Boolean(profile?.recentTreatment),
   }
 }
 
@@ -67,7 +70,10 @@ export function readOnboardingProfile() {
       profile.name ||
       profile.baseAirport ||
       profile.skinType ||
-      profile.skinConcerns.length > 0
+      profile.skinConcerns.length > 0 ||
+      profile.treatmentHistory ||
+      profile.treatmentDetail ||
+      profile.recentTreatment
 
     return hasProfileData ? profile : null
   } catch {

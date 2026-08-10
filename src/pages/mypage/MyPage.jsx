@@ -3,43 +3,29 @@ import { useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import statusBar from '../onboarding/assets/status-bar.svg'
-import {
-  readOnboardingProfile,
-  readOnboardingSunscreens,
-} from '../onboarding/storage/onboardingProfileStorage.js'
-import { getMyPage } from './api/mypageApi.js'
 import profileIcon from './assets/profile-icon.svg'
 import { mockMyPage } from './mocks/mockMyPage.js'
+import {
+  getFallbackMyPageData,
+  loadMyPageData,
+} from './utils/myPageData.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[#1d2b44] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 
-function getFallbackMyPageData() {
-  const onboardingProfile = readOnboardingProfile()
-  const onboardingSunscreens = readOnboardingSunscreens()
+const getSpfSummary = (product) => {
+  const spf = product.spf || '50'
+  const paSuffix = product.pa?.replace(/^PA/, '') ?? ''
 
-  if (!onboardingProfile && !onboardingSunscreens) {
-    return mockMyPage
+  if (!paSuffix || spf.includes('+')) {
+    return spf
   }
 
-  return {
-    ...mockMyPage,
-    profile: onboardingProfile
-      ? {
-          ...mockMyPage.profile,
-          ...onboardingProfile,
-          skinConcerns:
-            onboardingProfile.skinConcerns.length > 0
-              ? onboardingProfile.skinConcerns
-              : mockMyPage.profile.skinConcerns,
-        }
-      : mockMyPage.profile,
-    pouch: onboardingSunscreens ?? mockMyPage.pouch,
-  }
+  return `${spf}${paSuffix}`
 }
 
 function EditIcon({ className = '' }) {
@@ -69,33 +55,37 @@ function EditIcon({ className = '' }) {
 }
 
 function ProfileSummary({ profile }) {
-  const skinConcerns = profile.skinConcerns.join(' · ')
+  const skinConcerns = profile.skinConcerns
 
   return (
-    <div className="mt-[20px] flex h-[78px] items-center overflow-hidden rounded-[18px] bg-[#f5f8fc] shadow-[0_8px_24px_0_rgba(29,43,68,0.05)]">
-      <div className="flex flex-1 flex-col items-center justify-center">
+    <div className="mt-[24px] flex min-h-[78px] items-stretch overflow-hidden rounded-[22px] bg-[#F4F8FF] py-[15px] shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-3">
         <span
-          className={`text-[10px] font-bold leading-[14px] text-[#a7b6ca] ${headingFontClass}`}
+          className={`whitespace-nowrap text-center text-[11px] font-bold uppercase leading-[16.5px] tracking-[-0.4px] text-[#A8B8CC] ${headingFontClass}`}
         >
           피부타입
         </span>
         <strong
-          className={`mt-[7px] text-[14px] font-bold leading-[18px] text-[#1d2b44] ${headingFontClass}`}
+          className={`mt-[7px] max-w-full whitespace-normal break-keep text-center text-[17px] font-bold leading-[25.5px] tracking-[-1px] text-[#1D2B44] ${headingFontClass}`}
         >
           {profile.skinType}
         </strong>
       </div>
-      <span className="h-[38px] w-px bg-[#e4e9f1]" aria-hidden="true" />
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <span className="my-[7px] w-px self-stretch bg-[#e4e9f1]" aria-hidden="true" />
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-3">
         <span
-          className={`text-[10px] font-bold leading-[14px] text-[#a7b6ca] ${headingFontClass}`}
+          className={`whitespace-nowrap text-center text-[11px] font-bold uppercase leading-[16.5px] tracking-[-0.4px] text-[#A8B8CC] ${headingFontClass}`}
         >
           피부고민
         </span>
         <strong
-          className={`mt-[7px] max-w-[120px] truncate text-[14px] font-bold leading-[18px] text-[#1d2b44] ${headingFontClass}`}
+          className={`mt-[7px] flex max-w-full flex-wrap justify-center text-center text-[17px] font-bold leading-[25.5px] tracking-[-1px] text-[#1D2B44] ${headingFontClass}`}
         >
-          {skinConcerns}
+          {skinConcerns.map((concern, index) => (
+            <span className="whitespace-nowrap" key={concern}>
+              {index === 0 ? concern : ` · ${concern}`}
+            </span>
+          ))}
         </strong>
       </div>
     </div>
@@ -123,7 +113,7 @@ function PouchProduct({ product }) {
       <span
         className={`max-w-[118px] truncate text-[10px] font-[510] leading-4 tracking-[-0.4px] text-[#8a9eb8] ${headingFontClass}`}
       >
-        {product.blockingMethod} · SPF {product.spf}
+        {product.blockingMethod} · SPF {getSpfSummary(product)}
       </span>
     </li>
   )
@@ -136,15 +126,10 @@ function MyPage({ onEditProfile, onEditPouch }) {
   useEffect(() => {
     let ignore = false
 
-    getMyPage()
+    loadMyPageData()
       .then((data) => {
         if (!ignore) {
           setMyPageData(data)
-        }
-      })
-      .catch(() => {
-        if (!ignore) {
-          setMyPageData(getFallbackMyPageData())
         }
       })
 
@@ -188,75 +173,77 @@ function MyPage({ onEditProfile, onEditPouch }) {
   return (
     <div className={stageClass}>
       <section className={screenClass}>
-        <div className="bg-white">
-          <img
-            className="h-[62px] w-full object-contain"
-            src={statusBar}
-            alt=""
-            aria-hidden="true"
-          />
+        <div className="h-full overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="bg-white">
+            <img
+              className="h-[62px] w-full object-contain"
+              src={statusBar}
+              alt=""
+              aria-hidden="true"
+            />
 
-          <AppHeader />
+            <AppHeader />
 
-          <header className="relative px-10 pb-[30px] pt-[36px]">
-            <button
-              className="absolute right-[44px] top-[10px] flex h-7 w-7 items-center justify-center border-0 bg-transparent p-0 text-[#8a9eb8]"
-              type="button"
-              aria-label="내 정보 수정"
-              onClick={handleEditProfile}
-            >
-              <EditIcon className="h-[22px] w-[22px]" />
-            </button>
+            <header className="relative px-10 pb-[30px] pt-[36px]">
+              <button
+                className="absolute right-[44px] top-[10px] flex h-7 w-7 items-center justify-center border-0 bg-transparent p-0 text-[#8a9eb8]"
+                type="button"
+                aria-label="내 정보 수정"
+                onClick={handleEditProfile}
+              >
+                <EditIcon className="h-[22px] w-[22px]" />
+              </button>
 
-            <div className="text-center">
-              <img
-                className="mx-auto h-[76px] w-[76px] object-contain"
-                src={profileIcon}
-                alt=""
-                aria-hidden="true"
-              />
-              <div className="mt-[15px] flex items-center justify-center gap-[7px]">
-                <h1
-                  className={`m-0 text-[24px] font-bold leading-[30px] tracking-[-0.6px] text-[#1d2b44] ${headingFontClass}`}
-                >
-                  {profile.name}
-                </h1>
-                <span
-                  className={`inline-flex h-[23px] items-center justify-center rounded-full border-[1.276px] border-[#9fb0c6] bg-white px-[8px] text-[11px] font-bold leading-[14px] text-[#8a9eb8] ${headingFontClass}`}
-                >
-                  {profile.baseAirport}
-                </span>
+              <div className="text-center">
+                <img
+                  className="mx-auto h-[76px] w-[76px] object-contain"
+                  src={profileIcon}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className="mt-[15px] flex items-center justify-center gap-[7px]">
+                  <h1
+                    className={`m-0 text-[24px] font-[860] leading-[28.5px] tracking-[-1px] text-[#1D2B44] ${headingFontClass}`}
+                  >
+                    {profile.name}
+                  </h1>
+                  <span
+                    className={`inline-flex items-center justify-center rounded-[99px] border-[1.276px] border-[#8A9EB8] bg-[#ECEEF2] px-[8px] py-[2px] text-[12px] font-bold leading-[18px] text-[#8A9EB8] ${headingFontClass}`}
+                  >
+                    {profile.baseAirport}
+                  </span>
+                </div>
+
+                <ProfileSummary profile={profile} />
               </div>
-
-              <ProfileSummary profile={profile} />
-            </div>
-          </header>
-        </div>
-
-        <main className="px-[37px] pb-[126px] pt-[27px]">
-          <div className="flex items-center justify-between px-[13px]">
-            <h2
-              className={`m-0 text-[17px] font-bold leading-6 tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
-            >
-              내 파우치
-            </h2>
-            <button
-              className={`h-[28px] rounded-full border-[1.276px] border-[#9fb0c6] bg-white px-[14px] text-[11px] font-bold leading-[14px] text-[#8a9eb8] ${headingFontClass}`}
-              type="button"
-              onClick={handleEditPouch}
-            >
-              수정하기
-            </button>
+            </header>
           </div>
 
-          <section className="mt-[11px] overflow-hidden rounded-[16px] bg-white py-[2px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
-            <ul className="m-0 list-none divide-y divide-[#eceef2] p-0">
-              {pouch.map((product) => (
-                <PouchProduct key={product.id} product={product} />
-              ))}
-            </ul>
-          </section>
-        </main>
+          <main className="px-[37px] pb-[210px] pt-[27px]">
+            <div className="flex items-center justify-between px-[13px]">
+              <h2
+                className={`m-0 text-[17px] font-bold leading-6 tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+              >
+                내 파우치
+              </h2>
+              <button
+                className={`h-[28px] rounded-full border-[1.276px] border-[#9fb0c6] bg-white px-[14px] text-[11px] font-bold leading-[14px] text-[#8a9eb8] ${headingFontClass}`}
+                type="button"
+                onClick={handleEditPouch}
+              >
+                수정하기
+              </button>
+            </div>
+
+            <section className="mt-[11px] overflow-hidden rounded-[16px] bg-white py-[2px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+              <ul className="m-0 list-none divide-y divide-[#eceef2] p-0">
+                {pouch.map((product) => (
+                  <PouchProduct key={product.id} product={product} />
+                ))}
+              </ul>
+            </section>
+          </main>
+        </div>
 
         <BottomNavigation />
       </section>
