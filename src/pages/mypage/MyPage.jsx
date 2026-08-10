@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import statusBar from '../onboarding/assets/status-bar.svg'
-import { getMyPage } from './components/api/mypageApi.js'
-import { mockMyPage } from './components/mocks/mockMyPage.js'
+import { getMyPage } from './api/mypageApi.js'
+import { mockMyPage } from './mocks/mockMyPage.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
