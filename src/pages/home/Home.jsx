@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import AppHeader from '../../components/common/AppHeader.jsx'
+import { useEffect, useMemo, useState } from 'react'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
+import headerLogoNoBackground from '../../assets/navigation/header-logo-nobackground.svg'
 import statusBar from '../onboarding/assets/status-bar.svg'
 import GenerateSolutionButton from './components/GenerateSolutionButton.jsx'
 import HomeTopSection from './components/HomeTopSection.jsx'
@@ -8,42 +8,27 @@ import OutdoorModeCard from './components/OutdoorModeCard.jsx'
 import SolutionList from './components/SolutionList.jsx'
 import SunscreenSection from './components/SunscreenSection.jsx'
 import UvSummaryCard from './components/UvSummaryCard.jsx'
-import { mockHomeData } from './mocks/mockHome.js'
+import { getFallbackHomeData, loadHomeData } from './utils/homeData.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-hidden text-left font-[SF_Pro] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
-function HomeOutdoorHeader() {
+function HomeHeader({ isOutdoor }) {
   return (
-    <header className="flex h-[60px] w-full items-center bg-[#284663] px-6">
-      <div className="inline-flex items-center gap-[6px]" aria-label="SST">
-        <svg
-          className="h-[27px] w-[27px]"
-          viewBox="0 0 28 28"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <circle cx="14" cy="14" r="13" fill="#F5A623" />
-          <path
-            d="M3 14H25M14 1.8C10.7 5.2 9 9.3 9 14C9 18.7 10.7 22.8 14 26.2M14 1.8C17.3 5.2 19 9.3 19 14C19 18.7 17.3 22.8 14 26.2M5.2 7.5H22.8M5.2 20.5H22.8"
-            stroke="white"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="text-[24px] font-[860] leading-none tracking-[-1px] text-[#F5A623]">
-          SST.
-        </span>
-      </div>
+    <header className={`h-[69px] w-full ${isOutdoor ? 'bg-[#284663]' : 'bg-white'}`}>
+      <img
+        className="h-[69px] w-full object-cover"
+        src={headerLogoNoBackground}
+        alt="SST"
+      />
     </header>
   )
 }
 
 function Home() {
-  const data = mockHomeData
+  const [data, setData] = useState(() => getFallbackHomeData())
   const recommendedSunscreen =
     data.sunscreens.find((sunscreen) => sunscreen.recommended) ?? data.sunscreens[0]
 
@@ -54,6 +39,37 @@ function Home() {
   )
   const [hasManualSelection, setHasManualSelection] = useState(false)
   const [hasGeneratedSolution, setHasGeneratedSolution] = useState(false)
+
+  useEffect(() => {
+    let ignore = false
+
+    loadHomeData().then((nextData) => {
+      if (ignore) {
+        return
+      }
+
+      setData(nextData)
+      setSelectedSunscreenId((currentId) => {
+        const hasCurrentSunscreen = nextData.sunscreens.some(
+          (sunscreen) => sunscreen.id === currentId,
+        )
+
+        if (hasCurrentSunscreen) {
+          return currentId
+        }
+
+        const nextRecommended =
+          nextData.sunscreens.find((sunscreen) => sunscreen.recommended) ??
+          nextData.sunscreens[0]
+
+        return nextRecommended?.id ?? ''
+      })
+    })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const selectedSunscreen = useMemo(
     () =>
@@ -93,7 +109,7 @@ function Home() {
               alt=""
               aria-hidden="true"
             />
-            {isOutdoor ? <HomeOutdoorHeader /> : <AppHeader />}
+            <HomeHeader isOutdoor={isOutdoor} />
           </div>
 
           <HomeTopSection

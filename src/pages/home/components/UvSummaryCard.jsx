@@ -15,20 +15,35 @@ function UvBadge({ children, isOutdoor }) {
   )
 }
 
-function UvRing({ value }) {
+function UvRing({ value, isOutdoor }) {
   return (
     <div
-      className="absolute right-[20px] top-[24px] flex h-[76px] w-[76px] items-center justify-center"
+      className="absolute right-[20px] top-[20px] flex h-[88px] w-[88px] items-center justify-center"
       aria-label={`자외선 지수 ${value}`}
     >
-      <img className="absolute inset-0 h-full w-full" src={uvRingIcon} alt="" aria-hidden="true" />
-      <div className={`relative text-center ${headingFontClass}`}>
+      <span
+        className={`absolute inset-0 h-[88px] w-[88px] rounded-full ${
+          isOutdoor
+            ? 'bg-white/10 shadow-[0_2px_20px_0_#3D5D98]'
+            : 'bg-white/10 shadow-[0_2px_20px_0_#F5A623]'
+        }`}
+        aria-hidden="true"
+      />
+      <img
+        className="absolute inset-[6px] h-[76px] w-[76px] object-contain"
+        src={uvRingIcon}
+        alt=""
+        aria-hidden="true"
+      />
+      <div
+        className={`relative flex h-[32px] flex-col items-center justify-center text-center ${headingFontClass}`}
+      >
         <span className="block text-[10px] font-bold leading-[12px] tracking-[-0.64px] text-white/75">
           UV
         </span>
         <strong
           className="block text-[24px] font-[900] leading-[20px] tracking-[-0.64px] text-white"
-          style={{ fontFamily: '"SF Pro Rounded", "SF Pro", Arial, sans-serif' }}
+          style={{ fontFamily: '"Pretendard", "SF_Pro", Arial, sans-serif' }}
         >
           {value}
         </strong>
@@ -74,14 +89,17 @@ function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
             : 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#FF8C42_0%,#F5A623_49.52%,#FFD166_100%)] shadow-[0_6px_16px_-4px_rgba(245,140,50,0.28)]'
         }`}
       >
-        <UvRing value={summary.value} />
+        <UvRing value={summary.value} isOutdoor={isOutdoor} />
 
         <div className="pr-[88px]">
           <p
             className={`m-0 text-[15px] font-bold uppercase leading-[15px] tracking-[-1px] text-white/75 ${headingFontClass}`}
           >
             {summary.title}
-            <span className="ml-[6px] text-[12px] font-[590] leading-[15px] tracking-[-1px] text-white/55">
+            <span
+              className="ml-[6px] text-[12px] font-[590] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
+              style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
+            >
               · {summary.updatedAt}
             </span>
           </p>
@@ -102,14 +120,14 @@ function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
         </div>
 
         <button
-          className={`mt-[17px] flex h-[37px] w-full items-center justify-center rounded-[8px] border border-white/35 bg-white/20 px-3 text-center text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-white ${headingFontClass}`}
+          className={`mt-[17px] flex w-full items-center justify-center gap-[8px] rounded-[12px] border-[1.276px] border-[rgba(255,255,255,0.30)] bg-[rgba(255,255,255,0.20)] px-[14px] py-[8px] text-center text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-white ${headingFontClass}`}
           type="button"
           onClick={onToggleGraph}
           aria-expanded={expanded}
         >
           자외선 그래프 보기
           <img
-            className={`ml-[8px] h-[8px] w-[14px] transition-transform ${expanded ? 'rotate-180' : ''}`}
+            className={`h-[8px] w-[14px] transition-transform ${expanded ? 'rotate-180' : ''}`}
             src={chevronDownIcon}
             alt=""
             aria-hidden="true"

@@ -10,7 +10,7 @@ function SolutionIcon({ type }) {
 
   return (
     <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-white">
-      <img className="h-[24px] w-[24px] object-contain" src={iconSrc} alt="" aria-hidden="true" />
+      <img className="h-[21px] w-[21px] object-contain" src={iconSrc} alt="" aria-hidden="true" />
     </span>
   )
 }
@@ -34,7 +34,7 @@ function SolutionItem({ solution }) {
           {solution.title}
         </strong>
         <p
-          className={`m-0 mt-[3px] truncate text-[13px] font-normal leading-[16.5px] tracking-[-1px] text-[#8A9EB8] ${headingFontClass}`}
+          className={`m-0 mt-[6px] truncate text-[13px] font-normal leading-[16.5px] tracking-[-1px] text-[#8A9EB8] ${headingFontClass}`}
         >
           {solution.description}
         </p>
@@ -45,11 +45,12 @@ function SolutionItem({ solution }) {
 
 function SolutionList({ solutions, selectedProductName }) {
   return (
-    <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[14px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[20px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="ml-[4px] mt-[4px]">
           <h2
-            className={`m-0 text-[17px] font-bold leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
+            className="m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44]"
+            style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
           >
             오늘의 솔루션
           </h2>

@@ -64,7 +64,7 @@ function SunscreenTip({ tip }) {
       <div className="flex gap-[8px]">
         {tip.tags.map((tag) => (
           <span
-            className={`rounded-full border-[1.276px] border-[#C5DEFF] bg-white px-[8px] py-[2px] text-[11px] font-bold leading-[16.5px] tracking-[-0.64px] text-[#5C9CE6] ${headingFontClass}`}
+            className={`inline-flex h-[22px] items-center justify-center rounded-full border-[1.276px] border-[#C5DEFF] bg-white px-[8px] pb-0 pt-0 text-[11px] font-bold leading-[16.5px] tracking-[-0.64px] text-[#5C9CE6] ${headingFontClass}`}
             key={tag}
           >
             {tag}

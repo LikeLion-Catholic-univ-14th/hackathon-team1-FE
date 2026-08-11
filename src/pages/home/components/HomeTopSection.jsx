@@ -1,4 +1,5 @@
 import locationIcon from '../assets/icons/location.svg'
+import timeWhiteIcon from '../assets/icons/time-white.svg'
 import timeIcon from '../assets/icons/time.svg'
 import { headingFontClass } from './homeStyles.js'
 
@@ -57,12 +58,15 @@ function LocationTimePill({ user, dark = false }) {
         </span>
       </span>
 
-      <span className="h-[13px] w-px bg-[#C7D7EA]" aria-hidden="true" />
+      <span
+        className="h-[13px] w-px bg-[rgba(29,43,68,0.15)]"
+        aria-hidden="true"
+      />
 
       <span className="inline-flex items-center gap-[5px]">
         <img
           className="h-[13px] w-[13px] object-contain"
-          src={timeIcon}
+          src={dark ? timeWhiteIcon : timeIcon}
           alt=""
           aria-hidden="true"
         />
