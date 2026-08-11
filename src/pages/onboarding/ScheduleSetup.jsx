@@ -14,7 +14,7 @@ const emptySchedule = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 const activeEditIconStyle = {
@@ -539,7 +539,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
                       {file.name}
                     </span>
                     <button
-                      className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 font-[Arial,sans-serif] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                      className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
                       type="button"
                       aria-label={`${file.name} 삭제`}
                       onClick={() => removeFile(file.id)}

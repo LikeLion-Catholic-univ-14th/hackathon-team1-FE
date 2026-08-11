@@ -10,7 +10,7 @@ import {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[#1d2b44] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[#1d2b44] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 
@@ -179,7 +179,7 @@ function ProfileEdit() {
             <label className="mb-[26px] block">
               <FieldLabel>이름</FieldLabel>
               <input
-                className={`box-border h-[34px] w-full border-0 border-b-[1.276px] bg-transparent px-0 pb-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none transition-colors ${
+                className={`box-border h-[34px] w-full border-0 border-b-[1.276px] bg-transparent px-0 pb-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none transition-colors ${
                   form.name !== initialProfile.name
                     ? 'border-[#f5a623]'
                     : 'border-[#eceef2] focus:border-[#f5a623]'

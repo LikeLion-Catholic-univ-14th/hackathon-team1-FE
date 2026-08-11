@@ -5,7 +5,7 @@ import { headingFontClass } from './homeStyles.js'
 function ModeToggle({ isOutdoor, onToggle }) {
   return (
     <div
-      className={`inline-flex h-[38px] shrink-0 items-center gap-[8px] rounded-[99px] px-[14px] text-[13px] font-bold leading-[19.5px] tracking-[-0.64px] ${headingFontClass} ${
+      className={`inline-flex h-[38px] shrink-0 -translate-y-[6px] items-center gap-[8px] rounded-[99px] px-[14px] text-[13px] font-bold leading-[19.5px] tracking-[-0.64px] ${headingFontClass} ${
         isOutdoor
           ? 'bg-[#2E4865] text-white shadow-[0_2px_3px_0_rgba(0,0,0,0.25)]'
           : 'bg-[#F1F3F5] text-[#F5A623]'

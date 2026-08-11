@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import sunscreenIcon01 from '../../assets/sunscreen/sunscreen-icon-01.svg'
 import sunscreenIcon02 from '../../assets/sunscreen/sunscreen-icon-02.svg'
 import sunscreenIcon03 from '../../assets/sunscreen/sunscreen-icon-03.svg'
 import sunscreenIcon04 from '../../assets/sunscreen/sunscreen-icon-04.svg'
 import sunscreenIcon05 from '../../assets/sunscreen/sunscreen-icon-05.svg'
 import sunscreenIcon06 from '../../assets/sunscreen/sunscreen-icon-06.svg'
+import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 
 const sunscreenTypes = ['선크림', '선스틱', '선스프레이']
@@ -32,11 +33,52 @@ const emptySunscreen = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 const sunscreenLabelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16.5px] text-[#8a9eb8] ${headingFontClass}`
 const sunscreenControlClass = `box-border flex h-[52px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-4 text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
+
+function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
+  if (!product) {
+    return null
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="box-border w-full max-w-[402px] rounded-t-[22px] bg-white px-[30px] pb-[62px] pt-[25px]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${product.productName} 관리`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <span
+          className="mx-auto mb-[29px] block h-[5px] w-[62px] rounded-full bg-[#e3e3e3]"
+          aria-hidden="true"
+        />
+        <button
+          className={`flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
+          type="button"
+          onClick={onEdit}
+        >
+          수정하기
+        </button>
+        <button
+          className={`mt-[14px] flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#E91B23] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
+          type="button"
+          onClick={onDelete}
+        >
+          삭제하기
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function DropdownField({
   id,
@@ -95,12 +137,17 @@ function DropdownField({
 }
 
 function SunscreenSetup({ value, onChange, onBack, onComplete }) {
+  const formRef = useRef(null)
   const [openDropdown, setOpenDropdown] = useState('')
   const [isSpfFocused, setIsSpfFocused] = useState(false)
   const [localSunscreen, setLocalSunscreen] = useState(emptySunscreen)
+  const [editingProductId, setEditingProductId] = useState('')
+  const [actionProductId, setActionProductId] = useState('')
   const sunscreen = value ?? localSunscreen
   const form = sunscreen.form
   const products = sunscreen.products
+  const actionProduct = products.find((product) => product.id === actionProductId)
+  const isEditing = Boolean(editingProductId)
 
   const updateSunscreen = (updater) => {
     const nextSunscreen =
@@ -113,7 +160,7 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
     onChange?.(nextSunscreen)
   }
 
-  const canAddProduct = Boolean(
+  const canSubmitProduct = Boolean(
     form.productName.trim() &&
       form.type &&
       form.blockingMethod &&
@@ -141,12 +188,37 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
     setOpenDropdown('')
   }
 
-  const handleAddProduct = () => {
-    if (!canAddProduct) {
+  const handleSubmitProduct = () => {
+    if (!canSubmitProduct) {
       return
     }
 
     const productSpf = form.spf.trim()
+
+    if (isEditing) {
+      updateSunscreen((prevSunscreen) => ({
+        ...prevSunscreen,
+        form: {
+          ...prevSunscreen.form,
+          productName: '',
+        },
+        products: prevSunscreen.products.map((product) =>
+          product.id === editingProductId
+            ? {
+                ...product,
+                ...form,
+                productName: form.productName.trim(),
+                spf: productSpf,
+              }
+            : product,
+        ),
+      }))
+      setEditingProductId('')
+      setActionProductId('')
+      setOpenDropdown('')
+      return
+    }
+
     const randomIcon =
       sunscreenIcons[Math.floor(Math.random() * sunscreenIcons.length)]
 
@@ -168,6 +240,39 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
       ],
     }))
     setOpenDropdown('')
+  }
+
+  const handleEditProduct = (product) => {
+    updateSunscreen((prevSunscreen) => ({
+      ...prevSunscreen,
+      form: {
+        ...prevSunscreen.form,
+        productName: product.productName,
+        type: product.type,
+        blockingMethod: product.blockingMethod,
+        spf: product.spf,
+        pa: product.pa,
+      },
+    }))
+    setEditingProductId(product.id)
+    setActionProductId('')
+    setOpenDropdown('')
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleDeleteProduct = (productId) => {
+    updateSunscreen((prevSunscreen) => ({
+      ...prevSunscreen,
+      form:
+        editingProductId === productId ? emptySunscreen.form : prevSunscreen.form,
+      products: prevSunscreen.products.filter((item) => item.id !== productId),
+    }))
+
+    if (editingProductId === productId) {
+      setEditingProductId('')
+    }
+
+    setActionProductId('')
   }
 
   const handleContinue = () => {
@@ -223,9 +328,12 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
             </div>
           </header>
 
-          <form className="mb-8 mt-8 box-border w-full rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+          <form
+            className="mb-8 mt-8 box-border w-full rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]"
+            ref={formRef}
+          >
             <input
-              className={`box-border h-[54px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+              className={`box-border h-[54px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
                 form.productName ? 'border-[#f5a623]' : 'border-[#eceef2]'
               }`}
               type="text"
@@ -264,7 +372,7 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
                   SPF
                 </label>
                 <input
-                  className={`box-border flex h-[52px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+                  className={`box-border flex h-[52px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
                     form.spf
                       ? 'border-[#eceef2] text-[#1d2b44]'
                       : 'border-[#eceef2] text-[rgba(29,43,68,0.5)]'
@@ -293,15 +401,15 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
 
             <button
               className={`mt-7 box-border h-[53px] w-full rounded-[14px] border-0 text-[15px] font-bold leading-[23px] ${headingFontClass} ${
-                canAddProduct
+                canSubmitProduct
                   ? 'cursor-pointer bg-[#1d2b44] text-white'
                   : 'cursor-default bg-[#f0f2f6] text-[#91a4bf]'
               }`}
               type="button"
-              disabled={!canAddProduct}
-              onClick={handleAddProduct}
+              disabled={!canSubmitProduct}
+              onClick={handleSubmitProduct}
             >
-              + 추가하기
+              {isEditing ? '수정하기' : '+ 추가하기'}
             </button>
 
             {products.length > 0 && (
@@ -328,7 +436,7 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
                       >
                         {product.productName}
                       </strong>
-                      <div className="mt-2 flex max-w-full flex-wrap gap-[5px]">
+                      <div className="mt-2 flex max-w-full flex-wrap gap-[2px]">
                         {[product.type, product.blockingMethod, `SPF ${product.spf}`, product.pa].map(
                           (tag) => (
                             <span
@@ -342,19 +450,17 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
                       </div>
                     </div>
                     <button
-                      className="absolute right-4 top-[18px] h-[22px] w-[22px] cursor-pointer rounded-full border-0 bg-transparent p-0 font-[Arial,sans-serif] text-[24px] font-light leading-[22px] text-[#8a9eb8]"
+                      className="absolute right-4 top-[18px] flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0"
                       type="button"
-                      aria-label={`${product.productName} 삭제`}
-                      onClick={() =>
-                        updateSunscreen((prevSunscreen) => ({
-                          ...prevSunscreen,
-                          products: prevSunscreen.products.filter(
-                            (item) => item.id !== product.id,
-                          ),
-                        }))
-                      }
+                      aria-label={`${product.productName} 수정 또는 삭제 메뉴 열기`}
+                      onClick={() => setActionProductId(product.id)}
                     >
-                      ×
+                      <img
+                        className="h-[15px] w-[3px] object-contain"
+                        src={moreVerticalIcon}
+                        alt=""
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
                 ))}
@@ -384,6 +490,13 @@ function SunscreenSetup({ value, onChange, onBack, onComplete }) {
             </div>
           </form>
         </div>
+
+        <SunscreenActionSheet
+          product={actionProduct}
+          onClose={() => setActionProductId('')}
+          onEdit={() => actionProduct && handleEditProduct(actionProduct)}
+          onDelete={() => actionProduct && handleDeleteProduct(actionProduct.id)}
+        />
       </section>
     </div>
   )

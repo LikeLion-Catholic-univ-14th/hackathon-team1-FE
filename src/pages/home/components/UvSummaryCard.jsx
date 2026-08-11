@@ -70,7 +70,7 @@ function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
       <article
         className={`relative overflow-hidden px-[20px] pb-[20px] pt-[24px] text-white ${
           isOutdoor
-            ? 'rounded-[16px] bg-[linear-gradient(135deg,#3B78BE_0%,#5C98D8_100%)] shadow-[0_8px_22px_0_rgba(32,74,116,0.28)]'
+            ? 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#2B5588_0%,#3C72B3_49.52%,#6B9AD8_100%)] shadow-[0_6px_12.3px_-4px_rgba(63,138,225,0.50)]'
             : 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#FF8C42_0%,#F5A623_49.52%,#FFD166_100%)] shadow-[0_6px_16px_-4px_rgba(245,140,50,0.28)]'
         }`}
       >

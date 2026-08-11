@@ -6,6 +6,7 @@ import sunscreenIcon03 from '../../assets/sunscreen/sunscreen-icon-03.svg'
 import sunscreenIcon04 from '../../assets/sunscreen/sunscreen-icon-04.svg'
 import sunscreenIcon05 from '../../assets/sunscreen/sunscreen-icon-05.svg'
 import sunscreenIcon06 from '../../assets/sunscreen/sunscreen-icon-06.svg'
+import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import statusBar from '../onboarding/assets/status-bar.svg'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
 import {
@@ -35,11 +36,52 @@ const emptyForm = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[#1d2b44] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[#1d2b44] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 const labelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16.5px] text-[#8a9eb8] ${headingFontClass}`
 const controlClass = `box-border flex h-[46px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-[14px] text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
+
+function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
+  if (!product) {
+    return null
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="box-border w-full max-w-[402px] rounded-t-[22px] bg-white px-[30px] pb-[62px] pt-[25px]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${product.productName} 관리`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <span
+          className="mx-auto mb-[29px] block h-[5px] w-[62px] rounded-full bg-[#e3e3e3]"
+          aria-hidden="true"
+        />
+        <button
+          className={`flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
+          type="button"
+          onClick={onEdit}
+        >
+          수정하기
+        </button>
+        <button
+          className={`mt-[14px] flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#E91B23] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
+          type="button"
+          onClick={onDelete}
+        >
+          삭제하기
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const stripSpfPa = (value) => String(value ?? '').replace(/\++$/, '')
 
@@ -147,17 +189,15 @@ function DropdownField({
   )
 }
 
-function PouchProduct({ product, selected, onSelect, onRemove }) {
+function PouchProduct({ product, selected, onOpenActions }) {
   return (
     <li className="relative">
-      <button
+      <div
         className={`grid min-h-[68px] w-full grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border px-[12px] py-[10px] text-left transition-colors ${
           selected
             ? 'border-[#f5a623] bg-[#fff9ed]'
             : 'border-[#eceef2] bg-[#f7f8fb]'
         }`}
-        type="button"
-        onClick={onSelect}
       >
         <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
           <img
@@ -174,7 +214,7 @@ function PouchProduct({ product, selected, onSelect, onRemove }) {
           >
             {product.productName}
           </strong>
-          <div className="mt-[5px] flex flex-wrap gap-[6px]">
+          <div className="mt-[5px] flex flex-wrap gap-[2px]">
             {[
               product.type,
               product.blockingMethod,
@@ -190,15 +230,20 @@ function PouchProduct({ product, selected, onSelect, onRemove }) {
             ))}
           </div>
         </div>
-      </button>
+      </div>
 
       <button
-        className="absolute right-[14px] top-[14px] h-[18px] w-[18px] border-0 bg-transparent p-0 text-[22px] font-light leading-[18px] text-[#8a9eb8]"
+        className="absolute right-[14px] top-[14px] flex h-[18px] w-[18px] items-center justify-center border-0 bg-transparent p-0"
         type="button"
-        aria-label={`${product.productName} 삭제`}
-        onClick={onRemove}
+        aria-label={`${product.productName} 수정 또는 삭제 메뉴 열기`}
+        onClick={onOpenActions}
       >
-        ×
+        <img
+          className="h-[15px] w-[3px] object-contain"
+          src={moreVerticalIcon}
+          alt=""
+          aria-hidden="true"
+        />
       </button>
     </li>
   )
@@ -214,6 +259,7 @@ function PouchEdit() {
   const [products, setProducts] = useState(fallbackProducts)
   const [form, setForm] = useState(emptyForm)
   const [editingProductId, setEditingProductId] = useState('')
+  const [actionProductId, setActionProductId] = useState('')
   const [openDropdown, setOpenDropdown] = useState('')
   const [focusedInput, setFocusedInput] = useState('')
 
@@ -235,6 +281,7 @@ function PouchEdit() {
   const editingProduct = products.find(
     (product) => product.id === editingProductId,
   )
+  const actionProduct = products.find((product) => product.id === actionProductId)
   const hasFormChanges =
     !isEditing ||
     (editingProduct && getProductSnapshot(form) !== getProductSnapshot(editingProduct))
@@ -268,14 +315,7 @@ function PouchEdit() {
     setOpenDropdown('')
   }
 
-  const handleSelectProduct = (product) => {
-    if (editingProductId === product.id) {
-      setEditingProductId('')
-      setForm(emptyForm)
-      setOpenDropdown('')
-      return
-    }
-
+  const handleEditProduct = (product) => {
     setEditingProductId(product.id)
     setForm({
       productName: product.productName,
@@ -284,6 +324,7 @@ function PouchEdit() {
       spf: product.spf,
       pa: product.pa,
     })
+    setActionProductId('')
     setOpenDropdown('')
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -342,6 +383,7 @@ function PouchEdit() {
     }
 
     persistProducts(products.filter((product) => product.id !== id))
+    setActionProductId('')
   }
 
   return (
@@ -369,7 +411,7 @@ function PouchEdit() {
             ref={formRef}
           >
             <input
-              className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] ${
+              className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] ${
                 focusedInput === 'productName' || form.productName
                   ? 'border-[#f5a623]'
                   : 'border-[#eceef2]'
@@ -407,7 +449,7 @@ function PouchEdit() {
               <label className="block">
                 <span className={labelClass}>SPF</span>
                 <input
-                  className={`box-border h-[46px] w-full rounded-[10px] border-[1.276px] bg-white px-[14px] font-[Arial,sans-serif] text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${
+                  className={`box-border h-[46px] w-full rounded-[10px] border-[1.276px] bg-white px-[14px] font-[SF_Pro] text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${
                     focusedInput === 'spf' || form.spf
                       ? 'border-[#f5a623]'
                       : 'border-[#eceef2]'
@@ -460,14 +502,20 @@ function PouchEdit() {
                     key={product.id}
                     product={product}
                     selected={product.id === editingProductId}
-                    onSelect={() => handleSelectProduct(product)}
-                    onRemove={() => handleRemoveProduct(product.id)}
+                    onOpenActions={() => setActionProductId(product.id)}
                   />
                 ))}
               </ul>
             </div>
           </section>
         </main>
+
+        <SunscreenActionSheet
+          product={actionProduct}
+          onClose={() => setActionProductId('')}
+          onEdit={() => actionProduct && handleEditProduct(actionProduct)}
+          onDelete={() => actionProduct && handleRemoveProduct(actionProduct.id)}
+        />
       </section>
     </div>
   )

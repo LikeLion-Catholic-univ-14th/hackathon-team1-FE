@@ -7,7 +7,7 @@ export const mockHomeData = {
     name: '도영',
     date: '2026년 8월 6일 목요일',
     location: '시드니, 호주',
-    currentTime: '현재 10:24 AM',
+    currentTime: '현지 10:24 AM',
   },
   uvSummary: {
     title: '오늘 자외선 환산',
