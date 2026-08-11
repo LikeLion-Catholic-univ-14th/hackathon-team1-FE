@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { extractSchedulesFromFiles } from './api/scheduleApi.js'
 import checkIcon from './assets/schedule/check.svg'
 import editIcon from './assets/schedule/edit.svg'
@@ -36,6 +36,20 @@ const createId = () => {
   }
 
   return `${Date.now()}-${Math.random()}`
+}
+
+const createPreviewUrl = (file) => {
+  if (!file.type.startsWith('image/')) {
+    return ''
+  }
+
+  return URL.createObjectURL(file)
+}
+
+const revokePreviewUrl = (file) => {
+  if (file?.previewUrl) {
+    URL.revokeObjectURL(file.previewUrl)
+  }
 }
 
 function ScheduleField({
@@ -142,6 +156,7 @@ function ScheduleRow({
 }
 
 function ScheduleConfirmModal({
+  file,
   fileName,
   schedules,
   editingScheduleId,
@@ -174,9 +189,17 @@ function ScheduleConfirmModal({
 
         <div className="mt-7 grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3">
           <span
-            className="h-[34px] w-[34px] rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+            className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
             aria-hidden="true"
-          />
+          >
+            {file?.previewUrl && (
+              <img
+                className="h-full w-full object-cover"
+                src={file.previewUrl}
+                alt=""
+              />
+            )}
+          </span>
           <span
             className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
           >
@@ -247,6 +270,7 @@ function NoticeModal({ message, compact = false, onDismiss }) {
 
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
+  const filesRef = useRef([])
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
@@ -257,8 +281,15 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
   const schedule = value ?? localSchedule
   const files = schedule.files ?? []
+  filesRef.current = files
   const canContinue = files.length > 0 && !isExtracting
   const hasConfirmedSchedules = (schedule.schedules ?? []).length > 0
+
+  useEffect(() => {
+    return () => {
+      filesRef.current.forEach(revokePreviewUrl)
+    }
+  }, [])
 
   const updateSchedule = (updater) => {
     const nextSchedule =
@@ -317,6 +348,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
       ...selectedFiles.map((file) => ({
         id: createId(),
         name: file.name,
+        previewUrl: createPreviewUrl(file),
         sourceFile: file,
       })),
     ]
@@ -331,6 +363,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const removeFile = (fileId) => {
+    const removedFile = files.find((file) => file.id === fileId)
+    revokePreviewUrl(removedFile)
+
     updateSchedule((prevSchedule) => {
       const nextFiles = (prevSchedule.files ?? []).filter(
         (file) => file.id !== fileId,
@@ -487,9 +522,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
                     key={file.id}
                   >
                     <span
-                      className="h-[34px] w-[34px] rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+                      className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
                       aria-hidden="true"
-                    />
+                    >
+                      {file.previewUrl && (
+                        <img
+                          className="h-full w-full object-cover"
+                          src={file.previewUrl}
+                          alt=""
+                        />
+                      )}
+                    </span>
                     <span
                       className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
                     >
@@ -536,6 +579,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
           <ScheduleConfirmModal
             activeFieldKey={activeFieldKey}
             editingScheduleId={editingScheduleId}
+            file={files[files.length - 1]}
             fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
             schedules={displaySchedules}
             onActivateField={activateScheduleField}

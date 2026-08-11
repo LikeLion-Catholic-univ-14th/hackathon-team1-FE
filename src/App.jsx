@@ -8,6 +8,7 @@ import {
   saveOnboardingProfile,
   saveOnboardingSunscreens,
 } from './pages/onboarding/storage/onboardingProfileStorage.js'
+import Home from './pages/home/Home.jsx'
 import MyPage from './pages/mypage/MyPage.jsx'
 import PouchEdit from './pages/mypage/PouchEdit.jsx'
 import ProfileEdit from './pages/mypage/ProfileEdit.jsx'
@@ -111,6 +112,7 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<OnboardingFlow />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
