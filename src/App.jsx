@@ -6,6 +6,7 @@ import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
 import SunscreenSetup from './pages/onboarding/SunscreenSetup.jsx'
 import MyPage from './pages/mypage/MyPage.jsx'
 import SchedulePage from './pages/schedule/SchedulePage.jsx'
+import ReportPage from './pages/report/ReportPage.jsx'
 
 const initialOnboardingData = {
   profile: {
@@ -91,6 +92,7 @@ function App() {
           <Route path="/" element={<OnboardingFlow />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/report" element={<ReportPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

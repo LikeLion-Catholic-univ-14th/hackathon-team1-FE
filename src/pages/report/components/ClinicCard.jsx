@@ -66,13 +66,7 @@ function ClinicCard({ month, clinic }) {
             type="button"
             className="text-[13px] leading-[19.5px] tracking-[-0.64px] text-[#8a9eb8]"
           >
-            리포트 공유
-          </button>
-          <button
-            type="button"
-            className="text-[13px] leading-[19.5px] tracking-[-0.64px] text-[#8a9eb8]"
-          >
-            PDF 저장
+            PDF 저장하기
           </button>
         </div>
       </div>
