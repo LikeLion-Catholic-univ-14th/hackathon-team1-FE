@@ -8,12 +8,15 @@ const treatmentHistory = ['없음', '있음']
 const emptyProfile = {
   name: '',
   baseAirport: '',
-  skinType: '',
+  skinType: [],
   skinConcerns: [],
   treatmentHistory: '',
   treatmentDetail: '',
   recentTreatment: false,
 }
+
+const toSelectionArray = (value) =>
+  Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
@@ -46,11 +49,13 @@ function ProfileCard({
   isComplete,
   onNameChange,
   onSelectSingle,
+  onToggleSkinType,
   onToggleConcern,
   onSubmit,
 }) {
   const [isNameFocused, setIsNameFocused] = useState(false)
   const shouldShowTreatmentInput = profile.treatmentHistory === '있음'
+  const selectedSkinTypes = toSelectionArray(profile.skinType)
 
   return (
     <form className="box-border w-full rounded-[22px] bg-white px-[22px] pb-[18px] pt-6 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)] max-[380px]:px-4">
@@ -95,8 +100,8 @@ function ProfileCard({
             <OptionButton
               className="h-[37px] px-[11px] text-[13px] leading-[15px] max-[380px]:px-[7px] max-[380px]:text-[12px]"
               key={type}
-              selected={profile.skinType === type}
-              onClick={() => onSelectSingle('skinType', type)}
+              selected={selectedSkinTypes.includes(type)}
+              onClick={() => onToggleSkinType(type)}
             >
               {type}
             </OptionButton>
@@ -200,7 +205,7 @@ function ProfileSetup({ value, onChange, onComplete }) {
 
   const isComplete = Boolean(
     profile.baseAirport &&
-      profile.skinType &&
+      toSelectionArray(profile.skinType).length > 0 &&
       profile.skinConcerns.length > 0 &&
       profile.treatmentHistory &&
       (profile.treatmentHistory !== '있음' || profile.treatmentDetail.trim()),
@@ -214,6 +219,7 @@ function ProfileSetup({ value, onChange, onComplete }) {
     onComplete?.({
       ...profile,
       name: profile.name.trim() || '홍길동',
+      skinType: toSelectionArray(profile.skinType),
     })
   }
 
@@ -236,6 +242,20 @@ function ProfileSetup({ value, onChange, onComplete }) {
         skinConcerns: hasConcern
           ? prevProfile.skinConcerns.filter((item) => item !== concern)
           : [...prevProfile.skinConcerns, concern],
+      }
+    })
+  }
+
+  const toggleSkinType = (type) => {
+    updateProfile((prevProfile) => {
+      const selectedSkinTypes = toSelectionArray(prevProfile.skinType)
+      const hasType = selectedSkinTypes.includes(type)
+
+      return {
+        ...prevProfile,
+        skinType: hasType
+          ? selectedSkinTypes.filter((item) => item !== type)
+          : [...selectedSkinTypes, type],
       }
     })
   }
@@ -284,6 +304,7 @@ function ProfileSetup({ value, onChange, onComplete }) {
                 }))
               }
               onSelectSingle={selectSingleValue}
+              onToggleSkinType={toggleSkinType}
               onToggleConcern={toggleConcern}
               onSubmit={handleSubmit}
             />

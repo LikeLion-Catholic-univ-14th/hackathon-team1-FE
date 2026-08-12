@@ -133,9 +133,9 @@ function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
             aria-hidden="true"
           />
         </button>
-      </article>
 
-      {expanded && !isOutdoor && <UvGraph graph={graph} />}
+        {expanded && !isOutdoor && <UvGraph className="mt-[18px]" graph={graph} />}
+      </article>
     </section>
   )
 }

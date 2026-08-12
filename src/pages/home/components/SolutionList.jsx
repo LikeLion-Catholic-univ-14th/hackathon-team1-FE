@@ -43,7 +43,13 @@ function SolutionItem({ solution }) {
   )
 }
 
-function SolutionList({ solutions, selectedProductName }) {
+function SolutionList({
+  solutions,
+  title = '오늘의 솔루션',
+  selectedProductName,
+  onPrevious,
+  onNext,
+}) {
   return (
     <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[20px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <div className="flex items-center justify-between gap-3">
@@ -52,7 +58,7 @@ function SolutionList({ solutions, selectedProductName }) {
             className="m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44]"
             style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
           >
-            오늘의 솔루션
+            {title}
           </h2>
           <p
             className={`m-0 mt-[7px] text-[10px] font-[510] leading-[15px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
@@ -61,9 +67,23 @@ function SolutionList({ solutions, selectedProductName }) {
           </p>
         </div>
 
-        <div className="flex gap-[6px]" aria-hidden="true">
-          <img className="h-[30px] w-[30px] object-contain" src={arrowLeftIcon} alt="" />
-          <img className="h-[30px] w-[30px] object-contain" src={arrowRightIcon} alt="" />
+        <div className="flex gap-[6px]">
+          <button
+            className="flex h-[30px] w-[30px] items-center justify-center border-0 bg-transparent p-0"
+            type="button"
+            aria-label="이전 날짜 솔루션 보기"
+            onClick={onPrevious}
+          >
+            <img className="h-[30px] w-[30px] object-contain" src={arrowLeftIcon} alt="" />
+          </button>
+          <button
+            className="flex h-[30px] w-[30px] items-center justify-center border-0 bg-transparent p-0"
+            type="button"
+            aria-label="다음 날짜 솔루션 보기"
+            onClick={onNext}
+          >
+            <img className="h-[30px] w-[30px] object-contain" src={arrowRightIcon} alt="" />
+          </button>
         </div>
       </div>
 

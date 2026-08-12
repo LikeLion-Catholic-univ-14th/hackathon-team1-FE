@@ -31,12 +31,17 @@ function Home() {
   const [data, setData] = useState(() => getFallbackHomeData())
   const recommendedSunscreen =
     data.sunscreens.find((sunscreen) => sunscreen.recommended) ?? data.sunscreens[0]
+  const initialSolutionDayIndex = Math.max(
+    data.solutionDays.findIndex((day) => day.isToday || day.offset === 0),
+    0,
+  )
 
   const [isGraphExpanded, setIsGraphExpanded] = useState(false)
   const [isOutdoor, setIsOutdoor] = useState(false)
   const [selectedSunscreenId, setSelectedSunscreenId] = useState(
     recommendedSunscreen?.id ?? '',
   )
+  const [solutionDayIndex, setSolutionDayIndex] = useState(initialSolutionDayIndex)
   const [hasManualSelection, setHasManualSelection] = useState(false)
   const [hasGeneratedSolution, setHasGeneratedSolution] = useState(false)
 
@@ -49,6 +54,12 @@ function Home() {
       }
 
       setData(nextData)
+      setSolutionDayIndex(
+        Math.max(
+          nextData.solutionDays.findIndex((day) => day.isToday || day.offset === 0),
+          0,
+        ),
+      )
       setSelectedSunscreenId((currentId) => {
         const hasCurrentSunscreen = nextData.sunscreens.some(
           (sunscreen) => sunscreen.id === currentId,
@@ -78,6 +89,21 @@ function Home() {
     [data.sunscreens, recommendedSunscreen, selectedSunscreenId],
   )
 
+  const solutionDays =
+    Array.isArray(data.solutionDays) && data.solutionDays.length > 0
+      ? data.solutionDays
+      : [
+          {
+            id: 'solution-day-today',
+            title: '오늘의 솔루션',
+            offset: 0,
+            isToday: true,
+            solutions: data.solutions,
+          },
+        ]
+  const currentSolutionDay =
+    solutionDays[solutionDayIndex] ?? solutionDays[0]
+
   const handleSelectSunscreen = (sunscreenId) => {
     setSelectedSunscreenId(sunscreenId)
     setHasManualSelection(true)
@@ -93,8 +119,21 @@ function Home() {
     setIsGraphExpanded(false)
   }
 
+  const goToPreviousSolutionDay = () => {
+    setSolutionDayIndex((currentIndex) =>
+      currentIndex === 0 ? solutionDays.length - 1 : currentIndex - 1,
+    )
+  }
+
+  const goToNextSolutionDay = () => {
+    setSolutionDayIndex((currentIndex) =>
+      currentIndex === solutionDays.length - 1 ? 0 : currentIndex + 1,
+    )
+  }
+
   const showGenerateButton = hasManualSelection || hasGeneratedSolution
-  const selectedProductName = selectedSunscreen?.name ?? '선크림1'
+  const selectedProductName =
+    currentSolutionDay.selectedProductName || selectedSunscreen?.name || '선크림1'
 
   return (
     <div className={stageClass}>
@@ -148,8 +187,11 @@ function Home() {
                 />
 
                 <SolutionList
-                  solutions={data.solutions}
+                  solutions={currentSolutionDay.solutions}
+                  title={currentSolutionDay.title}
                   selectedProductName={selectedProductName}
+                  onPrevious={goToPreviousSolutionDay}
+                  onNext={goToNextSolutionDay}
                 />
               </>
             )}

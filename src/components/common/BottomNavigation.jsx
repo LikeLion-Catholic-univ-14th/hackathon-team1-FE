@@ -13,15 +13,15 @@ const navItems = [
   },
   {
     label: '일정',
-    path: '/calendar',
+    path: '/schedule',
     icon: navSchedule,
-    matchPaths: ['/calendar', '/schedule'],
+    matchPaths: ['/schedule'],
   },
   {
     label: '분석',
-    path: '/reports',
+    path: '/report',
     icon: navAnalysis,
-    matchPaths: ['/reports', '/analysis'],
+    matchPaths: ['/report'],
   },
   {
     label: 'MY',

@@ -28,6 +28,9 @@ const getSpfSummary = (product) => {
   return `${spf}${paSuffix}`
 }
 
+const toDisplayList = (value) =>
+  Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []
+
 function EditIcon({ className = '' }) {
   return (
     <svg
@@ -55,7 +58,8 @@ function EditIcon({ className = '' }) {
 }
 
 function ProfileSummary({ profile }) {
-  const skinConcerns = profile.skinConcerns
+  const skinTypes = toDisplayList(profile.skinType)
+  const skinConcerns = toDisplayList(profile.skinConcerns)
 
   return (
     <div className="mt-[24px] flex min-h-[78px] items-stretch overflow-hidden rounded-[22px] bg-[#F4F8FF] py-[15px] shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
@@ -66,9 +70,13 @@ function ProfileSummary({ profile }) {
           피부타입
         </span>
         <strong
-          className={`mt-[7px] max-w-full whitespace-normal break-keep text-center text-[17px] font-bold leading-[25.5px] tracking-[-1px] text-[#1D2B44] ${headingFontClass}`}
+          className={`mt-[7px] flex max-w-full flex-wrap justify-center text-center text-[17px] font-bold leading-[25.5px] tracking-[-1px] text-[#1D2B44] ${headingFontClass}`}
         >
-          {profile.skinType}
+          {skinTypes.map((type, index) => (
+            <span className="whitespace-nowrap" key={`${type}-${index}`}>
+              {index === 0 ? type : ` · ${type}`}
+            </span>
+          ))}
         </strong>
       </div>
       <span className="my-[7px] w-px self-stretch bg-[#e4e9f1]" aria-hidden="true" />
@@ -139,14 +147,23 @@ function MyPage({ onEditProfile, onEditPouch }) {
   }, [])
 
   const profile = useMemo(
-    () => ({
-      ...mockMyPage.profile,
-      ...myPageData.profile,
-      skinConcerns:
-        myPageData.profile.skinConcerns.length > 0
-          ? myPageData.profile.skinConcerns
-          : mockMyPage.profile.skinConcerns,
-    }),
+    () => {
+      const skinTypes = toDisplayList(myPageData.profile.skinType)
+      const skinConcerns = toDisplayList(myPageData.profile.skinConcerns)
+
+      return {
+        ...mockMyPage.profile,
+        ...myPageData.profile,
+        skinType:
+          skinTypes.length > 0
+            ? skinTypes
+            : toDisplayList(mockMyPage.profile.skinType),
+        skinConcerns:
+          skinConcerns.length > 0
+            ? skinConcerns
+            : toDisplayList(mockMyPage.profile.skinConcerns),
+      }
+    },
     [myPageData.profile],
   )
   const pouch =

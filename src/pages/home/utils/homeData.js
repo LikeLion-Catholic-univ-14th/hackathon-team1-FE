@@ -10,13 +10,56 @@ const airportLocationMap = {
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
 
+const normalizeSolutionDays = (data) => {
+  const sourceDays = Array.isArray(data.solutionDays)
+    ? data.solutionDays
+    : Array.isArray(data.dailySolutions)
+      ? data.dailySolutions
+      : []
+
+  if (sourceDays.length > 0) {
+    return sourceDays
+      .map((day, index) => ({
+        id: readString(day.id, `solution-day-${index}`),
+        date: readString(day.date),
+        title: readString(day.title),
+        offset: typeof day.offset === 'number' ? day.offset : index,
+        isToday: Boolean(day.isToday),
+        selectedProductName: readString(day.selectedProductName),
+        solutions: Array.isArray(day.solutions) ? day.solutions : [],
+      }))
+      .filter((day) => day.solutions.length > 0)
+  }
+
+  const solutions = Array.isArray(data.solutions) ? data.solutions : []
+
+  if (solutions.length > 0) {
+    return [
+      {
+        id: 'solution-day-today',
+        title: '오늘의 솔루션',
+        offset: 0,
+        isToday: true,
+        solutions,
+      },
+    ]
+  }
+
+  return mockHomeData.solutionDays
+}
+
 function mergeHomeData(data) {
   const baseAirport = readString(data.user?.baseAirport, mockHomeData.user.baseAirport)
   const locationFallback = airportLocationMap[baseAirport] ?? baseAirport
+  const solutionDays = normalizeSolutionDays(data)
+  const todaySolutionDay =
+    solutionDays.find((day) => day.isToday || day.offset === 0) ?? solutionDays[0]
 
   return {
     ...mockHomeData,
     ...data,
+    solutionDays,
+    solutions: todaySolutionDay?.solutions ?? mockHomeData.solutions,
     user: {
       ...mockHomeData.user,
       ...data.user,
