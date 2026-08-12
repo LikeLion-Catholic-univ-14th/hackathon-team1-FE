@@ -1,0 +1,20 @@
+export const mockCalendar = {
+  month: '2026-08',
+  days: [
+    { date: '2026-08-01', scheduleId: null, status: 'DANGER' },
+    { date: '2026-08-02', scheduleId: 101, status: 'DANGER' },
+    { date: '2026-08-03', scheduleId: 102, status: 'CAUTION' },
+    { date: '2026-08-04', scheduleId: 103, status: 'CAUTION' },
+    { date: '2026-08-05', scheduleId: 104, status: 'SAFE' },
+    { date: '2026-08-06', scheduleId: 105, status: 'SAFE' },
+    { date: '2026-08-07', scheduleId: 106, status: 'INDOOR' },
+    { date: '2026-08-08', scheduleId: 107, status: 'DANGER' },
+    { date: '2026-08-09', scheduleId: 108, status: 'DANGER' },
+    { date: '2026-08-10', scheduleId: null, status: 'DANGER' },
+    { date: '2026-08-11', scheduleId: null, status: 'CAUTION' },
+    { date: '2026-08-12', scheduleId: null, status: 'CAUTION' },
+    { date: '2026-08-13', scheduleId: null, status: 'SAFE' },
+    { date: '2026-08-14', scheduleId: null, status: 'SAFE' },
+    { date: '2026-08-15', scheduleId: null, status: 'INDOOR' },
+  ],
+}
