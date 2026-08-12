@@ -10,6 +10,8 @@ import {
 } from './pages/onboarding/storage/onboardingProfileStorage.js'
 import Home from './pages/home/Home.jsx'
 import MyPage from './pages/mypage/MyPage.jsx'
+import SchedulePage from './pages/schedule/SchedulePage.jsx'
+import ReportPage from './pages/report/ReportPage.jsx'
 import PouchEdit from './pages/mypage/PouchEdit.jsx'
 import ProfileEdit from './pages/mypage/ProfileEdit.jsx'
 
@@ -114,6 +116,8 @@ function App() {
           <Route path="/" element={<OnboardingFlow />} />
           <Route path="/home" element={<Home />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/report" element={<ReportPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
         </Route>
