@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { extractSchedulesFromFiles } from './api/scheduleApi.js'
 import checkIcon from './assets/schedule/check.svg'
 import editIcon from './assets/schedule/edit.svg'
@@ -14,7 +14,7 @@ const emptySchedule = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[Arial,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 const activeEditIconStyle = {
@@ -36,6 +36,20 @@ const createId = () => {
   }
 
   return `${Date.now()}-${Math.random()}`
+}
+
+const createPreviewUrl = (file) => {
+  if (!file.type.startsWith('image/')) {
+    return ''
+  }
+
+  return URL.createObjectURL(file)
+}
+
+const revokePreviewUrl = (file) => {
+  if (file?.previewUrl) {
+    URL.revokeObjectURL(file.previewUrl)
+  }
 }
 
 function ScheduleField({
@@ -142,6 +156,7 @@ function ScheduleRow({
 }
 
 function ScheduleConfirmModal({
+  file,
   fileName,
   schedules,
   editingScheduleId,
@@ -174,9 +189,17 @@ function ScheduleConfirmModal({
 
         <div className="mt-7 grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3">
           <span
-            className="h-[34px] w-[34px] rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+            className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
             aria-hidden="true"
-          />
+          >
+            {file?.previewUrl && (
+              <img
+                className="h-full w-full object-cover"
+                src={file.previewUrl}
+                alt=""
+              />
+            )}
+          </span>
           <span
             className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
           >
@@ -247,21 +270,26 @@ function NoticeModal({ message, compact = false, onDismiss }) {
 
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
-  const editNoticeTimerRef = useRef(null)
+  const filesRef = useRef([])
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [showEditNotice, setShowEditNotice] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState('')
   const [activeFieldKey, setActiveFieldKey] = useState('')
-  const [hasEditedSchedule, setHasEditedSchedule] = useState(false)
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
   const schedule = value ?? localSchedule
   const files = schedule.files ?? []
+  filesRef.current = files
   const canContinue = files.length > 0 && !isExtracting
   const hasConfirmedSchedules = (schedule.schedules ?? []).length > 0
+
+  useEffect(() => {
+    return () => {
+      filesRef.current.forEach(revokePreviewUrl)
+    }
+  }, [])
 
   const updateSchedule = (updater) => {
     const nextSchedule =
@@ -285,11 +313,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     setIsExtracting(true)
     setShowCompleteModal(false)
-    setShowEditNotice(false)
     setShowScheduleModal(false)
     setEditingScheduleId('')
     setActiveFieldKey('')
-    setHasEditedSchedule(false)
     setModalFileName(targetFiles[targetFiles.length - 1]?.name ?? '업로드한 일정 파일')
 
     let schedules
@@ -322,6 +348,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
       ...selectedFiles.map((file) => ({
         id: createId(),
         name: file.name,
+        previewUrl: createPreviewUrl(file),
         sourceFile: file,
       })),
     ]
@@ -336,6 +363,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const removeFile = (fileId) => {
+    const removedFile = files.find((file) => file.id === fileId)
+    revokePreviewUrl(removedFile)
+
     updateSchedule((prevSchedule) => {
       const nextFiles = (prevSchedule.files ?? []).filter(
         (file) => file.id !== fileId,
@@ -363,11 +393,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const activateScheduleField = (scheduleId, fieldKey) => {
     setEditingScheduleId(scheduleId)
     setActiveFieldKey(fieldKey)
-    setHasEditedSchedule(true)
   }
 
   const updateScheduleField = (scheduleId, fieldKey, nextValue) => {
-    setHasEditedSchedule(true)
     setDisplaySchedules((prevSchedules) =>
       prevSchedules.map((scheduleItem) =>
         scheduleItem.id === scheduleId
@@ -385,24 +413,6 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     updateSchedule(nextSchedule)
 
-    if (hasEditedSchedule || editingScheduleId) {
-      setShowEditNotice(true)
-      window.clearTimeout(editNoticeTimerRef.current)
-      editNoticeTimerRef.current = window.setTimeout(() => {
-        setShowEditNotice(false)
-        setShowScheduleModal(false)
-        editNoticeTimerRef.current = null
-      }, 2000)
-      return
-    }
-
-    setShowScheduleModal(false)
-  }
-
-  const dismissEditNotice = () => {
-    window.clearTimeout(editNoticeTimerRef.current)
-    editNoticeTimerRef.current = null
-    setShowEditNotice(false)
     setShowScheduleModal(false)
   }
 
@@ -512,16 +522,24 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
                     key={file.id}
                   >
                     <span
-                      className="h-[34px] w-[34px] rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+                      className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
                       aria-hidden="true"
-                    />
+                    >
+                      {file.previewUrl && (
+                        <img
+                          className="h-full w-full object-cover"
+                          src={file.previewUrl}
+                          alt=""
+                        />
+                      )}
+                    </span>
                     <span
                       className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
                     >
                       {file.name}
                     </span>
                     <button
-                      className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 font-[Arial,sans-serif] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                      className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
                       type="button"
                       aria-label={`${file.name} 삭제`}
                       onClick={() => removeFile(file.id)}
@@ -561,6 +579,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
           <ScheduleConfirmModal
             activeFieldKey={activeFieldKey}
             editingScheduleId={editingScheduleId}
+            file={files[files.length - 1]}
             fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
             schedules={displaySchedules}
             onActivateField={activateScheduleField}
@@ -568,14 +587,6 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
             onFieldChange={updateScheduleField}
             onSave={saveConfirmedSchedules}
             onStartEdit={startScheduleEdit}
-          />
-        )}
-
-        {showEditNotice && (
-          <NoticeModal
-            compact
-            message="비행 일정이 수정됐어요!"
-            onDismiss={dismissEditNotice}
           />
         )}
 

@@ -1,12 +1,14 @@
 import appHeaderLogo from '../../assets/navigation/app-header-logo.svg'
 
-function AppHeader() {
+function AppHeader({ className = '' }) {
   return (
-    <img
-      className="block h-[60px] w-full border-b border-[#eceef2]"
-      src={appHeaderLogo}
-      alt="SST"
-    />
+    <header className={`h-[60px] w-full border-b border-[#eceef2] bg-white ${className}`}>
+      <img
+        className="h-[60px] w-full object-cover"
+        src={appHeaderLogo}
+        alt="SST"
+      />
+    </header>
   )
 }
 

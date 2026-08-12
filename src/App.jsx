@@ -4,9 +4,16 @@ import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
 import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
 import SunscreenSetup from './pages/onboarding/SunscreenSetup.jsx'
+import {
+  saveOnboardingProfile,
+  saveOnboardingSunscreens,
+} from './pages/onboarding/storage/onboardingProfileStorage.js'
+import Home from './pages/home/Home.jsx'
 import MyPage from './pages/mypage/MyPage.jsx'
 import SchedulePage from './pages/schedule/SchedulePage.jsx'
 import ReportPage from './pages/report/ReportPage.jsx'
+import PouchEdit from './pages/mypage/PouchEdit.jsx'
+import ProfileEdit from './pages/mypage/ProfileEdit.jsx'
 
 const initialOnboardingData = {
   profile: {
@@ -46,6 +53,23 @@ function OnboardingFlow() {
     }))
   }
 
+  const completeProfileSetup = (profile) => {
+    saveOnboardingProfile(profile)
+    updateOnboardingData('profile', profile)
+    setOnboardingStep('sunscreen')
+  }
+
+  const completeSunscreenSetup = (products = []) => {
+    const sunscreen = {
+      ...onboardingData.sunscreen,
+      products,
+    }
+
+    saveOnboardingSunscreens(sunscreen)
+    updateOnboardingData('sunscreen', sunscreen)
+    setOnboardingStep('schedule')
+  }
+
   if (showSplash) {
     return <Splash onFinish={() => setShowSplash(false)} />
   }
@@ -56,7 +80,7 @@ function OnboardingFlow() {
         value={onboardingData.sunscreen}
         onChange={(sunscreen) => updateOnboardingData('sunscreen', sunscreen)}
         onBack={() => setOnboardingStep('profile')}
-        onComplete={() => setOnboardingStep('schedule')}
+        onComplete={completeSunscreenSetup}
       />
     )
   }
@@ -75,7 +99,7 @@ function OnboardingFlow() {
     <ProfileSetup
       value={onboardingData.profile}
       onChange={(profile) => updateOnboardingData('profile', profile)}
-      onComplete={() => setOnboardingStep('sunscreen')}
+      onComplete={completeProfileSetup}
     />
   )
 }
@@ -90,9 +114,12 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<OnboardingFlow />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/report" element={<ReportPage />} />
+          <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
+          <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
         </Route>
       </Routes>
     </BrowserRouter>

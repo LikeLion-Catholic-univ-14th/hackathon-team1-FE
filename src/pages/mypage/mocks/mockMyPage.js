@@ -4,6 +4,9 @@ export const mockMyPage = {
     baseAirport: 'ICN',
     skinType: '복합성',
     skinConcerns: ['기미', '건조'],
+    treatmentHistory: '없음',
+    treatmentDetail: '',
+    recentTreatment: false,
   },
   pouch: [
     {

@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "SF_Pro";
+  src: url("./assets/fonts/SF-Pro.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("./assets/fonts/SF-Pro.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: url("./assets/fonts/SF-Pro.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+:root {
+  font-family:
+    "SF_Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
