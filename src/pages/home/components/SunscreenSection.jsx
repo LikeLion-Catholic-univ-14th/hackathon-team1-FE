@@ -84,7 +84,7 @@ function SunscreenSection({ sunscreens, tip, selectedId, onSelect }) {
   return (
     <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[14px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <h2
-        className={`m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
+        className={`m-0 ml-[4px] mt-[4px] text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
       >
         오늘의 자외선 차단제
       </h2>

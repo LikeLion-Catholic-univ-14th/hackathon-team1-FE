@@ -17,7 +17,7 @@ function SolutionIcon({ type }) {
 
 function SolutionItem({ solution }) {
   return (
-    <li className="grid min-h-[80px] grid-cols-[61px_minmax(0,1fr)] items-center rounded-[12px] border border-[#E8EDF4] bg-[#F7F9FC] px-[14px] py-[10px]">
+    <li className="grid min-h-[80px] grid-cols-[61px_minmax(0,1fr)] items-center rounded-[12px] border border-[#E8EDF4] bg-[#F7F9FC] px-[14px] py-[12px]">
       <div className="flex flex-col items-center gap-[4px] border-r border-[#E3E9F1] pr-[12px]">
         <SolutionIcon type={solution.icon} />
         <span
@@ -29,12 +29,12 @@ function SolutionItem({ solution }) {
 
       <div className="min-w-0 pl-[14px]">
         <strong
-          className={`block truncate text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
+          className={`block break-keep text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
         >
           {solution.title}
         </strong>
         <p
-          className={`m-0 mt-[6px] truncate text-[13px] font-normal leading-[16.5px] tracking-[-1px] text-[#8A9EB8] ${headingFontClass}`}
+          className={`m-0 mt-[6px] break-keep text-[13px] font-normal leading-[16.5px] tracking-[-1px] text-[#8A9EB8] ${headingFontClass}`}
         >
           {solution.description}
         </p>

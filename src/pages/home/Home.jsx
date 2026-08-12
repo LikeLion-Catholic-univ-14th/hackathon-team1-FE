@@ -15,6 +15,44 @@ const stageClass =
 const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-hidden text-left font-[SF_Pro] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
+const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
+  if (Array.isArray(sunscreen?.solutions) && sunscreen.solutions.length > 0) {
+    return sunscreen.solutions
+  }
+
+  const productName = sunscreen?.name || '선택한 차단제'
+  const type = sunscreen?.type || '차단제'
+  const method = sunscreen?.method || sunscreen?.blockingMethod || ''
+  const productLabel = `${method} ${type}`.trim() || type
+
+  return [
+    {
+      ...(baseSolutions[0] ?? {}),
+      id: `${sunscreen?.id ?? 'selected'}-solution-before`,
+      icon: 'sun',
+      timing: '외출 전',
+      title: `${productLabel} 도포`,
+      description: `${productName}을 얼굴 + 목 뒤 + 귀 + 손등에 충분히 발라주세요.`,
+    },
+    {
+      ...(baseSolutions[1] ?? {}),
+      id: `${sunscreen?.id ?? 'selected'}-solution-during`,
+      icon: 'plane',
+      timing: '외출 중',
+      title: `${type} 보충`,
+      description: '땀이나 마찰이 생긴 부위는 닦아낸 뒤 다시 발라주세요.',
+    },
+    {
+      ...(baseSolutions[2] ?? {}),
+      id: `${sunscreen?.id ?? 'selected'}-solution-after`,
+      icon: 'moon',
+      timing: '복귀 후',
+      title: '클렌징 + 진정',
+      description: `${productName} 사용 후 더블 클렌징과 수분 진정을 해주세요.`,
+    },
+  ]
+}
+
 function HomeHeader({ isOutdoor }) {
   return (
     <header className={`h-[69px] w-full ${isOutdoor ? 'bg-[#284663]' : 'bg-white'}`}>
@@ -41,9 +79,10 @@ function Home() {
   const [selectedSunscreenId, setSelectedSunscreenId] = useState(
     recommendedSunscreen?.id ?? '',
   )
+  const [appliedSunscreenId, setAppliedSunscreenId] = useState(
+    recommendedSunscreen?.id ?? '',
+  )
   const [solutionDayIndex, setSolutionDayIndex] = useState(initialSolutionDayIndex)
-  const [hasManualSelection, setHasManualSelection] = useState(false)
-  const [hasGeneratedSolution, setHasGeneratedSolution] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -75,6 +114,21 @@ function Home() {
 
         return nextRecommended?.id ?? ''
       })
+      setAppliedSunscreenId((currentId) => {
+        const hasCurrentSunscreen = nextData.sunscreens.some(
+          (sunscreen) => sunscreen.id === currentId,
+        )
+
+        if (hasCurrentSunscreen) {
+          return currentId
+        }
+
+        const nextRecommended =
+          nextData.sunscreens.find((sunscreen) => sunscreen.recommended) ??
+          nextData.sunscreens[0]
+
+        return nextRecommended?.id ?? ''
+      })
     })
 
     return () => {
@@ -87,6 +141,12 @@ function Home() {
       data.sunscreens.find((sunscreen) => sunscreen.id === selectedSunscreenId) ??
       recommendedSunscreen,
     [data.sunscreens, recommendedSunscreen, selectedSunscreenId],
+  )
+  const appliedSunscreen = useMemo(
+    () =>
+      data.sunscreens.find((sunscreen) => sunscreen.id === appliedSunscreenId) ??
+      recommendedSunscreen,
+    [appliedSunscreenId, data.sunscreens, recommendedSunscreen],
   )
 
   const solutionDays =
@@ -106,12 +166,14 @@ function Home() {
 
   const handleSelectSunscreen = (sunscreenId) => {
     setSelectedSunscreenId(sunscreenId)
-    setHasManualSelection(true)
-    setHasGeneratedSolution(false)
+
+    if (sunscreenId === recommendedSunscreen?.id) {
+      setAppliedSunscreenId(sunscreenId)
+    }
   }
 
   const handleGenerateSolution = () => {
-    setHasGeneratedSolution(true)
+    setAppliedSunscreenId(selectedSunscreen?.id ?? recommendedSunscreen?.id ?? '')
   }
 
   const handleToggleOutdoor = () => {
@@ -131,9 +193,20 @@ function Home() {
     )
   }
 
-  const showGenerateButton = hasManualSelection || hasGeneratedSolution
+  const isDefaultRecommendedSolution =
+    !appliedSunscreen?.id || appliedSunscreen.id === recommendedSunscreen?.id
+  const showGenerateButton =
+    Boolean(selectedSunscreen?.id) && selectedSunscreen.id !== recommendedSunscreen?.id
+  const displayedSolutions = isDefaultRecommendedSolution
+    ? currentSolutionDay.solutions
+    : buildSunscreenSolutions(appliedSunscreen, currentSolutionDay.solutions)
   const selectedProductName =
-    currentSolutionDay.selectedProductName || selectedSunscreen?.name || '선크림1'
+    isDefaultRecommendedSolution
+      ? currentSolutionDay.selectedProductName ||
+        recommendedSunscreen?.name ||
+        appliedSunscreen?.name ||
+        '선크림1'
+      : appliedSunscreen?.name || '선크림1'
 
   return (
     <div className={stageClass}>
@@ -187,7 +260,7 @@ function Home() {
                 />
 
                 <SolutionList
-                  solutions={currentSolutionDay.solutions}
+                  solutions={displayedSolutions}
                   title={currentSolutionDay.title}
                   selectedProductName={selectedProductName}
                   onPrevious={goToPreviousSolutionDay}
