@@ -21,6 +21,10 @@ const activeEditIconStyle = {
   filter:
     'brightness(0) saturate(100%) invert(68%) sepia(80%) saturate(912%) hue-rotate(347deg) brightness(99%) contrast(94%)',
 }
+const maxScheduleFileSize = 10 * 1024 * 1024
+const imageCompressionType = 'image/jpeg'
+const imageCompressionMaxSides = [2200, 1800, 1400, 1100, 900, 700]
+const imageCompressionQualities = [0.82, 0.72, 0.62, 0.52, 0.42]
 
 const editableScheduleFields = [
   { key: 'date', width: 48, maxLength: 5 },
@@ -49,6 +53,105 @@ const createPreviewUrl = (file) => {
 const revokePreviewUrl = (file) => {
   if (file?.previewUrl) {
     URL.revokeObjectURL(file.previewUrl)
+  }
+}
+
+const loadImageFile = (file) =>
+  new Promise((resolve, reject) => {
+    const previewUrl = URL.createObjectURL(file)
+    const image = new Image()
+
+    image.onload = () => {
+      URL.revokeObjectURL(previewUrl)
+      resolve(image)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(previewUrl)
+      reject(new Error('이미지를 불러오지 못했습니다.'))
+    }
+
+    image.src = previewUrl
+  })
+
+const convertCanvasToBlob = (canvas, type, quality) =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob)
+          return
+        }
+
+        reject(new Error('이미지 압축에 실패했습니다.'))
+      },
+      type,
+      quality,
+    )
+  })
+
+const compressImageFile = async (file) => {
+  if (!file.type.startsWith('image/') || file.size <= maxScheduleFileSize) {
+    return file
+  }
+
+  const image = await loadImageFile(file)
+  const sourceWidth = image.naturalWidth || image.width
+  const sourceHeight = image.naturalHeight || image.height
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+
+  if (!sourceWidth || !sourceHeight || !context) {
+    return file
+  }
+
+  let bestBlob = null
+
+  for (const maxSide of imageCompressionMaxSides) {
+    const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight))
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale))
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale))
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+    for (const quality of imageCompressionQualities) {
+      const blob = await convertCanvasToBlob(canvas, imageCompressionType, quality)
+
+      bestBlob = !bestBlob || blob.size < bestBlob.size ? blob : bestBlob
+
+      if (blob.size <= maxScheduleFileSize) {
+        return new File([blob], file.name, {
+          type: imageCompressionType,
+          lastModified: Date.now(),
+        })
+      }
+    }
+  }
+
+  if (bestBlob && bestBlob.size < file.size) {
+    return new File([bestBlob], file.name, {
+      type: imageCompressionType,
+      lastModified: Date.now(),
+    })
+  }
+
+  return file
+}
+
+const prepareScheduleFile = async (file) => {
+  let sourceFile = file
+
+  try {
+    sourceFile = await compressImageFile(file)
+  } catch {
+    sourceFile = file
+  }
+
+  return {
+    id: createId(),
+    name: file.name,
+    previewUrl: createPreviewUrl(sourceFile),
+    sourceFile,
   }
 }
 
@@ -271,6 +374,7 @@ function NoticeModal({ message, compact = false, onDismiss }) {
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
   const filesRef = useRef([])
+  const completeTimerRef = useRef(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
@@ -287,6 +391,10 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
   useEffect(() => {
     return () => {
+      if (completeTimerRef.current) {
+        clearTimeout(completeTimerRef.current)
+      }
+
       filesRef.current.forEach(revokePreviewUrl)
     }
   }, [])
@@ -336,21 +444,20 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     setIsExtracting(false)
   }
 
-  const handleFilesChange = (event) => {
+  const handleFilesChange = async (event) => {
     const selectedFiles = Array.from(event.target.files ?? [])
 
     if (selectedFiles.length === 0) {
       return
     }
 
+    const preparedFiles = await Promise.all(
+      selectedFiles.map((file) => prepareScheduleFile(file)),
+    )
+
     const nextFiles = [
       ...files,
-      ...selectedFiles.map((file) => ({
-        id: createId(),
-        name: file.name,
-        previewUrl: createPreviewUrl(file),
-        sourceFile: file,
-      })),
+      ...preparedFiles,
     ]
 
     updateSchedule((prevSchedule) => ({
@@ -405,6 +512,19 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     )
   }
 
+  const completeAfterNotice = (nextSchedule) => {
+    if (completeTimerRef.current) {
+      clearTimeout(completeTimerRef.current)
+    }
+
+    setShowScheduleModal(false)
+    setShowCompleteModal(true)
+
+    completeTimerRef.current = setTimeout(() => {
+      onComplete?.(nextSchedule)
+    }, 2000)
+  }
+
   const saveConfirmedSchedules = () => {
     const nextSchedule = {
       ...schedule,
@@ -412,8 +532,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     }
 
     updateSchedule(nextSchedule)
-
-    setShowScheduleModal(false)
+    completeAfterNotice(nextSchedule)
   }
 
   const dismissScheduleModal = () => {
@@ -426,8 +545,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     }
 
     if (hasConfirmedSchedules) {
-      setShowCompleteModal(true)
-      onComplete?.(schedule)
+      completeAfterNotice(schedule)
       return
     }
 
@@ -435,8 +553,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const skipSchedule = () => {
-    setShowCompleteModal(true)
-    onComplete?.(schedule)
+    completeAfterNotice(schedule)
   }
 
   return (
@@ -501,7 +618,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
               <span
                 className={`mt-[7px] text-[11px] font-[590] leading-4 tracking-[-0.64px] text-[#91a4bf] ${headingFontClass}`}
               >
-                파일용량 제한 없음
+                파일당 최대 10MB
               </span>
             </button>
 

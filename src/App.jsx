@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
 import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
@@ -42,6 +42,7 @@ const initialOnboardingData = {
 }
 
 function OnboardingFlow() {
+  const navigate = useNavigate()
   const [showSplash, setShowSplash] = useState(true)
   const [onboardingStep, setOnboardingStep] = useState('profile')
   const [onboardingData, setOnboardingData] = useState(initialOnboardingData)
@@ -70,6 +71,11 @@ function OnboardingFlow() {
     setOnboardingStep('schedule')
   }
 
+  const completeScheduleSetup = (schedule) => {
+    updateOnboardingData('schedule', schedule ?? initialOnboardingData.schedule)
+    navigate('/home')
+  }
+
   if (showSplash) {
     return <Splash onFinish={() => setShowSplash(false)} />
   }
@@ -91,6 +97,7 @@ function OnboardingFlow() {
         value={onboardingData.schedule}
         onChange={(schedule) => updateOnboardingData('schedule', schedule)}
         onBack={() => setOnboardingStep('sunscreen')}
+        onComplete={completeScheduleSetup}
       />
     )
   }

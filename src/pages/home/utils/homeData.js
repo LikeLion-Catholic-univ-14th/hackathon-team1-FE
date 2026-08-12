@@ -50,7 +50,6 @@ const normalizeSolutionDays = (data) => {
 
 function mergeHomeData(data) {
   const baseAirport = readString(data.user?.baseAirport, mockHomeData.user.baseAirport)
-  const locationFallback = airportLocationMap[baseAirport] ?? baseAirport
   const solutionDays = normalizeSolutionDays(data)
   const todaySolutionDay =
     solutionDays.find((day) => day.isToday || day.offset === 0) ?? solutionDays[0]
@@ -65,10 +64,7 @@ function mergeHomeData(data) {
       ...data.user,
       name: readString(data.user?.name, mockHomeData.user.name),
       baseAirport,
-      location: readString(
-        data.user?.location,
-        locationFallback || mockHomeData.user.location,
-      ),
+      location: readString(data.user?.location, mockHomeData.user.location),
       date: readString(data.user?.date, mockHomeData.user.date),
       currentTime: readString(data.user?.currentTime, mockHomeData.user.currentTime),
     },
@@ -88,7 +84,6 @@ export function getFallbackHomeData() {
     user: {
       name: readString(onboardingProfile.name),
       baseAirport,
-      location: airportLocationMap[baseAirport] ?? baseAirport,
     },
   })
 }
