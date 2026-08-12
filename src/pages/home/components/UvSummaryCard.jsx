@@ -43,7 +43,7 @@ function UvRing({ value, isOutdoor }) {
         </span>
         <strong
           className="block text-[24px] font-[900] leading-[20px] tracking-[-0.64px] text-white"
-          style={{ fontFamily: '"Pretendard", "SF_Pro", Arial, sans-serif' }}
+          style={{ fontFamily: '"SF Pro Rounded", "SF_Pro", Arial, sans-serif' }}
         >
           {value}
         </strong>
@@ -134,7 +134,7 @@ function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
           />
         </button>
 
-        {expanded && !isOutdoor && <UvGraph className="mt-[18px]" graph={graph} />}
+        {expanded && <UvGraph className="mt-[18px]" graph={graph} isOutdoor={isOutdoor} />}
       </article>
     </section>
   )

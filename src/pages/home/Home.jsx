@@ -140,7 +140,7 @@ function Home() {
       <section
         className={`${screenClass} ${isOutdoor ? 'bg-[#284663]' : 'bg-[#f5f7fb]'}`}
       >
-        <div className="h-full overflow-x-hidden overflow-y-auto pb-[124px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto pb-[124px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className={isOutdoor ? 'bg-[#284663]' : 'bg-white'}>
             <img
               className="h-[62px] w-full object-contain"
@@ -158,8 +158,8 @@ function Home() {
           />
 
           <main
-            className={`px-[14px] pb-[18px] pt-[14px] ${
-              isOutdoor ? 'bg-[#284663]' : 'bg-[#F4F6F9]'
+            className={`flex-1 px-[14px] pb-[18px] pt-[14px] ${
+              isOutdoor ? 'bg-[#2E4865]' : 'bg-[#F4F6F9]'
             }`}
           >
             <UvSummaryCard

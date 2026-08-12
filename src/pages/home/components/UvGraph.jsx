@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import tabIcon from '../assets/icons/tab.svg'
+import tabOffIcon from '../assets/icons/tab-off.svg'
 import { headingFontClass } from './homeStyles.js'
 
 const chart = {
@@ -82,7 +83,7 @@ const interpolateUv = (x, points) => {
   return Math.round(previous.uv + (next.uv - previous.uv) * progress)
 }
 
-function UvGraph({ graph = {}, className = '' }) {
+function UvGraph({ graph = {}, className = '', isOutdoor = false }) {
   const points = useMemo(() => normalizePoints(graph.points), [graph.points])
   const path = useMemo(() => buildSmoothPath(points), [points])
   const levels = graph.levels?.length === 5 ? graph.levels : defaultLevels
@@ -103,6 +104,9 @@ function UvGraph({ graph = {}, className = '' }) {
   const selectedY = getYFromUv(selectedPoint.uv)
   const markerPercent = (selectedPoint.x / chart.width) * 100
   const markerLabelX = Math.min(Math.max(selectedPoint.x, 19), chart.width - 19)
+  const accentColor = isOutdoor ? '#2B5588' : '#F5A623'
+  const gradientId = isOutdoor ? 'uvHomeOutdoorFill' : 'uvHomeFill'
+  const markerIcon = isOutdoor ? tabOffIcon : tabIcon
 
   const handleSelectPoint = (event) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -152,9 +156,17 @@ function UvGraph({ graph = {}, className = '' }) {
             onClick={handleSelectPoint}
           >
             <defs>
-              <linearGradient id="uvHomeFill" x1="118" y1="25" x2="118" y2="80">
-                <stop stopColor="#F5A623" stopOpacity="0.58" />
-                <stop offset="1" stopColor="#F5A623" stopOpacity="0" />
+              <linearGradient
+                id={gradientId}
+                x1="0"
+                y1={chart.top}
+                x2="0"
+                y2={chart.bottom}
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0%" stopColor={accentColor} stopOpacity="0.9" />
+                <stop offset="58%" stopColor={accentColor} stopOpacity="0.3" />
+                <stop offset="100%" stopColor={accentColor} stopOpacity="0" />
               </linearGradient>
             </defs>
 
@@ -174,18 +186,18 @@ function UvGraph({ graph = {}, className = '' }) {
 
             <path
               d={`${path} L${chart.width} ${chart.bottom} L0 ${chart.bottom}Z`}
-              fill="url(#uvHomeFill)"
+              fill={`url(#${gradientId})`}
             />
             <path
               d={path}
-              stroke="#F5A623"
+              stroke={accentColor}
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d={`M${selectedPoint.x} ${selectedY}V${chart.bottom}`}
-              stroke="#F5A623"
+              stroke={accentColor}
               strokeDasharray="3 4"
               strokeWidth="1.4"
             />
@@ -193,9 +205,10 @@ function UvGraph({ graph = {}, className = '' }) {
           </svg>
 
           <div
-          className={`pointer-events-none absolute inline-flex h-[16px] -translate-x-1/2 items-center justify-center rounded-[20px] bg-[#F5A623] px-[7px] text-center text-[9.6px] font-bold leading-none tracking-[-0.096px] text-white ${headingFontClass}`}
+          className={`pointer-events-none absolute inline-flex h-[16px] -translate-x-1/2 items-center justify-center rounded-[20px] px-[7px] text-center text-[9.6px] font-bold leading-none tracking-[-0.096px] text-white ${headingFontClass}`}
             style={{
-              fontFamily: '"SF Pro Rounded", "SF_Pro", Arial, sans-serif',
+              fontFamily: '"SF Pro Rounded Regular", "SF Pro Rounded", "SF_Pro", Arial, sans-serif',
+              backgroundColor: accentColor,
               left: `${(markerLabelX / chart.width) * 100}%`,
               top: `${Math.max(selectedY - 28, 0)}px`,
             }}
@@ -205,7 +218,7 @@ function UvGraph({ graph = {}, className = '' }) {
 
           <img
             className="pointer-events-none absolute h-[14px] w-[14px] -translate-x-1/2 -translate-y-1/2"
-            src={tabIcon}
+            src={markerIcon}
             alt=""
             aria-hidden="true"
             style={{

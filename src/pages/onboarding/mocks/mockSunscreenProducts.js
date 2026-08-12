@@ -1,0 +1,178 @@
+const buildProductName = (brand, name) =>
+  name.startsWith(brand) ? name : `${brand} ${name}`
+
+export const sunscreenProductCatalog = [
+  {
+    brand: '식물나라',
+    name: '워터프루프 선크림',
+    type: '선크림',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '식물나라',
+    name: '워터프루프/알로에쿨링 선 스프레이',
+    type: '선스프레이',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '식물나라',
+    name: '보송/쿨링/워터프루프 선스틱',
+    type: '선스틱',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '달바',
+    name: '달바 핑크 톤업 선크림',
+    type: '선크림',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: 'AHC',
+    name: '마스터즈 에어리치 선스틱',
+    type: '선스틱',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '메디힐',
+    name: '마데카소사이드 수분 선세럼',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: 'VT',
+    name: '피디알엔 에어 클라우드 선스크린',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '라운드랩',
+    name: '자작나무 수분 선크림',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '구달',
+    name: '맑은 어성초 진정 수분 선크림',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '식물나라',
+    name: '가벼운 수분 선 젤',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '유이크',
+    name: '바이옴 레미디 워터프루프 선크림',
+    type: '선크림',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '닥터지',
+    name: '그린마일드 업 선플러스',
+    type: '선크림',
+    blockingMethod: '무기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '넘버즈인',
+    name: '3번 도자기결 톤업베이지 선크림',
+    type: '선크림',
+    blockingMethod: '무기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '셀퓨전씨',
+    name: '잡티 토닝 썬스크린',
+    type: '선크림',
+    blockingMethod: '혼합자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '오휘',
+    name: '3아워 블러링 선파우더',
+    type: '선파우더',
+    blockingMethod: '무기자차',
+    spf: '30',
+    pa: 'PA++',
+  },
+  {
+    brand: '프롬리에',
+    name: 'EGF 워터 화잘먹 선앰플',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '조선미녀',
+    name: '데이스크린 틴티드 선크림',
+    type: '선크림',
+    blockingMethod: '무기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '스킨1004',
+    name: '마다가스카르 센텔라 히알루-시카 워티핏 선세럼',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '제로이드',
+    name: '데일리 선크림',
+    type: '선크림',
+    blockingMethod: '무기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+  {
+    brand: '셀리맥스',
+    name: '트라넥삼산 브라이트닝 잡티 선크림',
+    type: '선크림',
+    blockingMethod: '유기자차',
+    spf: '50+',
+    pa: 'PA++++',
+  },
+].map((product) => ({
+  ...product,
+  productName: buildProductName(product.brand, product.name),
+}))
+
+export const mockSunscreenProducts = sunscreenProductCatalog.map(
+  (product) => product.productName,
+)
+
+export const findSunscreenProductByName = (productName) =>
+  sunscreenProductCatalog.find(
+    (product) =>
+      product.productName.toLowerCase() === productName.trim().toLowerCase(),
+  )

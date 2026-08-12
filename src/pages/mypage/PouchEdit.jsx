@@ -10,6 +10,10 @@ import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import statusBar from '../onboarding/assets/status-bar.svg'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
 import {
+  findSunscreenProductByName,
+  mockSunscreenProducts,
+} from '../onboarding/mocks/mockSunscreenProducts.js'
+import {
   getFallbackMyPageData,
   loadMyPageData,
 } from './utils/myPageData.js'
@@ -171,10 +175,10 @@ function DropdownField({
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-[#eceef2] bg-white shadow-[0_8px_24px_0_rgba(29,43,68,0.12)]">
           {options.map((option) => (
             <button
-              className={`h-11 w-full border-0 border-b border-[#eceef2] bg-white px-4 text-left text-[14px] font-[590] leading-5 tracking-[-1px] last:border-b-0 ${headingFontClass} ${
+              className={`h-11 w-full border-0 border-b border-[#eceef2] px-4 text-left text-[14px] font-[590] leading-5 tracking-[-1px] last:border-b-0 ${headingFontClass} ${
                 value === option
-                  ? 'bg-[#fff9ed] text-[#f5a623]'
-                  : 'text-[#1d2b44]'
+                  ? 'bg-[#FFFBF2] text-[#F5A623]'
+                  : 'bg-white text-[#1d2b44]'
               }`}
               key={option}
               type="button"
@@ -183,6 +187,81 @@ function DropdownField({
               {option}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProductNameField({
+  value,
+  suggestions,
+  onChange,
+  onSelect,
+  onFocus,
+  onBlur,
+}) {
+  const [isFocused, setIsFocused] = useState(false)
+  const query = value.trim().toLowerCase()
+  const filteredSuggestions = query
+    ? suggestions
+        .filter((productName) => productName.toLowerCase().includes(query))
+        .slice(0, 4)
+    : []
+  const shouldShowSuggestions = isFocused && filteredSuggestions.length > 0
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    onFocus?.()
+  }
+
+  const handleBlur = () => {
+    window.setTimeout(() => setIsFocused(false), 120)
+    onBlur?.()
+  }
+
+  return (
+    <div className="relative">
+      <input
+        className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] ${
+          value ? 'border-[#f5a623]' : 'border-[#eceef2]'
+        } ${shouldShowSuggestions ? 'rounded-b-none' : ''}`}
+        type="text"
+        value={value}
+        placeholder="제품명을 입력해주세요"
+        autoComplete="off"
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onChange={(event) => {
+          setIsFocused(true)
+          onChange(event.target.value)
+        }}
+      />
+
+      {shouldShowSuggestions && (
+        <div className="absolute left-0 right-0 top-[47px] z-30 overflow-hidden rounded-b-[10px] border-x-[1.276px] border-b-[1.276px] border-[#eceef2] bg-white shadow-[0_8px_18px_0_rgba(29,43,68,0.08)]">
+          {filteredSuggestions.map((productName) => {
+            const isExactMatch = productName.toLowerCase() === query
+
+            return (
+              <button
+                className={`block h-[48px] w-full border-0 border-b border-[#eceef2] px-4 text-left text-[14px] font-normal leading-[20px] tracking-[-0.64px] last:border-b-0 ${headingFontClass} ${
+                  isExactMatch
+                    ? 'bg-[#FFFBF2] text-[#F5A623]'
+                    : 'bg-white text-[#1d2b44]'
+                }`}
+                key={productName}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onSelect(productName)
+                  setIsFocused(false)
+                }}
+              >
+                {productName}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
@@ -315,6 +394,24 @@ function PouchEdit() {
     setOpenDropdown('')
   }
 
+  const selectProductName = (productName) => {
+    const product = findSunscreenProductByName(productName)
+
+    if (!product) {
+      updateForm('productName', productName)
+      return
+    }
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      productName: product.productName,
+      type: product.type,
+      blockingMethod: product.blockingMethod,
+      spf: product.spf,
+      pa: product.pa,
+    }))
+  }
+
   const handleEditProduct = (product) => {
     setEditingProductId(product.id)
     setForm({
@@ -410,18 +507,16 @@ function PouchEdit() {
             className="box-border rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]"
             ref={formRef}
           >
-            <input
-              className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] ${
-                focusedInput === 'productName' || form.productName
-                  ? 'border-[#f5a623]'
-                  : 'border-[#eceef2]'
-              }`}
-              type="text"
+            <ProductNameField
               value={form.productName}
-              placeholder="제품명을 입력해주세요"
-              onFocus={() => setFocusedInput('productName')}
+              suggestions={mockSunscreenProducts}
+              onChange={(productName) => updateForm('productName', productName)}
+              onSelect={selectProductName}
+              onFocus={() => {
+                setFocusedInput('productName')
+                setOpenDropdown('')
+              }}
               onBlur={() => setFocusedInput('')}
-              onChange={(event) => updateForm('productName', event.target.value)}
             />
 
             <div className="mt-[18px] grid grid-cols-2 gap-x-[11px] gap-y-[18px]">
