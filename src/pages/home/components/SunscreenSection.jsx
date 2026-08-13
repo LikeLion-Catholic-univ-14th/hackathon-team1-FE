@@ -1,7 +1,15 @@
+import { useRef } from 'react'
 import checkActiveIcon from '../assets/solution/check-active.svg'
 import checkInactiveIcon from '../assets/solution/check-inactive.svg'
 import HomeEmptyState from './HomeEmptyState.jsx'
 import { headingFontClass } from './homeStyles.js'
+
+const sunscreenCardSizeStyle = {
+  width: 'calc((100% - 24px) / 3)',
+  minWidth: 'calc((100% - 24px) / 3)',
+  maxWidth: 'calc((100% - 24px) / 3)',
+  scrollSnapAlign: 'start',
+}
 
 function CheckMark({ selected }) {
   return (
@@ -17,11 +25,12 @@ function CheckMark({ selected }) {
 function SunscreenCard({ sunscreen, selected, onSelect }) {
   return (
     <button
-      className={`relative flex h-[164px] min-w-[102px] flex-1 flex-col items-center rounded-[16px] border-[1.276px] px-[6px] pb-[12px] pt-[33px] text-left transition-colors ${
+      className={`relative flex min-h-[164px] flex-none flex-col items-center rounded-[16px] border-[1.276px] px-[6px] pb-[12px] pt-[33px] text-left transition-colors ${
         selected
           ? 'border-[#F5A623] bg-[#FFFBF2]'
           : 'border-[#eef2f7] bg-[#F5F7FB]'
       }`}
+      style={sunscreenCardSizeStyle}
       type="button"
       onClick={() => onSelect(sunscreen.id)}
       aria-pressed={selected}
@@ -38,12 +47,12 @@ function SunscreenCard({ sunscreen, selected, onSelect }) {
       </span>
 
       <strong
-        className={`mt-[11px] w-full truncate text-center text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+        className={`mt-[11px] w-full overflow-hidden break-keep text-center text-[14px] font-bold leading-[18px] tracking-[-0.64px] text-[#1d2b44] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [overflow-wrap:anywhere] ${headingFontClass}`}
       >
         {sunscreen.name}
       </strong>
       <span
-        className={`mt-[3px] w-full truncate text-center text-[10px] font-[510] leading-[15px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
+        className={`mt-[3px] w-full break-keep text-center text-[10px] font-[510] leading-[15px] tracking-[-0.64px] text-[#8A9EB8] [overflow-wrap:anywhere] ${headingFontClass}`}
       >
         {sunscreen.type}, {sunscreen.method}
       </span>
@@ -56,6 +65,16 @@ function SunscreenCard({ sunscreen, selected, onSelect }) {
         </span>
       )}
     </button>
+  )
+}
+
+function PlaceholderSunscreenCard() {
+  return (
+    <div
+      className="min-h-[164px] flex-none rounded-[16px] border-[1.276px] border-[#eef2f7] bg-[#F5F7FB]"
+      style={sunscreenCardSizeStyle}
+      aria-hidden="true"
+    />
   )
 }
 
@@ -89,6 +108,74 @@ function SunscreenSection({
   empty = false,
   onRegisterSunscreen,
 }) {
+  const scrollRef = useRef(null)
+  const dragStateRef = useRef({
+    active: false,
+    dragged: false,
+    pointerId: null,
+    scrollLeft: 0,
+    startX: 0,
+  })
+  const placeholderCount =
+    empty || sunscreens.length >= 3 ? 0 : Math.max(0, 3 - sunscreens.length)
+
+  const handlePointerDown = (event) => {
+    const scrollElement = scrollRef.current
+
+    if (!scrollElement) {
+      return
+    }
+
+    dragStateRef.current = {
+      active: true,
+      dragged: false,
+      pointerId: event.pointerId,
+      scrollLeft: scrollElement.scrollLeft,
+      startX: event.clientX,
+    }
+
+    scrollElement.setPointerCapture?.(event.pointerId)
+  }
+
+  const handlePointerMove = (event) => {
+    const scrollElement = scrollRef.current
+    const dragState = dragStateRef.current
+
+    if (!scrollElement || !dragState.active) {
+      return
+    }
+
+    const deltaX = event.clientX - dragState.startX
+
+    if (Math.abs(deltaX) > 4) {
+      dragState.dragged = true
+    }
+
+    scrollElement.scrollLeft = dragState.scrollLeft - deltaX
+  }
+
+  const endPointerDrag = (event) => {
+    const scrollElement = scrollRef.current
+    const dragState = dragStateRef.current
+
+    if (!dragState.active) {
+      return
+    }
+
+    dragState.active = false
+    scrollElement?.releasePointerCapture?.(event.pointerId)
+  }
+
+  const handleClickCapture = (event) => {
+    if (!dragStateRef.current.dragged) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    dragStateRef.current.dragged = false
+  }
+
   return (
     <section className="mt-[14px] rounded-[16px] bg-white px-[20px] pb-[18px] pt-[24px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <h2
@@ -103,7 +190,16 @@ function SunscreenSection({
         </div>
       ) : (
         <>
-          <div className="mt-[16px] flex gap-[12px] overflow-x-auto pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            ref={scrollRef}
+            className="mt-[16px] flex touch-pan-x snap-x select-none items-stretch gap-[12px] overflow-x-auto scroll-smooth pb-[2px] [cursor:grab] active:[cursor:grabbing] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onClickCapture={handleClickCapture}
+            onPointerCancel={endPointerDrag}
+            onPointerDown={handlePointerDown}
+            onPointerLeave={endPointerDrag}
+            onPointerMove={handlePointerMove}
+            onPointerUp={endPointerDrag}
+          >
             {sunscreens.map((sunscreen) => (
               <SunscreenCard
                 key={sunscreen.id}
@@ -111,6 +207,9 @@ function SunscreenSection({
                 selected={sunscreen.id === selectedId}
                 onSelect={onSelect}
               />
+            ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <PlaceholderSunscreenCard key={`sunscreen-placeholder-${index}`} />
             ))}
           </div>
 

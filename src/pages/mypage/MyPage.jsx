@@ -119,7 +119,7 @@ function TreatmentHistoryRow({ onClick }) {
 
 function PouchProduct({ product }) {
   return (
-    <li className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)_max-content] items-center gap-[14px] px-[14px]">
+    <li className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)_max-content] items-center gap-x-[14px] gap-y-[4px] px-[14px] py-[10px]">
       <span className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#ddecff]">
         {product.icon && (
           <img
@@ -131,12 +131,12 @@ function PouchProduct({ product }) {
         )}
       </span>
       <strong
-        className={`min-w-0 truncate text-[14px] font-[510] leading-5 tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+        className={`min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-5 tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
       >
         {product.productName}
       </strong>
       <span
-        className={`max-w-[118px] truncate text-[10px] font-[510] leading-4 tracking-[-0.4px] text-[#8a9eb8] ${headingFontClass}`}
+        className={`max-w-[118px] break-keep text-right text-[10px] font-[510] leading-4 tracking-[-0.4px] text-[#8a9eb8] [overflow-wrap:anywhere] ${headingFontClass}`}
       >
         {product.blockingMethod} · SPF {getSpfSummary(product)}
       </span>

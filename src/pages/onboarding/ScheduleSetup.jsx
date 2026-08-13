@@ -7,8 +7,8 @@ import editIcon from './assets/schedule/edit.svg'
 import flightIcon from './assets/schedule/flight.svg'
 import plane2Icon from './assets/schedule/plane2.svg'
 import warningRedIcon from './assets/schedule/warning-red.svg'
+import warningIcon from '../../assets/icons/warning.svg'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
-import { mockSchedules } from './mocks/mockSchedules.js'
 
 const emptySchedule = {
   files: [],
@@ -276,6 +276,31 @@ const createScheduleDraft = (schedule) => ({
   arrivalTime: normalizeTimeParts(schedule.arrivalTime),
 })
 
+const createManualScheduleDraft = () =>
+  createScheduleDraft({
+    id: `manual-schedule-${createId()}`,
+    date: '2026-08-09',
+    departureAirport: 'ICN',
+    arrivalAirport: 'SYD',
+    departureTime: '09:00',
+    arrivalTime: '09:00',
+  })
+
+const getScheduleDraftSignature = (draft) => {
+  if (!draft) {
+    return ''
+  }
+
+  return [
+    String(draft.departureAirport ?? '').trim(),
+    String(draft.arrivalAirport ?? '').trim(),
+    formatStoredDate(draft.departureDate),
+    formatStoredDate(draft.arrivalDate),
+    formatTimeValue(draft.departureTime),
+    formatTimeValue(draft.arrivalTime),
+  ].join('|')
+}
+
 function ScheduleField({
   field,
   isEditing,
@@ -521,6 +546,7 @@ function TimeIcon() {
 
 function ScheduleEditCard({
   draft,
+  canSave,
   onBack,
   onSave,
   onChange,
@@ -528,6 +554,7 @@ function ScheduleEditCard({
   onOpenTimePicker,
 }) {
   const hasDateTimeError = isArrivalBeforeDeparture(draft)
+  const isSaveEnabled = canSave && !hasDateTimeError
 
   return (
     <div
@@ -637,10 +664,15 @@ function ScheduleEditCard({
         )}
 
         <button
-          className={`h-[53px] w-full rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] text-white ${headingFontClass} ${
+          className={`h-[53px] w-full rounded-[14px] border-0 text-[15px] font-bold leading-[23px] ${headingFontClass} ${
+            isSaveEnabled
+              ? 'cursor-pointer bg-[#1D2B44] text-white'
+              : 'cursor-default bg-[#F0F2F6] text-[#91A4BF]'
+          } ${
             hasDateTimeError ? 'mt-[20px]' : 'mt-[30px]'
           }`}
           type="button"
+          disabled={!isSaveEnabled}
           onClick={onSave}
         >
           정보 수정하기
@@ -747,6 +779,9 @@ function PickerColumn({ options, value, onChange, formatOption = (option) => opt
 }
 
 function WheelPickerSheet({ type, value, onChange, onClose }) {
+  const dragStartYRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const [dragOffset, setDragOffset] = useState(0)
   const dayOptions =
     type === 'date'
       ? Array.from(
@@ -763,12 +798,57 @@ function WheelPickerSheet({ type, value, onChange, onClose }) {
     onChange({ ...value, ...nextValue })
   }
 
+  const startSheetDrag = (event) => {
+    isDraggingRef.current = true
+    dragStartYRef.current = event.clientY
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    setDragOffset(Math.max(0, event.clientY - dragStartYRef.current))
+  }
+
+  const endSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    const finalOffset = Math.max(0, event.clientY - dragStartYRef.current)
+    isDraggingRef.current = false
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+
+    if (finalOffset > 44) {
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
+  }
+
   return (
-    <div className="absolute inset-0 z-40 flex items-end justify-center bg-black/45">
-      <div className="box-border w-full rounded-t-[22px] bg-white px-[20px] pb-[34px] pt-[13px] shadow-[0_-12px_40px_0_rgba(29,43,68,0.18)]">
+    <div
+      className="absolute inset-0 z-40 flex items-end justify-center bg-black/45"
+      onClick={onClose}
+    >
+      <div
+        className="box-border w-full rounded-t-[22px] bg-white px-[20px] pb-[34px] pt-[13px] shadow-[0_-12px_40px_0_rgba(29,43,68,0.18)]"
+        onClick={(event) => event.stopPropagation()}
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: isDraggingRef.current ? 'none' : 'transform 160ms ease',
+        }}
+      >
         <span
-          className="mx-auto block h-[5px] w-[48px] rounded-full bg-[#E2E5EA]"
+          className="mx-auto block h-[5px] w-[48px] cursor-grab touch-none rounded-full bg-[#E2E5EA] active:cursor-grabbing"
           aria-hidden="true"
+          onPointerCancel={endSheetDrag}
+          onPointerDown={startSheetDrag}
+          onPointerMove={moveSheetDrag}
+          onPointerUp={endSheetDrag}
         />
 
         <div className="relative mt-[28px]">
@@ -859,16 +939,64 @@ function NoticeModal({ message, compact = false, onDismiss }) {
   )
 }
 
+function ScheduleExtractFailureModal({ onDismiss, onManualInput, onRetryUpload }) {
+  return (
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 px-6"
+      onClick={onDismiss}
+    >
+      <div
+        className="box-border flex w-full max-w-[307px] flex-col items-center rounded-[18px] bg-white px-[35px] pb-[23px] pt-[31px] shadow-[0_20px_60px_0_rgba(29,43,68,0.35)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <img
+          className="h-[32px] w-[32px] object-contain"
+          src={warningIcon}
+          alt=""
+          aria-hidden="true"
+        />
+        <p
+          className={`m-0 mt-[18px] whitespace-pre-line text-center text-[16px] font-[510] leading-[22px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
+        >
+          일정을 인식하지 못했어요.
+          {'\n'}
+          직접 입력하시겠어요?
+        </p>
+
+        <div className="mt-[24px] grid w-full grid-cols-2 gap-[10px]">
+          <button
+            className={`h-[45px] rounded-[10px] border-0 bg-[#F0F2F6] px-0 text-[13px] font-bold leading-[20px] tracking-[-0.4px] text-[#91A4BF] ${headingFontClass}`}
+            type="button"
+            onClick={onRetryUpload}
+          >
+            다시 업로드하기
+          </button>
+          <button
+            className={`h-[45px] rounded-[10px] border-0 bg-[#F5A623] px-0 text-[13px] font-bold leading-[20px] tracking-[-0.4px] text-white shadow-[0_4px_12px_0_rgba(245,166,35,0.32)] ${headingFontClass}`}
+            type="button"
+            onClick={onManualInput}
+          >
+            직접 입력하기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const fileInputRef = useRef(null)
   const filesRef = useRef([])
   const completeTimerRef = useRef(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [showExtractFailureModal, setShowExtractFailureModal] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState('')
   const [activeFieldKey, setActiveFieldKey] = useState('')
   const [editingScheduleDraft, setEditingScheduleDraft] = useState(null)
+  const [editingScheduleOriginalSignature, setEditingScheduleOriginalSignature] =
+    useState('')
   const [pickerState, setPickerState] = useState(null)
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
@@ -911,29 +1039,36 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
     setIsExtracting(true)
     setShowCompleteModal(false)
+    setShowExtractFailureModal(false)
     setShowScheduleModal(false)
     setEditingScheduleId('')
     setActiveFieldKey('')
     setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
     setPickerState(null)
     setModalFileName(targetFiles[targetFiles.length - 1]?.name ?? '업로드한 일정 파일')
 
-    let schedules
-
     try {
-      schedules = await extractSchedulesFromFiles(targetFiles)
-    } catch {
-      schedules = mockSchedules
-    }
+      const schedules = await extractSchedulesFromFiles(targetFiles)
 
-    updateSchedule((prevSchedule) => ({
-      ...prevSchedule,
-      files: targetFiles,
-      schedules,
-    }))
-    setDisplaySchedules(schedules)
-    setShowScheduleModal(true)
-    setIsExtracting(false)
+      updateSchedule((prevSchedule) => ({
+        ...prevSchedule,
+        files: targetFiles,
+        schedules,
+      }))
+      setDisplaySchedules(schedules)
+      setShowScheduleModal(true)
+    } catch {
+      updateSchedule((prevSchedule) => ({
+        ...prevSchedule,
+        files: targetFiles,
+        schedules: [],
+      }))
+      setDisplaySchedules([])
+      setShowExtractFailureModal(true)
+    } finally {
+      setIsExtracting(false)
+    }
   }
 
   const handleFilesChange = async (event) => {
@@ -987,7 +1122,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
       return
     }
 
-    setEditingScheduleDraft(createScheduleDraft(targetSchedule))
+    const nextDraft = createScheduleDraft(targetSchedule)
+    setEditingScheduleDraft(nextDraft)
+    setEditingScheduleOriginalSignature(getScheduleDraftSignature(nextDraft))
     setEditingScheduleId('')
     setActiveFieldKey('')
   }
@@ -1052,8 +1189,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     setPickerState(null)
   }
 
+  const hasEditedScheduleDraft =
+    Boolean(editingScheduleDraft) &&
+    getScheduleDraftSignature(editingScheduleDraft) !==
+      editingScheduleOriginalSignature
+
   const saveScheduleDraft = () => {
     if (!editingScheduleDraft) {
+      return
+    }
+
+    if (!hasEditedScheduleDraft) {
       return
     }
 
@@ -1072,18 +1218,26 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
       arrivalTime: formatTimeValue(editingScheduleDraft.arrivalTime),
     }
 
-    const nextSchedules = displaySchedules.map((scheduleItem) =>
-      scheduleItem.id === editingScheduleDraft.id
-        ? { ...scheduleItem, ...nextScheduleItem }
-        : scheduleItem,
+    const hasExistingSchedule = displaySchedules.some(
+      (scheduleItem) => scheduleItem.id === editingScheduleDraft.id,
     )
+    const nextSchedules = hasExistingSchedule
+      ? displaySchedules.map((scheduleItem) =>
+          scheduleItem.id === editingScheduleDraft.id
+            ? { ...scheduleItem, ...nextScheduleItem }
+            : scheduleItem,
+        )
+      : [nextScheduleItem]
 
     setDisplaySchedules(nextSchedules)
     updateSchedule((prevSchedule) => ({
       ...prevSchedule,
       schedules: nextSchedules,
     }))
+    setModalFileName(files[files.length - 1]?.name ?? '직접 입력 일정')
+    setShowScheduleModal(true)
     setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
     setPickerState(null)
   }
 
@@ -1113,7 +1267,34 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const dismissScheduleModal = () => {
     setShowScheduleModal(false)
     setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
     setPickerState(null)
+  }
+
+  const resetScheduleUpload = () => {
+    files.forEach(revokePreviewUrl)
+    updateSchedule({
+      files: [],
+      schedules: [],
+    })
+    setDisplaySchedules([])
+    setModalFileName('')
+    setShowExtractFailureModal(false)
+    setShowScheduleModal(false)
+    setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
+    setPickerState(null)
+  }
+
+  const startManualScheduleInput = () => {
+    setShowExtractFailureModal(false)
+    setShowScheduleModal(false)
+    setEditingScheduleId('')
+    setActiveFieldKey('')
+    setDisplaySchedules([])
+    const nextDraft = createManualScheduleDraft()
+    setEditingScheduleDraft(nextDraft)
+    setEditingScheduleOriginalSignature('')
   }
 
   const handleMainSave = () => {
@@ -1195,7 +1376,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
               <span
                 className={`mt-[7px] text-[11px] font-[590] leading-4 tracking-[-0.64px] text-[#91a4bf] ${headingFontClass}`}
               >
-                파일당 최대 10MB
+                파일용량 10MB 제한
               </span>
             </button>
 
@@ -1284,11 +1465,21 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
           />
         )}
 
+        {showExtractFailureModal && (
+          <ScheduleExtractFailureModal
+            onDismiss={() => setShowExtractFailureModal(false)}
+            onManualInput={startManualScheduleInput}
+            onRetryUpload={resetScheduleUpload}
+          />
+        )}
+
         {editingScheduleDraft && (
           <ScheduleEditCard
             draft={editingScheduleDraft}
+            canSave={hasEditedScheduleDraft}
             onBack={() => {
               setEditingScheduleDraft(null)
+              setEditingScheduleOriginalSignature('')
               setPickerState(null)
             }}
             onChange={setEditingScheduleDraft}

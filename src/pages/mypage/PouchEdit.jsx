@@ -20,7 +20,7 @@ import {
   loadMyPageData,
 } from './utils/myPageData.js'
 
-const sunscreenTypes = ['선크림', '선스틱', '선스프레이']
+const sunscreenTypes = ['선크림', '선스틱', '선스프레이', '선파우더']
 const blockingMethods = ['유기자차', '무기자차', '혼합자차']
 const paGrades = ['PA+', 'PA++', 'PA+++', 'PA++++']
 const maxSunscreenProductCount = 10
@@ -50,8 +50,43 @@ const labelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16
 const controlClass = `box-border flex h-[46px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-[14px] text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
 
 function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
+  const dragStartYRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const [dragOffset, setDragOffset] = useState(0)
+
   if (!product) {
     return null
+  }
+
+  const startSheetDrag = (event) => {
+    isDraggingRef.current = true
+    dragStartYRef.current = event.clientY
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    setDragOffset(Math.max(0, event.clientY - dragStartYRef.current))
+  }
+
+  const endSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    const finalOffset = Math.max(0, event.clientY - dragStartYRef.current)
+    isDraggingRef.current = false
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+
+    if (finalOffset > 44) {
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
   }
 
   return (
@@ -66,10 +101,18 @@ function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
         aria-modal="true"
         aria-label={`${product.productName} 관리`}
         onClick={(event) => event.stopPropagation()}
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: isDraggingRef.current ? 'none' : 'transform 160ms ease',
+        }}
       >
         <span
-          className="mx-auto mb-[29px] block h-[5px] w-[62px] rounded-full bg-[#e3e3e3]"
+          className="mx-auto mb-[29px] block h-[5px] w-[62px] cursor-grab touch-none rounded-full bg-[#e3e3e3] active:cursor-grabbing"
           aria-hidden="true"
+          onPointerCancel={endSheetDrag}
+          onPointerDown={startSheetDrag}
+          onPointerMove={moveSheetDrag}
+          onPointerUp={endSheetDrag}
         />
         <button
           className={`flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
@@ -317,10 +360,10 @@ function PouchProduct({ product, selected, onOpenActions }) {
   return (
     <li className="relative">
       <div
-        className={`grid min-h-[68px] w-full grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border px-[12px] py-[10px] text-left transition-colors ${
+        className={`grid min-h-[68px] w-full grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border-[1.276px] px-[12px] py-[10px] text-left transition-colors ${
           selected
             ? 'border-[#f5a623] bg-[#fff9ed]'
-            : 'border-[#eceef2] bg-[#f7f8fb]'
+            : 'border-[#ECEEF2] bg-[#F4F6F9]'
         }`}
       >
         <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
@@ -334,7 +377,7 @@ function PouchProduct({ product, selected, onOpenActions }) {
 
         <div className="min-w-0 pr-6">
           <strong
-            className={`block break-keep text-[12px] font-bold leading-[18px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+            className={`block overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
           >
             {product.productName}
           </strong>
@@ -346,7 +389,7 @@ function PouchProduct({ product, selected, onOpenActions }) {
               product.pa,
             ].map((tag) => (
               <span
-                className={`inline-flex h-[20px] items-center rounded-full border border-[#eceef2] bg-white px-[7px] text-[10px] font-[510] leading-[15px] tracking-[-0.4px] text-[#3a506b] ${headingFontClass}`}
+                className={`inline-flex min-h-[20px] items-center break-keep rounded-[99px] border-[1.276px] border-[#eceef2] bg-white px-[8px] py-[2px] text-center text-[11px] font-[510] leading-[16.5px] tracking-[-0.64px] text-[#3A506B] [overflow-wrap:anywhere] ${headingFontClass}`}
                 key={tag}
               >
                 {tag}

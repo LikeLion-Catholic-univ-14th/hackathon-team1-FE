@@ -6,13 +6,51 @@ import {
 import { getHome } from '../api/homeApi.js'
 import { mockHomeData } from '../mocks/mockHome.js'
 
-const airportLocationMap = {
-  ICN: '인천국제공항',
-  GMP: '김포국제공항',
+const baseAirportLocationMap = {
+  ICN: '인천, 대한민국',
+  GMP: '김포, 대한민국',
+  인천: '인천, 대한민국',
+  김포: '김포, 대한민국',
 }
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
+
+const getKoreaCurrentTime = () => {
+  try {
+    const formattedTime = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Seoul',
+    }).format(new Date())
+
+    return `현지 ${formattedTime}`
+  } catch {
+    return '현지 10:24 AM'
+  }
+}
+
+const formatDisplayCurrentTime = (value) => {
+  const time = readString(value)
+
+  if (!time) {
+    return ''
+  }
+
+  return time.startsWith('현지 ') ? time : `현지 ${time}`
+}
+
+const getBaseAirportFallbackLocation = (baseAirport) =>
+  baseAirportLocationMap[baseAirport] ?? baseAirportLocationMap.ICN
+
+const hasUsableScheduleLocation = (user) =>
+  Boolean(readString(user?.location) && readString(user?.currentTime) && user?.hasScheduleLocation)
+
+const readStoredHomeSunscreens = () =>
+  hasOnboardingSunscreensStorage()
+    ? normalizeStoredSunscreensForHome(readOnboardingSunscreens() ?? [])
+    : null
 
 const normalizeStoredSunscreensForHome = (sunscreens) =>
   Array.isArray(sunscreens)
@@ -25,7 +63,10 @@ const normalizeStoredSunscreensForHome = (sunscreens) =>
           spf: readString(sunscreen.spf),
           pa: readString(sunscreen.pa),
           icon: readString(sunscreen.icon, mockHomeData.sunscreens[index % mockHomeData.sunscreens.length]?.icon),
-          recommended: index === 0,
+          recommended:
+            typeof sunscreen.recommended === 'boolean'
+              ? sunscreen.recommended
+              : true,
         }))
         .filter((sunscreen) => sunscreen.name)
     : []
@@ -70,6 +111,12 @@ const normalizeSolutionDays = (data) => {
 
 function mergeHomeData(data) {
   const baseAirport = readString(data.user?.baseAirport, mockHomeData.user.baseAirport)
+  const onboardingProfile = readOnboardingProfile()
+  const fallbackBaseAirport = readString(
+    onboardingProfile?.baseAirport,
+    baseAirport || mockHomeData.user.baseAirport || 'ICN',
+  )
+  const hasScheduleLocation = hasUsableScheduleLocation(data.user)
   const solutionDays = normalizeSolutionDays(data)
   const todaySolutionDay =
     solutionDays.find((day) => day.isToday || day.offset === 0) ?? solutionDays[0]
@@ -84,19 +131,23 @@ function mergeHomeData(data) {
       ...data.user,
       name: readString(data.user?.name, mockHomeData.user.name),
       baseAirport,
-      location: readString(data.user?.location, mockHomeData.user.location),
+      location: hasScheduleLocation
+        ? readString(data.user?.location)
+        : getBaseAirportFallbackLocation(fallbackBaseAirport),
       date: readString(data.user?.date, mockHomeData.user.date),
-      currentTime: readString(data.user?.currentTime, mockHomeData.user.currentTime),
+      currentTime: hasScheduleLocation
+        ? formatDisplayCurrentTime(data.user?.currentTime)
+        : getKoreaCurrentTime(),
+      hasScheduleLocation,
     },
   }
 }
 
 export function getFallbackHomeData() {
   const onboardingProfile = readOnboardingProfile()
-  const hasStoredOnboardingSunscreens = hasOnboardingSunscreensStorage()
-  const onboardingSunscreens = readOnboardingSunscreens()
+  const storedSunscreens = readStoredHomeSunscreens()
 
-  if (!onboardingProfile && !hasStoredOnboardingSunscreens) {
+  if (!onboardingProfile && storedSunscreens === null) {
     return mockHomeData
   }
 
@@ -107,27 +158,22 @@ export function getFallbackHomeData() {
       name: readString(onboardingProfile?.name),
       baseAirport,
     },
-    ...(hasStoredOnboardingSunscreens
-      ? { sunscreens: normalizeStoredSunscreensForHome(onboardingSunscreens ?? []) }
-      : {}),
+    ...(storedSunscreens !== null ? { sunscreens: storedSunscreens } : {}),
   })
 }
 
 export async function loadHomeData() {
   const fallbackData = getFallbackHomeData()
-  const shouldKeepStoredEmptySunscreens =
-    hasOnboardingSunscreensStorage() &&
-    Array.isArray(fallbackData.sunscreens) &&
-    fallbackData.sunscreens.length === 0
+  const storedSunscreens = readStoredHomeSunscreens()
 
   try {
     const homeData = await getHome()
     const mergedHomeData = mergeHomeData(homeData)
 
-    if (shouldKeepStoredEmptySunscreens) {
+    if (storedSunscreens !== null) {
       return {
         ...mergedHomeData,
-        sunscreens: [],
+        sunscreens: storedSunscreens,
       }
     }
 

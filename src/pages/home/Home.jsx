@@ -10,6 +10,7 @@ import SolutionList from './components/SolutionList.jsx'
 import SunscreenSection from './components/SunscreenSection.jsx'
 import UvSummaryCard from './components/UvSummaryCard.jsx'
 import { getFallbackHomeData, loadHomeData } from './utils/homeData.js'
+import { ONBOARDING_SUNSCREEN_UPDATED_EVENT } from '../onboarding/storage/onboardingProfileStorage.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
@@ -54,6 +55,25 @@ const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
   ]
 }
 
+const getRecommendedSunscreens = (sunscreens) => {
+  const source = Array.isArray(sunscreens) ? sunscreens : []
+  const recommended = source.filter((sunscreen) => sunscreen.recommended)
+
+  return recommended.length > 0 ? recommended : source.slice(0, 1)
+}
+
+const getTodayBaseSolutions = (data) => {
+  const solutionDays = Array.isArray(data.solutionDays) ? data.solutionDays : []
+  const todaySolutionDay =
+    solutionDays.find((day) => day.isToday || day.offset === 0) ?? solutionDays[0]
+
+  if (Array.isArray(todaySolutionDay?.solutions) && todaySolutionDay.solutions.length > 0) {
+    return todaySolutionDay.solutions
+  }
+
+  return Array.isArray(data.solutions) ? data.solutions : []
+}
+
 function HomeHeader({ isOutdoor }) {
   return (
     <header className={`h-[69px] w-full ${isOutdoor ? 'bg-[#284663]' : 'bg-white'}`}>
@@ -71,42 +91,40 @@ function Home() {
   const [data, setData] = useState(() => getFallbackHomeData())
   const sunscreens = Array.isArray(data.sunscreens) ? data.sunscreens : []
   const hasRegisteredSunscreens = sunscreens.length > 0
-  const recommendedSunscreen =
-    sunscreens.find((sunscreen) => sunscreen.recommended) ?? sunscreens[0]
-  const initialSolutionDayIndex = Math.max(
-    data.solutionDays.findIndex((day) => day.isToday || day.offset === 0),
-    0,
+  const recommendedSunscreens = useMemo(
+    () => getRecommendedSunscreens(sunscreens),
+    [sunscreens],
   )
+  const recommendedSunscreen = recommendedSunscreens[0]
+  const recommendedSunscreenIds = recommendedSunscreens
+    .map((sunscreen) => sunscreen.id)
+    .join('|')
+  const sunscreenIds = sunscreens.map((sunscreen) => sunscreen.id).join('|')
 
   const [isGraphExpanded, setIsGraphExpanded] = useState(false)
   const [isOutdoor, setIsOutdoor] = useState(false)
   const [selectedSunscreenId, setSelectedSunscreenId] = useState(
     recommendedSunscreen?.id ?? '',
   )
-  const [appliedSunscreenId, setAppliedSunscreenId] = useState(
-    recommendedSunscreen?.id ?? '',
+  const [solutionProductIds, setSolutionProductIds] = useState(
+    recommendedSunscreen?.id ? [recommendedSunscreen.id] : [],
   )
-  const [solutionDayIndex, setSolutionDayIndex] = useState(initialSolutionDayIndex)
+  const [solutionProductIndex, setSolutionProductIndex] = useState(0)
 
   useEffect(() => {
     let ignore = false
 
-    loadHomeData().then((nextData) => {
+    const applyHomeData = (nextData) => {
       if (ignore) {
         return
       }
 
       setData(nextData)
-      setSolutionDayIndex(
-        Math.max(
-          nextData.solutionDays.findIndex((day) => day.isToday || day.offset === 0),
-          0,
-        ),
-      )
       setSelectedSunscreenId((currentId) => {
         const nextSunscreens = Array.isArray(nextData.sunscreens)
           ? nextData.sunscreens
           : []
+        const nextRecommendedSunscreens = getRecommendedSunscreens(nextSunscreens)
         const hasCurrentSunscreen = nextSunscreens.some(
           (sunscreen) => sunscreen.id === currentId,
         )
@@ -115,36 +133,57 @@ function Home() {
           return currentId
         }
 
-        const nextRecommended =
-          nextSunscreens.find((sunscreen) => sunscreen.recommended) ??
-          nextSunscreens[0]
+        const nextRecommended = nextRecommendedSunscreens[0] ?? nextSunscreens[0]
 
         return nextRecommended?.id ?? ''
       })
-      setAppliedSunscreenId((currentId) => {
-        const nextSunscreens = Array.isArray(nextData.sunscreens)
-          ? nextData.sunscreens
-          : []
-        const hasCurrentSunscreen = nextSunscreens.some(
-          (sunscreen) => sunscreen.id === currentId,
-        )
+    }
 
-        if (hasCurrentSunscreen) {
-          return currentId
-        }
+    const refreshHomeData = () => {
+      loadHomeData().then(applyHomeData)
+    }
 
-        const nextRecommended =
-          nextSunscreens.find((sunscreen) => sunscreen.recommended) ??
-          nextSunscreens[0]
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshHomeData()
+      }
+    }
 
-        return nextRecommended?.id ?? ''
-      })
-    })
+    refreshHomeData()
+    window.addEventListener(ONBOARDING_SUNSCREEN_UPDATED_EVENT, refreshHomeData)
+    window.addEventListener('focus', refreshHomeData)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       ignore = true
+      window.removeEventListener(ONBOARDING_SUNSCREEN_UPDATED_EVENT, refreshHomeData)
+      window.removeEventListener('focus', refreshHomeData)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
+
+  useEffect(() => {
+    const defaultProductId = recommendedSunscreen?.id ?? ''
+
+    setSolutionProductIds((currentIds) => {
+      if (!defaultProductId) {
+        return []
+      }
+
+      const allowedIds = new Set(sunscreens.map((sunscreen) => sunscreen.id))
+      const generatedIds = currentIds.filter(
+        (productId) => productId !== defaultProductId && allowedIds.has(productId),
+      )
+
+      return [defaultProductId, ...generatedIds]
+    })
+  }, [recommendedSunscreen?.id, recommendedSunscreenIds, sunscreenIds, sunscreens])
+
+  useEffect(() => {
+    setSolutionProductIndex((currentIndex) =>
+      Math.min(currentIndex, Math.max(solutionProductIds.length - 1, 0)),
+    )
+  }, [solutionProductIds.length])
 
   const selectedSunscreen = useMemo(
     () =>
@@ -152,38 +191,48 @@ function Home() {
       recommendedSunscreen,
     [recommendedSunscreen, selectedSunscreenId, sunscreens],
   )
-  const appliedSunscreen = useMemo(
+  const currentSolutionProductId =
+    solutionProductIds[solutionProductIndex] ?? recommendedSunscreen?.id ?? ''
+  const currentSolutionSunscreen = useMemo(
     () =>
-      sunscreens.find((sunscreen) => sunscreen.id === appliedSunscreenId) ??
+      sunscreens.find((sunscreen) => sunscreen.id === currentSolutionProductId) ??
       recommendedSunscreen,
-    [appliedSunscreenId, recommendedSunscreen, sunscreens],
+    [currentSolutionProductId, recommendedSunscreen, sunscreens],
   )
-
-  const solutionDays =
-    Array.isArray(data.solutionDays) && data.solutionDays.length > 0
-      ? data.solutionDays
-      : [
-          {
-            id: 'solution-day-today',
-            title: '오늘의 솔루션',
-            offset: 0,
-            isToday: true,
-            solutions: data.solutions,
-          },
-        ]
-  const currentSolutionDay =
-    solutionDays[solutionDayIndex] ?? solutionDays[0]
+  const todayBaseSolutions = useMemo(() => getTodayBaseSolutions(data), [data])
 
   const handleSelectSunscreen = (sunscreenId) => {
     setSelectedSunscreenId(sunscreenId)
-
-    if (sunscreenId === recommendedSunscreen?.id) {
-      setAppliedSunscreenId(sunscreenId)
-    }
   }
 
   const handleGenerateSolution = () => {
-    setAppliedSunscreenId(selectedSunscreen?.id ?? recommendedSunscreen?.id ?? '')
+    const targetProductId = selectedSunscreen?.id ?? recommendedSunscreen?.id ?? ''
+
+    if (!targetProductId) {
+      return
+    }
+
+    setSolutionProductIds((currentIds) => {
+      const defaultProductId = recommendedSunscreen?.id ?? targetProductId
+      const nextIds =
+        targetProductId === defaultProductId
+          ? [
+              defaultProductId,
+              ...currentIds.filter((productId) => productId !== defaultProductId),
+            ]
+          : [
+              defaultProductId,
+              ...currentIds.filter(
+                (productId) =>
+                  productId !== defaultProductId && productId !== targetProductId,
+              ),
+              targetProductId,
+            ]
+
+      setSolutionProductIndex(Math.max(nextIds.length - 1, 0))
+
+      return nextIds
+    })
   }
 
   const handleToggleOutdoor = () => {
@@ -196,35 +245,40 @@ function Home() {
   }
 
   const handleRegisterSchedule = () => {
-    navigate('/schedule')
+    navigate('/schedule/register')
   }
 
-  const goToPreviousSolutionDay = () => {
-    setSolutionDayIndex((currentIndex) =>
-      currentIndex === 0 ? solutionDays.length - 1 : currentIndex - 1,
+  const canNavigateSolutions = solutionProductIds.length > 1
+  const canGoPreviousSolution = solutionProductIndex > 0
+  const canGoNextSolution =
+    solutionProductIndex < Math.max(solutionProductIds.length - 1, 0)
+
+  const goToPreviousSolution = () => {
+    if (!canGoPreviousSolution) {
+      return
+    }
+
+    setSolutionProductIndex((currentIndex) =>
+      Math.max(0, currentIndex - 1),
     )
   }
 
-  const goToNextSolutionDay = () => {
-    setSolutionDayIndex((currentIndex) =>
-      currentIndex === solutionDays.length - 1 ? 0 : currentIndex + 1,
+  const goToNextSolution = () => {
+    if (!canGoNextSolution) {
+      return
+    }
+
+    setSolutionProductIndex((currentIndex) =>
+      Math.min(solutionProductIds.length - 1, currentIndex + 1),
     )
   }
 
-  const isDefaultRecommendedSolution =
-    !appliedSunscreen?.id || appliedSunscreen.id === recommendedSunscreen?.id
   const showGenerateButton =
     Boolean(selectedSunscreen?.id) && selectedSunscreen.id !== recommendedSunscreen?.id
-  const displayedSolutions = isDefaultRecommendedSolution
-    ? currentSolutionDay.solutions
-    : buildSunscreenSolutions(appliedSunscreen, currentSolutionDay.solutions)
-  const selectedProductName =
-    isDefaultRecommendedSolution
-      ? currentSolutionDay.selectedProductName ||
-        recommendedSunscreen?.name ||
-        appliedSunscreen?.name ||
-        '선크림1'
-      : appliedSunscreen?.name || '선크림1'
+  const displayedSolutions = currentSolutionSunscreen
+    ? buildSunscreenSolutions(currentSolutionSunscreen, todayBaseSolutions)
+    : todayBaseSolutions
+  const selectedProductName = currentSolutionSunscreen?.name || '선크림1'
 
   return (
     <div className={stageClass}>
@@ -279,10 +333,13 @@ function Home() {
                   solutions={[]}
                   title="오늘의 솔루션"
                   selectedProductName=""
-                  onPrevious={goToPreviousSolutionDay}
-                  onNext={goToNextSolutionDay}
+                  onPrevious={goToPreviousSolution}
+                  onNext={goToNextSolution}
                   empty
                   onRegisterSunscreen={handleRegisterSunscreen}
+                  canNavigate={false}
+                  canGoPrevious={false}
+                  canGoNext={false}
                 />
               </>
             ) : isOutdoor ? (
@@ -303,10 +360,13 @@ function Home() {
 
                 <SolutionList
                   solutions={displayedSolutions}
-                  title={currentSolutionDay.title}
+                  title="오늘의 솔루션"
                   selectedProductName={selectedProductName}
-                  onPrevious={goToPreviousSolutionDay}
-                  onNext={goToNextSolutionDay}
+                  onPrevious={goToPreviousSolution}
+                  onNext={goToNextSolution}
+                  canNavigate={canNavigateSolutions}
+                  canGoPrevious={canGoPreviousSolution}
+                  canGoNext={canGoNextSolution}
                 />
               </>
             )}

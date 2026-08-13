@@ -2,30 +2,6 @@ import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
 import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
 import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
 
-const yesterdaySolutions = [
-  {
-    id: 'solution-yesterday-1',
-    icon: 'sun',
-    timing: '외출 전',
-    title: '보습 크림 얇게 도포',
-    description: '건조한 부위 중심으로 수분막 만들기',
-  },
-  {
-    id: 'solution-yesterday-2',
-    icon: 'plane',
-    timing: '외출 중',
-    title: '선스틱 보충',
-    description: '코와 광대 위주로 2시간마다 덧바르기',
-  },
-  {
-    id: 'solution-yesterday-3',
-    icon: 'moon',
-    timing: '복귀 후',
-    title: '진정 앰플 케어',
-    description: '세안 후 붉어진 부위에 진정 앰플',
-  },
-]
-
 const todaySolutions = [
   {
     id: 'solution-today-1',
@@ -47,30 +23,6 @@ const todaySolutions = [
     timing: '복귀 후',
     title: '클렌징 + 진정',
     description: '더블 클렌징 후 수분 앰플 팩',
-  },
-]
-
-const tomorrowSolutions = [
-  {
-    id: 'solution-tomorrow-1',
-    icon: 'sun',
-    timing: '외출 전',
-    title: '선크림 충분히 바르기',
-    description: '외출 20분 전 얼굴과 목에 고르게 도포',
-  },
-  {
-    id: 'solution-tomorrow-2',
-    icon: 'plane',
-    timing: '외출 중',
-    title: '점심 후 차단제 보충',
-    description: '땀이 난 부위는 닦아낸 뒤 다시 바르기',
-  },
-  {
-    id: 'solution-tomorrow-3',
-    icon: 'moon',
-    timing: '복귀 후',
-    title: '저자극 클렌징',
-    description: '피부 자극을 줄여주는 약산성 세안',
   },
 ]
 
@@ -128,26 +80,12 @@ export const mockHomeData = {
   solutions: todaySolutions,
   solutionDays: [
     {
-      id: 'solution-day-yesterday',
-      date: '2026-08-05',
-      title: '어제의 솔루션',
-      offset: -1,
-      solutions: yesterdaySolutions,
-    },
-    {
       id: 'solution-day-today',
       date: '2026-08-06',
       title: '오늘의 솔루션',
       offset: 0,
       isToday: true,
       solutions: todaySolutions,
-    },
-    {
-      id: 'solution-day-tomorrow',
-      date: '2026-08-07',
-      title: '내일의 솔루션',
-      offset: 1,
-      solutions: tomorrowSolutions,
     },
   ],
   outdoor: {

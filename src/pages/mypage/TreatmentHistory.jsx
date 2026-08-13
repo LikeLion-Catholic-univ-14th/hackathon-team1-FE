@@ -173,7 +173,7 @@ function TreatmentForm({ onAdd }) {
 
 function EmptyTreatmentState() {
   return (
-    <div className="flex min-h-[171px] flex-col items-center justify-center rounded-[16px] bg-white px-6 text-center shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <div className="flex min-h-[171px] flex-col items-center justify-center rounded-[22px] bg-white px-6 text-center shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <img
         className="h-[18px] w-[18px] object-contain opacity-70"
         src={moreHorizontalIcon}
@@ -193,7 +193,7 @@ function TreatmentItem({ treatment, onRemove }) {
   return (
     <li className="flex min-h-[48px] items-center gap-[12px] rounded-[12px] border-[1.276px] border-[#ECEEF2] bg-[#F4F6F9] px-[24px] py-[12px]">
       <span
-        className={`min-w-0 flex-1 truncate text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+        className={`min-w-0 flex-1 break-keep text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] [overflow-wrap:anywhere] ${headingFontClass}`}
       >
         {treatment.name}
       </span>
@@ -222,7 +222,7 @@ function TreatmentList({ treatments, onRemove }) {
   }
 
   return (
-    <section className="rounded-[22px] bg-white px-[13px] py-[13px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <section className="min-h-[171px] rounded-[22px] bg-white px-[13px] py-[13px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <ul className="m-0 flex list-none flex-col gap-[7px] p-0">
         {treatments.map((treatment) => (
           <TreatmentItem
@@ -282,7 +282,7 @@ function TreatmentHistory() {
             </h1>
           </header>
 
-          <main className="min-h-[752px] bg-[#f5f7fb] px-[33px] pb-[80px] pt-[28px] max-[380px]:px-[24px]">
+          <main className="min-h-[752px] bg-[#f5f7fb] px-[22px] pb-[80px] pt-[28px] max-[380px]:px-[18px]">
             <TreatmentForm onAdd={handleAddTreatment} />
 
             <h2

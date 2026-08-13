@@ -1,5 +1,6 @@
 export const ONBOARDING_PROFILE_STORAGE_KEY = 'sst:onboarding:profile'
 export const ONBOARDING_SUNSCREEN_STORAGE_KEY = 'sst:onboarding:sunscreen'
+export const ONBOARDING_SUNSCREEN_UPDATED_EVENT = 'sst:onboarding:sunscreen-updated'
 
 const airportCodeMap = {
   인천: 'ICN',
@@ -29,6 +30,14 @@ const buildSpfLabel = (spf, pa) => {
   }
 
   return `${spfText}${paSuffix}`
+}
+
+const notifySunscreenStorageUpdated = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.dispatchEvent(new Event(ONBOARDING_SUNSCREEN_UPDATED_EVENT))
 }
 
 export function normalizeStoredOnboardingProfile(profile) {
@@ -127,6 +136,8 @@ export function saveOnboardingSunscreens(sunscreen) {
     ONBOARDING_SUNSCREEN_STORAGE_KEY,
     JSON.stringify(storedSunscreens),
   )
+
+  notifySunscreenStorageUpdated()
 }
 
 export function readOnboardingSunscreens() {

@@ -1,5 +1,3 @@
-import arrowLeftIcon from '../assets/icons/arrow-left.svg'
-import arrowRightIcon from '../assets/icons/arrow-right.svg'
 import moonIcon from '../assets/solution/moon.svg'
 import planeIcon from '../assets/solution/plane.svg'
 import sunIcon from '../assets/solution/sun.svg'
@@ -44,12 +42,49 @@ function SolutionItem({ solution }) {
   )
 }
 
+function SolutionNavButton({ direction, active, label, onClick }) {
+  const isPrevious = direction === 'previous'
+
+  return (
+    <button
+      className={`flex h-[30px] w-[30px] items-center justify-center rounded-[8px] border-[1.276px] p-0 transition-colors ${
+        active
+          ? 'cursor-pointer border-[#E8EDF4] bg-white'
+          : 'cursor-default border-[#F0F2F6] bg-[#F0F2F6]'
+      }`}
+      type="button"
+      aria-label={label}
+      disabled={!active}
+      onClick={onClick}
+    >
+      <svg
+        className="h-[12px] w-[8px]"
+        viewBox="0 0 8 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          d={isPrevious ? 'M6.5 1L1.5 6L6.5 11' : 'M1.5 1L6.5 6L1.5 11'}
+          stroke={active ? '#1D2B44' : '#A8B8CC'}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  )
+}
+
 function SolutionList({
   solutions,
   title = '오늘의 솔루션',
   selectedProductName,
   onPrevious,
   onNext,
+  canNavigate = true,
+  canGoPrevious = canNavigate,
+  canGoNext = canNavigate,
   empty = false,
   onRegisterSunscreen,
 }) {
@@ -73,22 +108,18 @@ function SolutionList({
         </div>
 
         <div className="flex gap-[6px]">
-          <button
-            className="flex h-[30px] w-[30px] items-center justify-center border-0 bg-transparent p-0"
-            type="button"
-            aria-label="이전 날짜 솔루션 보기"
+          <SolutionNavButton
+            direction="previous"
+            active={canGoPrevious}
+            label="이전 솔루션 보기"
             onClick={onPrevious}
-          >
-            <img className="h-[30px] w-[30px] object-contain" src={arrowLeftIcon} alt="" />
-          </button>
-          <button
-            className="flex h-[30px] w-[30px] items-center justify-center border-0 bg-transparent p-0"
-            type="button"
-            aria-label="다음 날짜 솔루션 보기"
+          />
+          <SolutionNavButton
+            direction="next"
+            active={canGoNext}
+            label="다음 솔루션 보기"
             onClick={onNext}
-          >
-            <img className="h-[30px] w-[30px] object-contain" src={arrowRightIcon} alt="" />
-          </button>
+          />
         </div>
       </div>
 

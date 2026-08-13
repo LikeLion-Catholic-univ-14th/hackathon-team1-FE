@@ -13,7 +13,7 @@ import {
   mockSunscreenProducts,
 } from './mocks/mockSunscreenProducts.js'
 
-const sunscreenTypes = ['선크림', '선스틱', '선스프레이']
+const sunscreenTypes = ['선크림', '선스틱', '선스프레이', '선파우더']
 const blockingMethods = ['유기자차', '무기자차', '혼합자차']
 const paGrades = ['PA+', 'PA++', 'PA+++', 'PA++++']
 const maxSunscreenProductCount = 10
@@ -46,8 +46,43 @@ const sunscreenLabelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase le
 const sunscreenControlClass = `box-border flex h-[46px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-[14px] text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
 
 function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
+  const dragStartYRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const [dragOffset, setDragOffset] = useState(0)
+
   if (!product) {
     return null
+  }
+
+  const startSheetDrag = (event) => {
+    isDraggingRef.current = true
+    dragStartYRef.current = event.clientY
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const moveSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    setDragOffset(Math.max(0, event.clientY - dragStartYRef.current))
+  }
+
+  const endSheetDrag = (event) => {
+    if (!isDraggingRef.current) {
+      return
+    }
+
+    const finalOffset = Math.max(0, event.clientY - dragStartYRef.current)
+    isDraggingRef.current = false
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+
+    if (finalOffset > 44) {
+      onClose()
+      return
+    }
+
+    setDragOffset(0)
   }
 
   return (
@@ -62,10 +97,18 @@ function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
         aria-modal="true"
         aria-label={`${product.productName} 관리`}
         onClick={(event) => event.stopPropagation()}
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition: isDraggingRef.current ? 'none' : 'transform 160ms ease',
+        }}
       >
         <span
-          className="mx-auto mb-[29px] block h-[5px] w-[62px] rounded-full bg-[#e3e3e3]"
+          className="mx-auto mb-[29px] block h-[5px] w-[62px] cursor-grab touch-none rounded-full bg-[#e3e3e3] active:cursor-grabbing"
           aria-hidden="true"
+          onPointerCancel={endSheetDrag}
+          onPointerDown={startSheetDrag}
+          onPointerMove={moveSheetDrag}
+          onPointerUp={endSheetDrag}
         />
         <button
           className={`flex h-[53px] w-full items-center justify-center rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] tracking-[-0.64px] text-white ${headingFontClass}`}
@@ -571,28 +614,28 @@ function SunscreenSetup({
               >
                 {products.map((product) => (
                   <div
-                    className="relative box-border grid min-h-[86px] grid-cols-[50px_minmax(0,1fr)] items-center gap-3 rounded-2xl border-[1.276px] border-[#eceef2] bg-[#f7f8fb] p-[14px] shadow-[0_4px_12px_0_rgba(29,43,68,0.04)]"
+                    className="relative box-border grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)] items-center gap-[12px] rounded-[14px] border-[1.276px] border-[#ECEEF2] bg-[#F4F6F9] px-[12px] py-[10px] shadow-[0_4px_12px_0_rgba(29,43,68,0.04)]"
                     key={product.id}
                   >
-                    <span className="flex h-[50px] w-[50px] items-center justify-center rounded-[14px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
+                    <span className="flex h-[42px] w-[42px] items-center justify-center rounded-[13px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
                       <img
-                        className="h-7 w-7 object-contain"
+                        className="h-[20px] w-[20px] object-contain"
                         src={product.icon ?? sunscreenIcon01}
                         alt=""
                         aria-hidden="true"
                       />
                     </span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 pr-6">
                       <strong
-                        className={`block break-keep pr-[26px] text-[14px] font-bold leading-5 tracking-[-1px] text-[#1d2b44] ${headingFontClass}`}
+                        className={`block overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
                       >
                         {product.productName}
                       </strong>
-                      <div className="mt-2 flex max-w-full flex-wrap gap-[2px]">
+                      <div className="mt-[5px] flex max-w-full flex-wrap gap-[2px]">
                         {[product.type, product.blockingMethod, `SPF ${product.spf}`, product.pa].map(
                           (tag) => (
                             <span
-                              className={`box-border inline-flex h-6 max-w-full items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-full border border-[#eceef2] bg-white px-[7px] py-[3px] text-[11px] font-[510] leading-[16.5px] tracking-[-0.64px] text-[#3a506b] ${headingFontClass}`}
+                              className={`box-border inline-flex min-h-[20px] max-w-full items-center justify-center break-keep rounded-[99px] border-[1.276px] border-[#eceef2] bg-white px-[8px] py-[2px] text-center text-[11px] font-[510] leading-[16.5px] tracking-[-0.64px] text-[#3A506B] [overflow-wrap:anywhere] ${headingFontClass}`}
                               key={tag}
                             >
                               {tag}
@@ -602,7 +645,7 @@ function SunscreenSetup({
                       </div>
                     </div>
                     <button
-                      className="absolute right-4 top-[18px] flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0"
+                      className="absolute right-[14px] top-[14px] flex h-[18px] w-[18px] cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0"
                       type="button"
                       aria-label={`${product.productName} 수정 또는 삭제 메뉴 열기`}
                       onClick={() => setActionProductId(product.id)}

@@ -112,6 +112,20 @@ function OnboardingFlow() {
   )
 }
 
+function ScheduleRegisterPage() {
+  const navigate = useNavigate()
+  const [schedule, setSchedule] = useState(initialOnboardingData.schedule)
+
+  return (
+    <ScheduleSetup
+      value={schedule}
+      onChange={setSchedule}
+      onBack={() => navigate('/home')}
+      onComplete={() => navigate('/home')}
+    />
+  )
+}
+
 function AppLayout() {
   return <Outlet />
 }
@@ -125,6 +139,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/schedule/register" element={<ScheduleRegisterPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
