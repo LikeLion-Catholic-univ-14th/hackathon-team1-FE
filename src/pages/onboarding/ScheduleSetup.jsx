@@ -3,11 +3,10 @@ import { extractSchedulesFromFiles } from './api/scheduleApi.js'
 import calendarIcon from './assets/schedule/calendar.svg'
 import checkIcon from './assets/schedule/check.svg'
 import clockIcon from './assets/schedule/clock.svg'
-import editIcon from './assets/schedule/edit.svg'
-import flightIcon from './assets/schedule/flight.svg'
 import plane2Icon from './assets/schedule/plane2.svg'
 import warningRedIcon from './assets/schedule/warning-red.svg'
 import warningIcon from '../../assets/icons/warning.svg'
+import { ScheduleConfirmModal } from '../../components/common/schedule/index.js'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 
 const emptySchedule = {
@@ -21,22 +20,11 @@ const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
-const activeEditIconStyle = {
-  filter:
-    'brightness(0) saturate(100%) invert(68%) sepia(80%) saturate(912%) hue-rotate(347deg) brightness(99%) contrast(94%)',
-}
 const maxScheduleFileSize = 10 * 1024 * 1024
 const imageCompressionType = 'image/jpeg'
 const imageCompressionMaxSides = [2200, 1800, 1400, 1100, 900, 700]
 const imageCompressionQualities = [0.82, 0.72, 0.62, 0.52, 0.42]
 
-const editableScheduleFields = [
-  { key: 'date', width: 48, maxLength: 5 },
-  { key: 'departureTime', width: 46, maxLength: 5 },
-  { key: 'departureAirport', width: 32, maxLength: 3, airport: true },
-  { key: 'arrivalTime', width: 46, maxLength: 5 },
-  { key: 'arrivalAirport', width: 32, maxLength: 3, airport: true },
-]
 const pickerYears = Array.from({ length: 5 }, (_, index) => 2026 + index)
 const pickerMonths = Array.from({ length: 12 }, (_, index) => index + 1)
 const pickerHours = Array.from({ length: 12 }, (_, index) => index + 1)
@@ -299,197 +287,6 @@ const getScheduleDraftSignature = (draft) => {
     formatTimeValue(draft.departureTime),
     formatTimeValue(draft.arrivalTime),
   ].join('|')
-}
-
-function ScheduleField({
-  field,
-  isEditing,
-  isActive,
-  schedule,
-  onActivate,
-  onChange,
-}) {
-  const baseClass = `box-border inline-flex h-[25px] ${isEditing ? 'px-[3px]' : 'px-0'} items-center justify-center rounded-[5px] border bg-white text-center outline-none`
-  const textClass = field.airport
-    ? `text-[12px] font-[510] leading-[21px] tracking-[-0.4px] ${headingFontClass}`
-    : `text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`
-  const borderClass = isActive
-    ? 'border-[#f5a623]'
-    : isEditing
-      ? 'border-[#8aa9ca]'
-      : 'border-transparent bg-transparent'
-  const fieldStyle = {
-    ...(field.airport ? { color: '#3F8AE1' } : {}),
-    width: `${field.width}px`,
-    minWidth: `${field.width}px`,
-    maxWidth: `${field.width}px`,
-  }
-
-  if (!isEditing) {
-    return (
-      <span
-        className={`${baseClass} ${textClass} ${borderClass}`}
-        style={fieldStyle}
-      >
-        {schedule[field.key]}
-      </span>
-    )
-  }
-
-  return (
-    <input
-      className={`${baseClass} ${textClass} ${borderClass}`}
-      value={schedule[field.key]}
-      maxLength={field.maxLength}
-      style={fieldStyle}
-      onClick={() => onActivate(field.key)}
-      onFocus={() => onActivate(field.key)}
-      onChange={(event) => onChange(field.key, event.target.value)}
-    />
-  )
-}
-
-function ScheduleRow({
-  schedule,
-  isEditing,
-  activeFieldKey,
-  onStartEdit,
-  onActivateField,
-  onFieldChange,
-}) {
-  const renderField = (field) => (
-    <ScheduleField
-      field={field}
-      isActive={isEditing && activeFieldKey === field.key}
-      isEditing={isEditing}
-      key={field.key}
-      schedule={schedule}
-      onActivate={onActivateField}
-      onChange={onFieldChange}
-    />
-  )
-
-  return (
-    <div className="flex min-h-10 items-center border-b border-[#eceef2] last:border-b-0">
-      {renderField(editableScheduleFields[0])}
-      <span className="ml-[18px] flex items-center gap-[2px]">
-        {renderField(editableScheduleFields[1])}
-        {renderField(editableScheduleFields[2])}
-      </span>
-      <span className="mx-[5px] flex items-center justify-center" aria-hidden="true">
-        <img
-          className="block h-[17px] w-6 object-contain"
-          src={flightIcon}
-          alt=""
-        />
-      </span>
-      <span className="flex items-center gap-[2px]">
-        {renderField(editableScheduleFields[3])}
-        {renderField(editableScheduleFields[4])}
-      </span>
-      <button
-        className="ml-auto flex h-[24px] w-[22px] items-center justify-center border-0 bg-transparent p-0 outline-none focus:outline-none focus-visible:outline-none"
-        type="button"
-        aria-label={`${schedule.date} 일정 수정`}
-        onClick={() => onStartEdit(schedule.id)}
-      >
-        <img
-          className="block h-[15px] w-[15px] object-contain"
-          src={editIcon}
-          alt=""
-          style={isEditing ? activeEditIconStyle : undefined}
-        />
-      </button>
-    </div>
-  )
-}
-
-function ScheduleConfirmModal({
-  file,
-  fileName,
-  schedules,
-  editingScheduleId,
-  activeFieldKey,
-  onStartEdit,
-  onActivateField,
-  onFieldChange,
-  onDismiss,
-  onSave,
-}) {
-  return (
-    <div
-      className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6"
-      onClick={onDismiss}
-    >
-      <div
-        className="relative box-border w-full max-w-[340px] overflow-hidden rounded-[24px] bg-white px-5 pb-6 pt-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
-        style={{
-          borderRadius: '24px',
-          boxShadow: '0 20px 60px 0 rgba(29, 43, 68, 0.5)',
-        }}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2
-          className={`m-0 text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
-          style={{ fontSize: '19px' }}
-        >
-          등록된 일정을 확인해주세요
-        </h2>
-
-        <div className="mt-7 grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3">
-          <span
-            className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
-            aria-hidden="true"
-          >
-            {file?.previewUrl && (
-              <img
-                className="h-full w-full object-cover"
-                src={file.previewUrl}
-                alt=""
-              />
-            )}
-          </span>
-          <span
-            className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
-          >
-            {fileName}
-          </span>
-        </div>
-
-        <div className="mt-[17px] px-2">
-          {schedules.map((schedule) => (
-            <ScheduleRow
-              activeFieldKey={activeFieldKey}
-              isEditing={schedule.id === editingScheduleId}
-              key={schedule.id}
-              schedule={schedule}
-              onActivateField={(fieldKey) =>
-                onActivateField(schedule.id, fieldKey)
-              }
-              onFieldChange={(fieldKey, nextValue) =>
-                onFieldChange(schedule.id, fieldKey, nextValue)
-              }
-              onStartEdit={onStartEdit}
-            />
-          ))}
-        </div>
-
-        <div className="mt-[18px] flex items-center justify-center gap-[5px]">
-          <span className="h-[6px] w-5 rounded-full bg-[#f6a51a]" />
-          <span className="h-[6px] w-[6px] rounded-full bg-[#edf1f6]" />
-          <span className="h-[6px] w-[6px] rounded-full bg-[#edf1f6]" />
-        </div>
-
-        <button
-          className={`mt-[25px] h-[53px] w-full rounded-2xl border-0 bg-[#f5a623] text-[15px] font-bold leading-[23px] text-white shadow-[0_4px_12px_0_rgba(245,166,35,0.32)] ${headingFontClass}`}
-          type="button"
-          onClick={onSave}
-        >
-          저장하고 계속
-        </button>
-      </div>
-    </div>
-  )
 }
 
 function EditFieldButton({ icon, label, value, onClick }) {
