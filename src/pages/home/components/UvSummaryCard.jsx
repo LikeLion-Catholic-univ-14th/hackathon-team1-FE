@@ -1,4 +1,5 @@
 import UvGraph from './UvGraph.jsx'
+import HomeEmptyState from './HomeEmptyState.jsx'
 import { headingFontClass } from './homeStyles.js'
 import chevronDownIcon from '../assets/icons/chevron-down.svg'
 import uvRingIcon from '../assets/icons/ring.svg'
@@ -79,16 +80,54 @@ function ComparisonText({ text }) {
   )
 }
 
-function UvSummaryCard({ summary, graph, expanded, onToggleGraph, isOutdoor }) {
+function UvSummaryCard({
+  summary,
+  graph,
+  expanded,
+  onToggleGraph,
+  isOutdoor,
+  empty = false,
+  onRegisterSchedule,
+  onRegisterSunscreen,
+}) {
+  const cardClass = `relative overflow-hidden px-[20px] pb-[20px] pt-[24px] text-white ${
+    isOutdoor
+      ? 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#2B5588_0%,#3C72B3_49.52%,#6B9AD8_100%)] shadow-[0_6px_12.3px_-4px_rgba(63,138,225,0.50)]'
+      : 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#FF8C42_0%,#F5A623_49.52%,#FFD166_100%)] shadow-[0_6px_16px_-4px_rgba(245,140,50,0.28)]'
+  }`
+
+  if (empty) {
+    return (
+      <section>
+        <article className={`${cardClass} flex min-h-[198px] flex-col`}>
+          <p
+            className={`m-0 text-[15px] font-bold leading-[15px] tracking-[-1px] text-white/75 ${headingFontClass}`}
+          >
+            {summary.title}
+            <span
+              className="ml-[6px] text-[12px] font-[590] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
+              style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
+            >
+              · {summary.updatedAt}
+            </span>
+          </p>
+
+          <div className="flex flex-1 items-center justify-center pb-[8px]">
+            <HomeEmptyState
+              actionLabel="일정 등록하러 가기"
+              message="아직 등록된 위치가 없어요"
+              tone="onColor"
+              onRegister={onRegisterSchedule ?? onRegisterSunscreen}
+            />
+          </div>
+        </article>
+      </section>
+    )
+  }
+
   return (
     <section>
-      <article
-        className={`relative overflow-hidden px-[20px] pb-[20px] pt-[24px] text-white ${
-          isOutdoor
-            ? 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#2B5588_0%,#3C72B3_49.52%,#6B9AD8_100%)] shadow-[0_6px_12.3px_-4px_rgba(63,138,225,0.50)]'
-            : 'rounded-[22px_22px_16px_22px] bg-[linear-gradient(135deg,#FF8C42_0%,#F5A623_49.52%,#FFD166_100%)] shadow-[0_6px_16px_-4px_rgba(245,140,50,0.28)]'
-        }`}
-      >
+      <article className={cardClass}>
         <UvRing value={summary.value} isOutdoor={isOutdoor} />
 
         <div className="pr-[88px]">

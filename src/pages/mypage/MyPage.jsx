@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import statusBar from '../onboarding/assets/status-bar.svg'
+import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import profileIcon from './assets/profile-icon.svg'
 import { mockMyPage } from './mocks/mockMyPage.js'
 import {
@@ -13,7 +14,7 @@ import {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
-  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
+  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] text-[#1D2B44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 
@@ -100,6 +101,22 @@ function ProfileSummary({ profile }) {
   )
 }
 
+function TreatmentHistoryRow({ onClick }) {
+  return (
+    <button
+      className={`mt-[24px] flex h-[44px] w-full items-center justify-between border-0 bg-transparent px-[14px] text-left text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+      type="button"
+      onClick={onClick}
+    >
+      <span>나의 시술 이력</span>
+      <span
+        className="h-[11px] w-[11px] rotate-45 border-r-[2px] border-t-[2px] border-[#8A9EB8]"
+        aria-hidden="true"
+      />
+    </button>
+  )
+}
+
 function PouchProduct({ product }) {
   return (
     <li className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)_max-content] items-center gap-[14px] px-[14px]">
@@ -114,7 +131,7 @@ function PouchProduct({ product }) {
         )}
       </span>
       <strong
-        className={`min-w-0 truncate text-[14px] font-[510] leading-5 tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+        className={`min-w-0 truncate text-[14px] font-[510] leading-5 tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
       >
         {product.productName}
       </strong>
@@ -124,6 +141,24 @@ function PouchProduct({ product }) {
         {product.blockingMethod} · SPF {getSpfSummary(product)}
       </span>
     </li>
+  )
+}
+
+function EmptyPouchState() {
+  return (
+    <div className="flex min-h-[190px] flex-col items-center justify-center rounded-[16px] bg-white px-6 text-center shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+      <img
+        className="h-[18px] w-[18px] object-contain opacity-70"
+        src={moreHorizontalIcon}
+        alt=""
+        aria-hidden="true"
+      />
+      <p
+        className={`mt-[13px] m-0 text-[15px] font-normal leading-[21px] tracking-[-0.64px] text-[rgba(29,43,68,0.50)] ${headingFontClass}`}
+      >
+        아직 등록된 차단제가 없어요
+      </p>
+    </div>
   )
 }
 
@@ -166,8 +201,9 @@ function MyPage({ onEditProfile, onEditPouch }) {
     },
     [myPageData.profile],
   )
-  const pouch =
-    myPageData.pouch.length > 0 ? myPageData.pouch : mockMyPage.pouch
+  const pouch = Array.isArray(myPageData.pouch)
+    ? myPageData.pouch
+    : mockMyPage.pouch
 
   const handleEditProfile = () => {
     if (onEditProfile) {
@@ -201,7 +237,7 @@ function MyPage({ onEditProfile, onEditPouch }) {
 
             <AppHeader />
 
-            <header className="relative px-10 pb-[30px] pt-[36px]">
+            <header className="relative px-10 pb-[20px] pt-[36px]">
               <button
                 className="absolute right-[44px] top-[10px] flex h-7 w-7 items-center justify-center border-0 bg-transparent p-0 text-[#8a9eb8]"
                 type="button"
@@ -232,14 +268,17 @@ function MyPage({ onEditProfile, onEditPouch }) {
                 </div>
 
                 <ProfileSummary profile={profile} />
+                <TreatmentHistoryRow
+                  onClick={() => navigate('/mypage/treatment-history')}
+                />
               </div>
             </header>
           </div>
 
-          <main className="px-[37px] pb-[210px] pt-[27px]">
+          <main className="px-[37px] pb-[210px] pt-[37px]">
             <div className="flex items-center justify-between px-[13px]">
               <h2
-                className={`m-0 text-[17px] font-bold leading-6 tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+                className={`m-0 text-[17px] font-bold leading-6 tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
               >
                 내 파우치
               </h2>
@@ -252,12 +291,18 @@ function MyPage({ onEditProfile, onEditPouch }) {
               </button>
             </div>
 
-            <section className="mt-[11px] overflow-hidden rounded-[16px] bg-white py-[2px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
-              <ul className="m-0 list-none divide-y divide-[#eceef2] p-0">
-                {pouch.map((product) => (
-                  <PouchProduct key={product.id} product={product} />
-                ))}
-              </ul>
+            <section className="mt-[11px]">
+              {pouch.length > 0 ? (
+                <div className="overflow-hidden rounded-[16px] bg-white py-[2px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+                  <ul className="m-0 list-none divide-y divide-[#eceef2] p-0">
+                    {pouch.map((product) => (
+                      <PouchProduct key={product.id} product={product} />
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <EmptyPouchState />
+              )}
             </section>
           </main>
         </div>

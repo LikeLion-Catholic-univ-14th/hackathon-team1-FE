@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import headerLogoNoBackground from '../../assets/navigation/header-logo-nobackground.svg'
 import statusBar from '../onboarding/assets/status-bar.svg'
@@ -66,9 +67,12 @@ function HomeHeader({ isOutdoor }) {
 }
 
 function Home() {
+  const navigate = useNavigate()
   const [data, setData] = useState(() => getFallbackHomeData())
+  const sunscreens = Array.isArray(data.sunscreens) ? data.sunscreens : []
+  const hasRegisteredSunscreens = sunscreens.length > 0
   const recommendedSunscreen =
-    data.sunscreens.find((sunscreen) => sunscreen.recommended) ?? data.sunscreens[0]
+    sunscreens.find((sunscreen) => sunscreen.recommended) ?? sunscreens[0]
   const initialSolutionDayIndex = Math.max(
     data.solutionDays.findIndex((day) => day.isToday || day.offset === 0),
     0,
@@ -100,7 +104,10 @@ function Home() {
         ),
       )
       setSelectedSunscreenId((currentId) => {
-        const hasCurrentSunscreen = nextData.sunscreens.some(
+        const nextSunscreens = Array.isArray(nextData.sunscreens)
+          ? nextData.sunscreens
+          : []
+        const hasCurrentSunscreen = nextSunscreens.some(
           (sunscreen) => sunscreen.id === currentId,
         )
 
@@ -109,13 +116,16 @@ function Home() {
         }
 
         const nextRecommended =
-          nextData.sunscreens.find((sunscreen) => sunscreen.recommended) ??
-          nextData.sunscreens[0]
+          nextSunscreens.find((sunscreen) => sunscreen.recommended) ??
+          nextSunscreens[0]
 
         return nextRecommended?.id ?? ''
       })
       setAppliedSunscreenId((currentId) => {
-        const hasCurrentSunscreen = nextData.sunscreens.some(
+        const nextSunscreens = Array.isArray(nextData.sunscreens)
+          ? nextData.sunscreens
+          : []
+        const hasCurrentSunscreen = nextSunscreens.some(
           (sunscreen) => sunscreen.id === currentId,
         )
 
@@ -124,8 +134,8 @@ function Home() {
         }
 
         const nextRecommended =
-          nextData.sunscreens.find((sunscreen) => sunscreen.recommended) ??
-          nextData.sunscreens[0]
+          nextSunscreens.find((sunscreen) => sunscreen.recommended) ??
+          nextSunscreens[0]
 
         return nextRecommended?.id ?? ''
       })
@@ -138,15 +148,15 @@ function Home() {
 
   const selectedSunscreen = useMemo(
     () =>
-      data.sunscreens.find((sunscreen) => sunscreen.id === selectedSunscreenId) ??
+      sunscreens.find((sunscreen) => sunscreen.id === selectedSunscreenId) ??
       recommendedSunscreen,
-    [data.sunscreens, recommendedSunscreen, selectedSunscreenId],
+    [recommendedSunscreen, selectedSunscreenId, sunscreens],
   )
   const appliedSunscreen = useMemo(
     () =>
-      data.sunscreens.find((sunscreen) => sunscreen.id === appliedSunscreenId) ??
+      sunscreens.find((sunscreen) => sunscreen.id === appliedSunscreenId) ??
       recommendedSunscreen,
-    [appliedSunscreenId, data.sunscreens, recommendedSunscreen],
+    [appliedSunscreenId, recommendedSunscreen, sunscreens],
   )
 
   const solutionDays =
@@ -179,6 +189,14 @@ function Home() {
   const handleToggleOutdoor = () => {
     setIsOutdoor((prevOutdoor) => !prevOutdoor)
     setIsGraphExpanded(false)
+  }
+
+  const handleRegisterSunscreen = () => {
+    navigate('/mypage/pouch-edit')
+  }
+
+  const handleRegisterSchedule = () => {
+    navigate('/schedule')
   }
 
   const goToPreviousSolutionDay = () => {
@@ -240,15 +258,39 @@ function Home() {
               graph={data.uvGraph}
               expanded={isGraphExpanded}
               isOutdoor={isOutdoor}
+              empty={!hasRegisteredSunscreens}
+              onRegisterSchedule={handleRegisterSchedule}
+              onRegisterSunscreen={handleRegisterSunscreen}
               onToggleGraph={() => setIsGraphExpanded((prevExpanded) => !prevExpanded)}
             />
 
-            {isOutdoor ? (
+            {!hasRegisteredSunscreens ? (
+              <>
+                <SunscreenSection
+                  sunscreens={[]}
+                  tip={data.sunscreenTip}
+                  selectedId=""
+                  onSelect={handleSelectSunscreen}
+                  empty
+                  onRegisterSunscreen={handleRegisterSunscreen}
+                />
+
+                <SolutionList
+                  solutions={[]}
+                  title="오늘의 솔루션"
+                  selectedProductName=""
+                  onPrevious={goToPreviousSolutionDay}
+                  onNext={goToNextSolutionDay}
+                  empty
+                  onRegisterSunscreen={handleRegisterSunscreen}
+                />
+              </>
+            ) : isOutdoor ? (
               <OutdoorModeCard data={data.outdoor} />
             ) : (
               <>
                 <SunscreenSection
-                  sunscreens={data.sunscreens}
+                  sunscreens={sunscreens}
                   tip={data.sunscreenTip}
                   selectedId={selectedSunscreenId}
                   onSelect={handleSelectSunscreen}

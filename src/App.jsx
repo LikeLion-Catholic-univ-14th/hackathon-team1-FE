@@ -14,6 +14,7 @@ import SchedulePage from './pages/schedule/SchedulePage.jsx'
 import ReportPage from './pages/report/ReportPage.jsx'
 import PouchEdit from './pages/mypage/PouchEdit.jsx'
 import ProfileEdit from './pages/mypage/ProfileEdit.jsx'
+import TreatmentHistory from './pages/mypage/TreatmentHistory.jsx'
 
 const initialOnboardingData = {
   profile: {
@@ -127,6 +128,7 @@ function App() {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
+          <Route path="/mypage/treatment-history" element={<TreatmentHistory />} />
         </Route>
       </Routes>
     </BrowserRouter>

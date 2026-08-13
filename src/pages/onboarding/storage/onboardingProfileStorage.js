@@ -147,8 +147,16 @@ export function readOnboardingSunscreens() {
       JSON.parse(rawSunscreens),
     )
 
-    return sunscreens.length > 0 ? sunscreens : null
+    return sunscreens
   } catch {
     return null
   }
+}
+
+export function hasOnboardingSunscreensStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return false
+  }
+
+  return window.localStorage.getItem(ONBOARDING_SUNSCREEN_STORAGE_KEY) !== null
 }

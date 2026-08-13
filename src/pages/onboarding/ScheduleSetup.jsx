@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { extractSchedulesFromFiles } from './api/scheduleApi.js'
+import calendarIcon from './assets/schedule/calendar.svg'
 import checkIcon from './assets/schedule/check.svg'
+import clockIcon from './assets/schedule/clock.svg'
 import editIcon from './assets/schedule/edit.svg'
 import flightIcon from './assets/schedule/flight.svg'
+import plane2Icon from './assets/schedule/plane2.svg'
+import warningRedIcon from './assets/schedule/warning-red.svg'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 import { mockSchedules } from './mocks/mockSchedules.js'
 
@@ -33,6 +37,17 @@ const editableScheduleFields = [
   { key: 'arrivalTime', width: 46, maxLength: 5 },
   { key: 'arrivalAirport', width: 32, maxLength: 3, airport: true },
 ]
+const pickerYears = Array.from({ length: 5 }, (_, index) => 2026 + index)
+const pickerMonths = Array.from({ length: 12 }, (_, index) => index + 1)
+const pickerHours = Array.from({ length: 12 }, (_, index) => index + 1)
+const pickerMinutes = Array.from({ length: 60 }, (_, index) => index)
+const pickerPeriods = ['오전', '오후']
+const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+const airportLabelMap = {
+  ICN: '인천, ICN',
+  GMP: '김포, GMP',
+  SYD: '시드니, SYD',
+}
 
 const createId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -154,6 +169,112 @@ const prepareScheduleFile = async (file) => {
     sourceFile,
   }
 }
+
+const pad2 = (value) => String(value).padStart(2, '0')
+
+const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate()
+
+const clampDay = (dateParts) => ({
+  ...dateParts,
+  day: Math.min(dateParts.day, getDaysInMonth(dateParts.year, dateParts.month)),
+})
+
+const normalizeDateParts = (dateValue) => {
+  const text = String(dateValue ?? '').trim()
+  const match = text.match(/(?:(20\d{2})\D*)?(\d{1,2})\D+(\d{1,2})/)
+  const year = match?.[1] ? Number(match[1]) : 2026
+  const month = match?.[2] ? Number(match[2]) : 8
+  const day = match?.[3] ? Number(match[3]) : 9
+
+  return clampDay({
+    year: Math.min(2030, Math.max(2026, year)),
+    month: Math.min(12, Math.max(1, month)),
+    day: Math.min(31, Math.max(1, day)),
+  })
+}
+
+const formatShortDate = (dateParts) =>
+  `${pad2(dateParts.month)}/${pad2(dateParts.day)}`
+
+const formatStoredDate = (dateParts) =>
+  `${dateParts.year}-${pad2(dateParts.month)}-${pad2(dateParts.day)}`
+
+const formatPickerDateLabel = (dateParts) =>
+  `${String(dateParts.year).slice(2)}년 ${dateParts.month}월 ${dateParts.day}일`
+
+const formatFullDateLabel = (dateParts) => {
+  const date = new Date(dateParts.year, dateParts.month - 1, dateParts.day)
+  return `${dateParts.year}년 ${dateParts.month}월 ${dateParts.day}일 (${weekdays[date.getDay()]})`
+}
+
+const normalizeTimeParts = (timeValue) => {
+  const text = String(timeValue ?? '').trim()
+  const periodFromText = text.includes('오후')
+    ? '오후'
+    : text.includes('오전')
+      ? '오전'
+      : ''
+  const match = text.match(/(\d{1,2})\D+(\d{1,2})/)
+  const rawHour = match?.[1] ? Number(match[1]) : 9
+  const minute = match?.[2] ? Number(match[2]) : 0
+  const period = periodFromText || (rawHour >= 12 ? '오후' : '오전')
+  const hour = rawHour > 12 ? rawHour - 12 : rawHour === 0 ? 12 : rawHour
+
+  return {
+    period,
+    hour: Math.min(12, Math.max(1, hour)),
+    minute: Math.min(59, Math.max(0, minute)),
+  }
+}
+
+const to24Hour = (timeParts) => {
+  if (timeParts.period === '오후') {
+    return timeParts.hour === 12 ? 12 : timeParts.hour + 12
+  }
+
+  return timeParts.hour === 12 ? 0 : timeParts.hour
+}
+
+const formatTimeValue = (timeParts) =>
+  `${pad2(to24Hour(timeParts))}:${pad2(timeParts.minute)}`
+
+const formatPickerTimeLabel = (timeParts) =>
+  `${pad2(to24Hour(timeParts))} : ${pad2(timeParts.minute)}`
+
+const getScheduleDateTimeValue = (dateParts, timeParts) =>
+  new Date(
+    dateParts.year,
+    dateParts.month - 1,
+    dateParts.day,
+    to24Hour(timeParts),
+    timeParts.minute,
+  ).getTime()
+
+const isArrivalBeforeDeparture = (draft) =>
+  getScheduleDateTimeValue(draft.arrivalDate, draft.arrivalTime) <
+  getScheduleDateTimeValue(draft.departureDate, draft.departureTime)
+
+const toAirportLabel = (airport) => {
+  const code = String(airport ?? '').trim()
+  return airportLabelMap[code] ?? code
+}
+
+const toAirportCode = (airportLabel) => {
+  const text = String(airportLabel ?? '').trim()
+  const parts = text.split(',').map((part) => part.trim()).filter(Boolean)
+  const lastPart = parts[parts.length - 1] ?? text
+  return lastPart.toUpperCase()
+}
+
+const createScheduleDraft = (schedule) => ({
+  id: schedule.id,
+  departureAirport: toAirportLabel(schedule.departureAirport),
+  arrivalAirport: toAirportLabel(schedule.arrivalAirport),
+  departureDate: normalizeDateParts(schedule.departureDate ?? schedule.date),
+  arrivalDate: normalizeDateParts(schedule.arrivalDate ?? schedule.date),
+  departureTime: normalizeTimeParts(schedule.departureTime),
+  arrivalTime: normalizeTimeParts(schedule.arrivalTime),
+})
 
 function ScheduleField({
   field,
@@ -346,6 +467,373 @@ function ScheduleConfirmModal({
   )
 }
 
+function EditFieldButton({ icon, label, value, onClick }) {
+  return (
+    <div>
+      <span
+        className={`mb-[7px] block text-[12px] font-[510] leading-[16px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
+      >
+        {label}
+      </span>
+      <button
+        className={`box-border flex h-[40px] w-full items-center justify-between rounded-[10px] border-[1.276px] border-[#ECEEF2] bg-white px-[10px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
+        type="button"
+        onClick={onClick}
+      >
+        <span className="flex min-w-0 items-center gap-[7px]">
+          {icon && (
+            <span className="flex h-[16px] w-[16px] items-center justify-center">
+              {icon}
+            </span>
+          )}
+          <span className="truncate">{value}</span>
+        </span>
+        <span
+          className="h-[8px] w-[8px] rotate-45 border-b-[1.7px] border-r-[1.7px] border-[#8A9EB8]"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+  )
+}
+
+function DateIcon() {
+  return (
+    <img
+      className="h-[16px] w-[16px] object-contain"
+      src={calendarIcon}
+      alt=""
+      aria-hidden="true"
+    />
+  )
+}
+
+function TimeIcon() {
+  return (
+    <img
+      className="h-[14px] w-[14px] object-contain"
+      src={clockIcon}
+      alt=""
+      aria-hidden="true"
+    />
+  )
+}
+
+function ScheduleEditCard({
+  draft,
+  onBack,
+  onSave,
+  onChange,
+  onOpenDatePicker,
+  onOpenTimePicker,
+}) {
+  const hasDateTimeError = isArrivalBeforeDeparture(draft)
+
+  return (
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 px-[34px]"
+      onClick={onBack}
+    >
+      <div
+        className="box-border w-full max-w-[332px] rounded-[22px] bg-white px-[22px] pb-[26px] pt-[25px] text-[#1D2B44] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="grid grid-cols-[28px_minmax(0,1fr)_28px] items-center">
+          <button
+            className="flex h-7 w-7 items-center justify-center border-0 bg-transparent p-0"
+            type="button"
+            aria-label="일정 확인으로 돌아가기"
+            onClick={onBack}
+          >
+            <span
+              className="h-[9px] w-[9px] rotate-45 border-b-[2.2px] border-l-[2.2px] border-[#1D2B44]"
+              aria-hidden="true"
+            />
+          </button>
+          <h2
+            className={`m-0 text-center text-[18px] font-[590] leading-[22px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
+          >
+            {formatFullDateLabel(draft.departureDate)}
+          </h2>
+          <span />
+        </header>
+
+        <div className="mt-[28px] grid grid-cols-[1fr_22px_1fr] items-end gap-[8px]">
+          <label>
+            <span
+              className={`mb-[7px] block text-[12px] font-[510] leading-[16px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
+            >
+              출발
+            </span>
+            <input
+              className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] border-[#F5A623] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none ${headingFontClass}`}
+              value={draft.departureAirport}
+              onChange={(event) =>
+                onChange({ ...draft, departureAirport: event.target.value })
+              }
+            />
+          </label>
+          <img
+            className="mb-[11px] h-[17px] w-[22px] object-contain"
+            src={plane2Icon}
+            alt=""
+            aria-hidden="true"
+          />
+          <label>
+            <span
+              className={`mb-[7px] block text-[12px] font-[510] leading-[16px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
+            >
+              도착
+            </span>
+            <input
+              className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] border-[#ECEEF2] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none focus:border-[#F5A623] ${headingFontClass}`}
+              value={draft.arrivalAirport}
+              onChange={(event) =>
+                onChange({ ...draft, arrivalAirport: event.target.value })
+              }
+            />
+          </label>
+        </div>
+
+        <div className="mt-[26px] grid grid-cols-2 gap-x-[12px] gap-y-[16px]">
+          <EditFieldButton
+            icon={<DateIcon />}
+            label="출발일"
+            value={formatPickerDateLabel(draft.departureDate)}
+            onClick={() => onOpenDatePicker('departureDate')}
+          />
+          <EditFieldButton
+            icon={<TimeIcon />}
+            label="출발 시간"
+            value={formatPickerTimeLabel(draft.departureTime)}
+            onClick={() => onOpenTimePicker('departureTime')}
+          />
+          <EditFieldButton
+            icon={<DateIcon />}
+            label="도착일"
+            value={formatPickerDateLabel(draft.arrivalDate)}
+            onClick={() => onOpenDatePicker('arrivalDate')}
+          />
+          <EditFieldButton
+            icon={<TimeIcon />}
+            label="도착 시간"
+            value={formatPickerTimeLabel(draft.arrivalTime)}
+            onClick={() => onOpenTimePicker('arrivalTime')}
+          />
+        </div>
+
+        {hasDateTimeError && (
+          <p
+            className={`mt-[12px] flex items-center gap-[6px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#ED3333] ${headingFontClass}`}
+          >
+            <img
+              className="h-[13px] w-[13px] shrink-0 object-contain"
+              src={warningRedIcon}
+              alt=""
+              aria-hidden="true"
+            />
+            도착 일시는 출발 일시 이후로 설정해주세요.
+          </p>
+        )}
+
+        <button
+          className={`h-[53px] w-full rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] text-white ${headingFontClass} ${
+            hasDateTimeError ? 'mt-[20px]' : 'mt-[30px]'
+          }`}
+          type="button"
+          onClick={onSave}
+        >
+          정보 수정하기
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PickerColumn({ options, value, onChange, formatOption = (option) => option }) {
+  const columnRef = useRef(null)
+  const scrollTimerRef = useRef(null)
+  const itemHeight = 42
+  const selectedIndex = Math.max(
+    options.findIndex((option) => option === value),
+    0,
+  )
+
+  useEffect(() => {
+    const column = columnRef.current
+
+    if (!column) {
+      return
+    }
+
+    column.scrollTo({
+      top: selectedIndex * itemHeight,
+      behavior: 'smooth',
+    })
+  }, [selectedIndex])
+
+  useEffect(
+    () => () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current)
+      }
+    },
+    [],
+  )
+
+  const selectOption = (option, index) => {
+    columnRef.current?.scrollTo({
+      top: index * itemHeight,
+      behavior: 'smooth',
+    })
+    onChange(option)
+  }
+
+  const handleScroll = () => {
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current)
+    }
+
+    scrollTimerRef.current = setTimeout(() => {
+      const column = columnRef.current
+
+      if (!column) {
+        return
+      }
+
+      const nextIndex = Math.min(
+        options.length - 1,
+        Math.max(0, Math.round(column.scrollTop / itemHeight)),
+      )
+      const nextOption = options[nextIndex]
+
+      column.scrollTo({
+        top: nextIndex * itemHeight,
+        behavior: 'smooth',
+      })
+
+      if (nextOption !== value) {
+        onChange(nextOption)
+      }
+    }, 80)
+  }
+
+  return (
+    <div
+      className="h-[126px] w-full snap-y snap-mandatory overflow-y-auto overscroll-contain py-[42px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      ref={columnRef}
+      role="listbox"
+      tabIndex={0}
+      onScroll={handleScroll}
+    >
+      {options.map((option, index) => (
+        <button
+          className={`flex h-[42px] w-full snap-center items-center justify-center border-0 bg-transparent p-0 text-center text-[18px] leading-[24px] tracking-[-0.64px] outline-none transition-colors ${headingFontClass} ${
+            option === value
+              ? 'font-bold text-[#1D2B44]'
+              : 'font-normal text-[#B7BDC6]'
+          }`}
+          type="button"
+          role="option"
+          aria-selected={option === value}
+          key={option}
+          onClick={() => selectOption(option, index)}
+        >
+          {formatOption(option)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function WheelPickerSheet({ type, value, onChange, onClose }) {
+  const dayOptions =
+    type === 'date'
+      ? Array.from(
+          { length: getDaysInMonth(value.year, value.month) },
+          (_, index) => index + 1,
+        )
+      : []
+
+  const updateDate = (nextValue) => {
+    onChange(clampDay({ ...value, ...nextValue }))
+  }
+
+  const updateTime = (nextValue) => {
+    onChange({ ...value, ...nextValue })
+  }
+
+  return (
+    <div className="absolute inset-0 z-40 flex items-end justify-center bg-black/45">
+      <div className="box-border w-full rounded-t-[22px] bg-white px-[20px] pb-[34px] pt-[13px] shadow-[0_-12px_40px_0_rgba(29,43,68,0.18)]">
+        <span
+          className="mx-auto block h-[5px] w-[48px] rounded-full bg-[#E2E5EA]"
+          aria-hidden="true"
+        />
+
+        <div className="relative mt-[28px]">
+          <span
+            className="absolute left-0 right-0 top-1/2 h-[56px] -translate-y-1/2 rounded-[20px] bg-[#E6F1FF]"
+            aria-hidden="true"
+          />
+          <div className="relative z-10 grid grid-cols-3 gap-[8px]">
+            {type === 'date' ? (
+              <>
+                <PickerColumn
+                  options={pickerYears}
+                  value={value.year}
+                  formatOption={(year) => `${year}년`}
+                  onChange={(year) => updateDate({ year })}
+                />
+                <PickerColumn
+                  options={pickerMonths}
+                  value={value.month}
+                  formatOption={(month) => `${month}월`}
+                  onChange={(month) => updateDate({ month })}
+                />
+                <PickerColumn
+                  options={dayOptions}
+                  value={value.day}
+                  formatOption={(day) => `${day}일`}
+                  onChange={(day) => updateDate({ day })}
+                />
+              </>
+            ) : (
+              <>
+                <PickerColumn
+                  options={pickerPeriods}
+                  value={value.period}
+                  onChange={(period) => updateTime({ period })}
+                />
+                <PickerColumn
+                  options={pickerHours}
+                  value={value.hour}
+                  formatOption={(hour) => `${hour}시`}
+                  onChange={(hour) => updateTime({ hour })}
+                />
+                <PickerColumn
+                  options={pickerMinutes}
+                  value={value.minute}
+                  formatOption={(minute) => `${pad2(minute)}분`}
+                  onChange={(minute) => updateTime({ minute })}
+                />
+              </>
+            )}
+          </div>
+        </div>
+
+        <button
+          className={`mt-[22px] h-[53px] w-full rounded-[14px] border-0 bg-[#1D2B44] text-[15px] font-bold leading-[23px] text-white ${headingFontClass}`}
+          type="button"
+          onClick={onClose}
+        >
+          선택하기
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function NoticeModal({ message, compact = false, onDismiss }) {
   const cardClass = compact
     ? 'box-border flex h-[173px] w-[298px] flex-col items-center justify-center gap-4 rounded-2xl bg-white px-6 py-5 shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]'
@@ -380,6 +868,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   const [isExtracting, setIsExtracting] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState('')
   const [activeFieldKey, setActiveFieldKey] = useState('')
+  const [editingScheduleDraft, setEditingScheduleDraft] = useState(null)
+  const [pickerState, setPickerState] = useState(null)
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
@@ -424,6 +914,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     setShowScheduleModal(false)
     setEditingScheduleId('')
     setActiveFieldKey('')
+    setEditingScheduleDraft(null)
+    setPickerState(null)
     setModalFileName(targetFiles[targetFiles.length - 1]?.name ?? '업로드한 일정 파일')
 
     let schedules
@@ -487,13 +979,16 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
   }
 
   const startScheduleEdit = (scheduleId) => {
-    if (editingScheduleId === scheduleId) {
-      setEditingScheduleId('')
-      setActiveFieldKey('')
+    const targetSchedule = displaySchedules.find(
+      (scheduleItem) => scheduleItem.id === scheduleId,
+    )
+
+    if (!targetSchedule) {
       return
     }
 
-    setEditingScheduleId(scheduleId)
+    setEditingScheduleDraft(createScheduleDraft(targetSchedule))
+    setEditingScheduleId('')
     setActiveFieldKey('')
   }
 
@@ -510,6 +1005,86 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
           : scheduleItem,
       ),
     )
+  }
+
+  const openScheduleDatePicker = (fieldKey) => {
+    if (!editingScheduleDraft) {
+      return
+    }
+
+    setPickerState({
+      fieldKey,
+      type: 'date',
+      value: editingScheduleDraft[fieldKey],
+    })
+  }
+
+  const openScheduleTimePicker = (fieldKey) => {
+    if (!editingScheduleDraft) {
+      return
+    }
+
+    setPickerState({
+      fieldKey,
+      type: 'time',
+      value: editingScheduleDraft[fieldKey],
+    })
+  }
+
+  const updatePickerValue = (nextValue) => {
+    setPickerState((prevPickerState) =>
+      prevPickerState ? { ...prevPickerState, value: nextValue } : prevPickerState,
+    )
+  }
+
+  const closePicker = () => {
+    if (pickerState) {
+      setEditingScheduleDraft((prevDraft) =>
+        prevDraft
+          ? {
+              ...prevDraft,
+              [pickerState.fieldKey]: pickerState.value,
+            }
+          : prevDraft,
+      )
+    }
+
+    setPickerState(null)
+  }
+
+  const saveScheduleDraft = () => {
+    if (!editingScheduleDraft) {
+      return
+    }
+
+    if (isArrivalBeforeDeparture(editingScheduleDraft)) {
+      return
+    }
+
+    const nextScheduleItem = {
+      id: editingScheduleDraft.id,
+      date: formatShortDate(editingScheduleDraft.departureDate),
+      departureDate: formatStoredDate(editingScheduleDraft.departureDate),
+      arrivalDate: formatStoredDate(editingScheduleDraft.arrivalDate),
+      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
+      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
+      departureTime: formatTimeValue(editingScheduleDraft.departureTime),
+      arrivalTime: formatTimeValue(editingScheduleDraft.arrivalTime),
+    }
+
+    const nextSchedules = displaySchedules.map((scheduleItem) =>
+      scheduleItem.id === editingScheduleDraft.id
+        ? { ...scheduleItem, ...nextScheduleItem }
+        : scheduleItem,
+    )
+
+    setDisplaySchedules(nextSchedules)
+    updateSchedule((prevSchedule) => ({
+      ...prevSchedule,
+      schedules: nextSchedules,
+    }))
+    setEditingScheduleDraft(null)
+    setPickerState(null)
   }
 
   const completeAfterNotice = (nextSchedule) => {
@@ -537,6 +1112,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
 
   const dismissScheduleModal = () => {
     setShowScheduleModal(false)
+    setEditingScheduleDraft(null)
+    setPickerState(null)
   }
 
   const handleMainSave = () => {
@@ -704,6 +1281,29 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
             onFieldChange={updateScheduleField}
             onSave={saveConfirmedSchedules}
             onStartEdit={startScheduleEdit}
+          />
+        )}
+
+        {editingScheduleDraft && (
+          <ScheduleEditCard
+            draft={editingScheduleDraft}
+            onBack={() => {
+              setEditingScheduleDraft(null)
+              setPickerState(null)
+            }}
+            onChange={setEditingScheduleDraft}
+            onOpenDatePicker={openScheduleDatePicker}
+            onOpenTimePicker={openScheduleTimePicker}
+            onSave={saveScheduleDraft}
+          />
+        )}
+
+        {pickerState && (
+          <WheelPickerSheet
+            type={pickerState.type}
+            value={pickerState.value}
+            onChange={updatePickerValue}
+            onClose={closePicker}
           />
         )}
 

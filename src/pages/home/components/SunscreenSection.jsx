@@ -1,5 +1,6 @@
 import checkActiveIcon from '../assets/solution/check-active.svg'
 import checkInactiveIcon from '../assets/solution/check-inactive.svg'
+import HomeEmptyState from './HomeEmptyState.jsx'
 import { headingFontClass } from './homeStyles.js'
 
 function CheckMark({ selected }) {
@@ -80,27 +81,42 @@ function SunscreenTip({ tip }) {
   )
 }
 
-function SunscreenSection({ sunscreens, tip, selectedId, onSelect }) {
+function SunscreenSection({
+  sunscreens,
+  tip,
+  selectedId,
+  onSelect,
+  empty = false,
+  onRegisterSunscreen,
+}) {
   return (
-    <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[14px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <section className="mt-[14px] rounded-[16px] bg-white px-[20px] pb-[18px] pt-[24px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <h2
-        className={`m-0 ml-[4px] mt-[4px] text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
+        className={`m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
       >
         오늘의 자외선 차단제
       </h2>
 
-      <div className="mt-[16px] flex gap-[12px] overflow-x-auto pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {sunscreens.map((sunscreen) => (
-          <SunscreenCard
-            key={sunscreen.id}
-            sunscreen={sunscreen}
-            selected={sunscreen.id === selectedId}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
+      {empty ? (
+        <div className="flex min-h-[130px] items-center justify-center">
+          <HomeEmptyState onRegister={onRegisterSunscreen} />
+        </div>
+      ) : (
+        <>
+          <div className="mt-[16px] flex gap-[12px] overflow-x-auto pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {sunscreens.map((sunscreen) => (
+              <SunscreenCard
+                key={sunscreen.id}
+                sunscreen={sunscreen}
+                selected={sunscreen.id === selectedId}
+                onSelect={onSelect}
+              />
+            ))}
+          </div>
 
-      <SunscreenTip tip={tip} />
+          <SunscreenTip tip={tip} />
+        </>
+      )}
     </section>
   )
 }

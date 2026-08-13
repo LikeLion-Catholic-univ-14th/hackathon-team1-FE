@@ -3,6 +3,7 @@ import arrowRightIcon from '../assets/icons/arrow-right.svg'
 import moonIcon from '../assets/solution/moon.svg'
 import planeIcon from '../assets/solution/plane.svg'
 import sunIcon from '../assets/solution/sun.svg'
+import HomeEmptyState from './HomeEmptyState.jsx'
 import { headingFontClass } from './homeStyles.js'
 
 function SolutionIcon({ type }) {
@@ -49,22 +50,26 @@ function SolutionList({
   selectedProductName,
   onPrevious,
   onNext,
+  empty = false,
+  onRegisterSunscreen,
 }) {
   return (
-    <section className="mt-[14px] rounded-[16px] bg-white px-[14px] pb-[18px] pt-[20px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <section className="mt-[14px] rounded-[16px] bg-white px-[20px] pb-[18px] pt-[24px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <div className="flex items-center justify-between gap-3">
-        <div className="ml-[4px] mt-[4px]">
+        <div>
           <h2
             className="m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44]"
             style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
           >
             {title}
           </h2>
-          <p
-            className={`m-0 mt-[7px] text-[10px] font-[510] leading-[15px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
-          >
-            - {selectedProductName}
-          </p>
+          {!empty && (
+            <p
+              className={`m-0 mt-[7px] text-[10px] font-[510] leading-[15px] tracking-[-0.64px] text-[#8A9EB8] ${headingFontClass}`}
+            >
+              - {selectedProductName}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-[6px]">
@@ -87,11 +92,17 @@ function SolutionList({
         </div>
       </div>
 
-      <ul className="m-0 mt-[14px] flex list-none flex-col gap-[8px] p-0">
-        {solutions.map((solution) => (
-          <SolutionItem key={solution.id} solution={solution} />
-        ))}
-      </ul>
+      {empty ? (
+        <div className="flex min-h-[128px] items-center justify-center">
+          <HomeEmptyState onRegister={onRegisterSunscreen} />
+        </div>
+      ) : (
+        <ul className="m-0 mt-[14px] flex list-none flex-col gap-[8px] p-0">
+          {solutions.map((solution) => (
+            <SolutionItem key={solution.id} solution={solution} />
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

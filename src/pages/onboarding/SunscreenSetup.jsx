@@ -6,6 +6,7 @@ import sunscreenIcon04 from '../../assets/sunscreen/sunscreen-icon-04.svg'
 import sunscreenIcon05 from '../../assets/sunscreen/sunscreen-icon-05.svg'
 import sunscreenIcon06 from '../../assets/sunscreen/sunscreen-icon-06.svg'
 import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
+import warningIcon from '../../assets/icons/warning.svg'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 import {
   findSunscreenProductByName,
@@ -15,6 +16,7 @@ import {
 const sunscreenTypes = ['선크림', '선스틱', '선스프레이']
 const blockingMethods = ['유기자차', '무기자차', '혼합자차']
 const paGrades = ['PA+', 'PA++', 'PA+++', 'PA++++']
+const maxSunscreenProductCount = 10
 const sunscreenIcons = [
   sunscreenIcon01,
   sunscreenIcon02,
@@ -41,7 +43,7 @@ const screenClass =
 const headingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
 const sunscreenLabelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16.5px] text-[#8a9eb8] ${headingFontClass}`
-const sunscreenControlClass = `box-border flex h-[52px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-4 text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
+const sunscreenControlClass = `box-border flex h-[46px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-[14px] text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
 
 function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
   if (!product) {
@@ -79,6 +81,36 @@ function SunscreenActionSheet({ product, onClose, onEdit, onDelete }) {
         >
           삭제하기
         </button>
+      </div>
+    </div>
+  )
+}
+
+function ProductLimitNotice({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-[24px]"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="box-border flex w-full max-w-[330px] flex-col items-center rounded-[16px] bg-white px-[24px] py-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.35)]"
+        role="dialog"
+        aria-modal="true"
+        aria-label="제품 등록 개수 제한"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <img
+          className="h-[30px] w-[30px] object-contain"
+          src={warningIcon}
+          alt=""
+          aria-hidden="true"
+        />
+        <p
+          className={`m-0 mt-[22px] text-center text-[17px] font-bold leading-[24px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+        >
+          제품은 10개까지 등록할 수 있어요
+        </p>
       </div>
     </div>
   )
@@ -149,6 +181,8 @@ function ProductNameField({
   onBlur,
 }) {
   const [isFocused, setIsFocused] = useState(false)
+  const [selectedSuggestion, setSelectedSuggestion] = useState('')
+  const selectTimerRef = useRef(null)
   const query = value.trim().toLowerCase()
   const filteredSuggestions = query
     ? suggestions
@@ -170,7 +204,7 @@ function ProductNameField({
   return (
     <div className="relative">
       <input
-        className={`box-border h-[54px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#eceef2] ${
+        className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#eceef2] ${
           value ? 'border-[#f5a623]' : 'border-[#eceef2]'
         } ${shouldShowSuggestions ? 'rounded-b-none' : ''}`}
         type="text"
@@ -180,20 +214,24 @@ function ProductNameField({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onChange={(event) => {
+          if (selectTimerRef.current) {
+            window.clearTimeout(selectTimerRef.current)
+          }
           setIsFocused(true)
+          setSelectedSuggestion('')
           onChange(event.target.value)
         }}
       />
 
       {shouldShowSuggestions && (
-        <div className="absolute left-0 right-0 top-[53px] z-20 overflow-hidden rounded-b-[10px] border-x-[1.276px] border-b-[1.276px] border-[#eceef2] bg-white shadow-[0_8px_18px_0_rgba(29,43,68,0.08)]">
+        <div className="absolute left-0 right-0 top-[47px] z-20 overflow-hidden rounded-b-[10px] border-x-[1.276px] border-b-[1.276px] border-[#eceef2] bg-white shadow-[0_8px_18px_0_rgba(29,43,68,0.08)]">
           {filteredSuggestions.map((productName) => {
-            const isExactMatch = productName.toLowerCase() === query
+            const isSelected = selectedSuggestion === productName
 
             return (
               <button
                 className={`block h-[48px] w-full border-0 border-b border-[#eceef2] px-4 text-left text-[14px] font-normal leading-[20px] tracking-[-0.64px] last:border-b-0 ${headingFontClass} ${
-                  isExactMatch
+                  isSelected
                     ? 'bg-[#FFFBF2] text-[#F5A623]'
                     : 'bg-white text-[#1d2b44]'
                 }`}
@@ -201,8 +239,14 @@ function ProductNameField({
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
-                  onSelect(productName)
-                  setIsFocused(false)
+                  if (selectTimerRef.current) {
+                    window.clearTimeout(selectTimerRef.current)
+                  }
+                  setSelectedSuggestion(productName)
+                  selectTimerRef.current = window.setTimeout(() => {
+                    onSelect(productName)
+                    setIsFocused(false)
+                  }, 1000)
                 }}
               >
                 {productName}
@@ -228,6 +272,7 @@ function SunscreenSetup({
   const [localSunscreen, setLocalSunscreen] = useState(emptySunscreen)
   const [editingProductId, setEditingProductId] = useState('')
   const [actionProductId, setActionProductId] = useState('')
+  const [showLimitNotice, setShowLimitNotice] = useState(false)
   const sunscreen = value ?? localSunscreen
   const form = sunscreen.form
   const products = sunscreen.products
@@ -322,6 +367,11 @@ function SunscreenSetup({
       setEditingProductId('')
       setActionProductId('')
       setOpenDropdown('')
+      return
+    }
+
+    if (products.length >= maxSunscreenProductCount) {
+      setShowLimitNotice(true)
       return
     }
 
@@ -446,7 +496,7 @@ function SunscreenSetup({
               onFocus={() => setOpenDropdown('')}
             />
 
-            <div className="mt-[26px] grid grid-cols-2 gap-x-3 gap-y-[23px]">
+            <div className="mt-[18px] grid grid-cols-2 gap-x-[11px] gap-y-[18px]">
               <DropdownField
                 id="sunscreen-type"
                 label="종류"
@@ -474,7 +524,7 @@ function SunscreenSetup({
                   SPF
                 </label>
                 <input
-                  className={`box-border flex h-[52px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+                  className={`box-border flex h-[46px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-[14px] font-[SF_Pro] text-[13px] font-normal leading-[19.5px] tracking-[0] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
                     form.spf
                       ? 'border-[#eceef2] text-[#1d2b44]'
                       : 'border-[#eceef2] text-[rgba(29,43,68,0.5)]'
@@ -521,7 +571,7 @@ function SunscreenSetup({
               >
                 {products.map((product) => (
                   <div
-                    className="relative box-border grid min-h-[86px] grid-cols-[50px_minmax(0,1fr)] items-center gap-3 overflow-hidden rounded-2xl border-[1.276px] border-[#eceef2] bg-[#f7f8fb] p-[14px] shadow-[0_4px_12px_0_rgba(29,43,68,0.04)]"
+                    className="relative box-border grid min-h-[86px] grid-cols-[50px_minmax(0,1fr)] items-center gap-3 rounded-2xl border-[1.276px] border-[#eceef2] bg-[#f7f8fb] p-[14px] shadow-[0_4px_12px_0_rgba(29,43,68,0.04)]"
                     key={product.id}
                   >
                     <span className="flex h-[50px] w-[50px] items-center justify-center rounded-[14px] bg-white shadow-[0_4px_14px_0_rgba(29,43,68,0.08)]">
@@ -532,9 +582,9 @@ function SunscreenSetup({
                         aria-hidden="true"
                       />
                     </span>
-                    <div className="min-w-0 overflow-hidden">
+                    <div className="min-w-0">
                       <strong
-                        className={`block overflow-hidden text-ellipsis whitespace-nowrap pr-[26px] text-[14px] font-bold leading-5 tracking-[-1px] text-[#1d2b44] ${headingFontClass}`}
+                        className={`block break-keep pr-[26px] text-[14px] font-bold leading-5 tracking-[-1px] text-[#1d2b44] ${headingFontClass}`}
                       >
                         {product.productName}
                       </strong>
@@ -599,6 +649,10 @@ function SunscreenSetup({
           onEdit={() => actionProduct && handleEditProduct(actionProduct)}
           onDelete={() => actionProduct && handleDeleteProduct(actionProduct.id)}
         />
+
+        {showLimitNotice && (
+          <ProductLimitNotice onClose={() => setShowLimitNotice(false)} />
+        )}
       </section>
     </div>
   )
