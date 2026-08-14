@@ -328,7 +328,7 @@ function EditFieldButton({ icon, label, value, placeholder, onClick }) {
   )
 }
 
-function AirportAutocompleteInput({ value, placeholder, isFocusedBorder, onChange, onSelect }) {
+function AirportAutocompleteInput({ value, placeholder, onChange, onSelect }) {
   const [isFocused, setIsFocused] = useState(false)
   const [selectedSuggestion, setSelectedSuggestion] = useState('')
   const selectTimerRef = useRef(null)
@@ -357,7 +357,7 @@ function AirportAutocompleteInput({ value, placeholder, isFocusedBorder, onChang
     <div className="relative">
       <input
         className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none placeholder:text-[#8A9EB8] ${headingFontClass} ${
-          isFocusedBorder || isFocused ? 'border-[#F5A623]' : 'border-[#ECEEF2]'
+          isFocused ? 'border-[#F5A623]' : 'border-[#ECEEF2]'
         } ${shouldShowSuggestions ? 'rounded-b-none' : ''}`}
         type="text"
         value={value}
@@ -487,7 +487,6 @@ function ScheduleEditCard({
             <AirportAutocompleteInput
               value={draft.departureAirport}
               placeholder="공항명"
-              isFocusedBorder={Boolean(draft.departureAirport)}
               onChange={(nextValue) =>
                 onChange({ ...draft, departureAirport: nextValue })
               }
@@ -511,7 +510,6 @@ function ScheduleEditCard({
             <AirportAutocompleteInput
               value={draft.arrivalAirport}
               placeholder="공항명"
-              isFocusedBorder={Boolean(draft.arrivalAirport)}
               onChange={(nextValue) =>
                 onChange({ ...draft, arrivalAirport: nextValue })
               }
@@ -1837,10 +1835,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
             canSave={
               !isArrivalBeforeDeparture(editingScheduleDraft) &&
               String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
-              String(editingScheduleDraft.arrivalAirport ?? '').trim() !== ''
+              String(editingScheduleDraft.arrivalAirport ?? '').trim() !== '' &&
+              editingScheduleDraft.departureDate !== null &&
+              editingScheduleDraft.arrivalDate !== null &&
+              editingScheduleDraft.departureTime !== null &&
+              editingScheduleDraft.arrivalTime !== null &&
+              (manualSchedules.some((s) => s.id === editingScheduleDraft.id)
+                ? getScheduleDraftSignature(editingScheduleDraft) !== editingScheduleOriginalSignature
+                : true)
             }
-            title="비행 일정 추가하기"
-            saveLabel="+ 추가하기"
+            title={manualSchedules.some((s) => s.id === editingScheduleDraft.id) ? '비행 일정 추가하기' : '비행 일정 추가하기'}
+            saveLabel={manualSchedules.some((s) => s.id === editingScheduleDraft.id) ? '정보 수정하기' : '+ 추가하기'}
             onBack={() => {
               setEditingScheduleDraft(null)
               setEditingScheduleOriginalSignature('')

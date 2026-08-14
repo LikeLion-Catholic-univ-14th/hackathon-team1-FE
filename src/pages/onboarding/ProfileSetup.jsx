@@ -204,6 +204,7 @@ function ProfileSetup({ value, onChange, onComplete }) {
   }
 
   const isComplete = Boolean(
+    profile.name.trim() &&
     profile.baseAirport &&
       toSelectionArray(profile.skinType).length > 0 &&
       profile.skinConcerns.length > 0 &&
