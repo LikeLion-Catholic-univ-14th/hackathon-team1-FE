@@ -1459,9 +1459,19 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
     completeAfterNotice(schedule)
   }
 
+  // 모달이 겹치면 딤이 여러 겹 깔려서 뒤 카드가 비쳐 보인다.
+  // 더 깊은 모달이 열리면 앞 단계는 감춘다.
+  const isEditingSchedule = Boolean(editingScheduleDraft) || Boolean(pickerState)
+  const hasOverlay =
+    showScheduleModal ||
+    showExtractFailureModal ||
+    showManualListModal ||
+    showCompleteModal ||
+    isEditingSchedule
+
   const overlays = (
     <>
-      {showScheduleModal && (
+      {showScheduleModal && !isEditingSchedule && (
         <ScheduleConfirmModal
           activeFieldKey={activeFieldKey}
           editingScheduleId={editingScheduleId}
@@ -1484,6 +1494,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
         />
       )}
 
+      {/* 피커는 바텀시트라 편집 카드 위에 겹쳐 뜨는 게 시안대로다 */}
       {editingScheduleDraft && (
         <ScheduleEditCard
           draft={editingScheduleDraft}
@@ -1522,7 +1533,12 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
   if (embedded) {
     return (
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-[rgba(29,43,68,0.4)] px-[18px]">
-        <div className="w-full rounded-[26px] bg-white px-[22px] pt-[24px] pb-[26px] drop-shadow-[0px_-8px_20px_rgba(29,43,68,0.16)]">
+        {/* 다음 단계 모달이 열리면 업로드 카드는 감춘다 (딤이 겹치지 않게) */}
+        <div
+          className={`w-full rounded-[26px] bg-white px-[22px] pt-[24px] pb-[26px] drop-shadow-[0px_-8px_20px_rgba(29,43,68,0.16)] ${
+            hasOverlay ? 'invisible' : ''
+          }`}
+        >
           <div className="flex items-center justify-between pl-[6px]">
             <p
               className={`text-[20px] leading-[22.5px] font-[860] tracking-[-0.72px] text-[#1d2b44] ${headingFontClass}`}
@@ -1573,9 +1589,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
             <div className="mt-4 grid gap-2">
               {files.map((file) => (
                 <div
-                  className="grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
+                  className="grid min-h-[57px] grid-cols-[22px_34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
                   key={file.id}
                 >
+                  <button
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 text-[22px] leading-[22px] font-light text-[#8a9eb8]"
+                    type="button"
+                    aria-label={`${file.name} 삭제`}
+                    onClick={() => removeFile(file.id)}
+                  >
+                    ×
+                  </button>
                   <span
                     className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
                     aria-hidden="true"
@@ -1594,12 +1618,15 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
                     {file.name}
                   </span>
                   <button
-                    className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 text-[22px] leading-[22px] font-light text-[#8a9eb8]"
+                    className="flex h-[22px] w-[22px] items-center justify-center border-0 bg-transparent p-0"
                     type="button"
-                    aria-label={`${file.name} 삭제`}
-                    onClick={() => removeFile(file.id)}
+                    aria-label={`${file.name} 일정 확인`}
+                    onClick={() => reopenScheduleConfirmModal(file)}
                   >
-                    ×
+                    <span
+                      className="h-[9px] w-[9px] rotate-45 border-t-[2px] border-r-[2px] border-[#8a9eb8]"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               ))}

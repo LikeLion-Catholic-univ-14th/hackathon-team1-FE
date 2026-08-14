@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppHeader from '../../components/common/AppHeader.jsx'
+import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import TotalCard from './components/TotalCard.jsx'
 import RouteRanking from './components/RouteRanking.jsx'
 import ExposureChart from './components/ExposureChart.jsx'
@@ -14,7 +15,7 @@ import chevronDown from './assets/chevron-down.svg'
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] pb-10 text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
 function ReportPage() {
   const [report, setReport] = useState(null)
@@ -74,6 +75,8 @@ function ReportPage() {
             </div>
           )}
         </div>
+
+        <BottomNavigation />
 
         {showConsent && (
           <ConsentModal
