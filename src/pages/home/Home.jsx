@@ -34,7 +34,7 @@ const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
       icon: 'sun',
       timing: '외출 전',
       title: `${productLabel} 도포`,
-      description: `${productName}을 얼굴 + 목 뒤 + 귀 + 손등에 충분히 발라주세요.`,
+      description: '500원 동전 크기 · 얼굴 + 목 뒤 + 귀 + 손등',
     },
     {
       ...(baseSolutions[1] ?? {}),
@@ -50,7 +50,7 @@ const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
       icon: 'moon',
       timing: '복귀 후',
       title: '클렌징 + 진정',
-      description: `${productName} 사용 후 더블 클렌징과 수분 진정을 해주세요.`,
+      description: '더블 클렌징 후 수분 앰플 팩',
     },
   ]
 }
