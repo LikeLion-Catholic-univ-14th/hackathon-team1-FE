@@ -781,7 +781,9 @@ function ScheduleExtractFailureModal({ onDismiss, onManualInput, onRetryUpload }
   )
 }
 
-function ScheduleSetup({ value, onChange, onBack, onComplete }) {
+// embedded=true 이면 온보딩 껍데기(상태바·뒤로가기·타이틀·진행점) 없이
+// 업로드 카드와 모달만 렌더한다. 일정 탭에서 모달로 띄울 때 사용.
+function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }) {
   const fileInputRef = useRef(null)
   const filesRef = useRef([])
   const completeTimerRef = useRef(null)
@@ -1111,6 +1113,172 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
     completeAfterNotice(schedule)
   }
 
+  const overlays = (
+    <>
+      {showScheduleModal && (
+        <ScheduleConfirmModal
+          activeFieldKey={activeFieldKey}
+          editingScheduleId={editingScheduleId}
+          file={files[files.length - 1]}
+          fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
+          schedules={displaySchedules}
+          onActivateField={activateScheduleField}
+          onDismiss={dismissScheduleModal}
+          onFieldChange={updateScheduleField}
+          onSave={saveConfirmedSchedules}
+          onStartEdit={startScheduleEdit}
+        />
+      )}
+
+      {showExtractFailureModal && (
+        <ScheduleExtractFailureModal
+          onDismiss={() => setShowExtractFailureModal(false)}
+          onManualInput={startManualScheduleInput}
+          onRetryUpload={resetScheduleUpload}
+        />
+      )}
+
+      {editingScheduleDraft && (
+        <ScheduleEditCard
+          draft={editingScheduleDraft}
+          canSave={hasEditedScheduleDraft}
+          onBack={() => {
+            setEditingScheduleDraft(null)
+            setEditingScheduleOriginalSignature('')
+            setPickerState(null)
+          }}
+          onChange={setEditingScheduleDraft}
+          onOpenDatePicker={openScheduleDatePicker}
+          onOpenTimePicker={openScheduleTimePicker}
+          onSave={saveScheduleDraft}
+        />
+      )}
+
+      {pickerState && (
+        <WheelPickerSheet
+          type={pickerState.type}
+          value={pickerState.value}
+          onChange={updatePickerValue}
+          onClose={closePicker}
+        />
+      )}
+
+      {showCompleteModal && (
+        <NoticeModal
+          message={embedded ? '비행 일정이 등록되었어요!' : '프로필이 완성되었어요!'}
+          onDismiss={() => setShowCompleteModal(false)}
+        />
+      )}
+    </>
+  )
+
+  // 일정 탭 — 달력 위에 모달로 뜬다
+  if (embedded) {
+    return (
+      <div className="absolute inset-0 z-20 flex items-center justify-center bg-[rgba(29,43,68,0.4)] px-[18px]">
+        <div className="w-full rounded-[26px] bg-white px-[22px] pt-[24px] pb-[26px] drop-shadow-[0px_-8px_20px_rgba(29,43,68,0.16)]">
+          <div className="flex items-center justify-between pl-[6px]">
+            <p
+              className={`text-[20px] leading-[22.5px] font-[860] tracking-[-0.72px] text-[#1d2b44] ${headingFontClass}`}
+            >
+              비행 일정 등록하기
+            </p>
+
+            <button
+              type="button"
+              aria-label="닫기"
+              className="flex size-[32px] shrink-0 items-center justify-center rounded-full bg-[#f0f2f6] text-[15px] text-[#1d2b44]"
+              onClick={onBack}
+            >
+              ✕
+            </button>
+          </div>
+
+          <button
+            className="mt-[22px] box-border flex h-[161px] w-full flex-col items-center justify-center rounded-[18px] border-[1.276px] border-dashed border-[#c5deff] bg-[#e8f3ff] px-4 text-center"
+            type="button"
+            onClick={openFilePicker}
+          >
+            <span className="flex size-[52px] items-center justify-center rounded-full bg-white text-[24px] leading-none text-[#1d2b44] drop-shadow-[0px_4px_7px_rgba(92,156,230,0.2)]">
+              +
+            </span>
+            <span
+              className={`mt-[12px] text-[14px] leading-[21px] font-bold tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+            >
+              파일이나 사진을 업로드해주세요
+            </span>
+            <span
+              className={`mt-[6px] text-[12px] leading-[20.4px] tracking-[-0.64px] text-[#8a9eb8] ${headingFontClass}`}
+            >
+              파일용량 10MB 제한
+            </span>
+          </button>
+
+          <input
+            className="hidden"
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            multiple
+            onChange={handleFilesChange}
+          />
+
+          {files.length > 0 && (
+            <div className="mt-4 grid gap-2">
+              {files.map((file) => (
+                <div
+                  className="grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
+                  key={file.id}
+                >
+                  <span
+                    className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+                    aria-hidden="true"
+                  >
+                    {file.previewUrl && (
+                      <img
+                        className="h-full w-full object-cover"
+                        src={file.previewUrl}
+                        alt=""
+                      />
+                    )}
+                  </span>
+                  <span
+                    className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+                  >
+                    {file.name}
+                  </span>
+                  <button
+                    className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 text-[22px] leading-[22px] font-light text-[#8a9eb8]"
+                    type="button"
+                    aria-label={`${file.name} 삭제`}
+                    onClick={() => removeFile(file.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            className={`mt-[18px] h-[53px] w-full rounded-[16px] border-0 text-[15px] leading-[22.5px] font-[860] tracking-[-0.4px] ${headingFontClass} ${
+              canContinue
+                ? 'cursor-pointer bg-[#f5a623] text-white drop-shadow-[0px_3px_6px_rgba(245,166,35,0.32)]'
+                : 'cursor-default bg-[#f0f2f6] text-[#8a9eb8]'
+            }`}
+            type="button"
+            disabled={!canContinue}
+            onClick={handleMainSave}
+          >
+            {isExtracting ? '확인 중' : '업로드'}
+          </button>
+        </div>
+
+        {overlays}
+      </div>
+    )
+  }
+
   return (
     <div className={stageClass}>
       <section className={screenClass}>
@@ -1247,60 +1415,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete }) {
           </form>
         </div>
 
-        {showScheduleModal && (
-          <ScheduleConfirmModal
-            activeFieldKey={activeFieldKey}
-            editingScheduleId={editingScheduleId}
-            file={files[files.length - 1]}
-            fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
-            schedules={displaySchedules}
-            onActivateField={activateScheduleField}
-            onDismiss={dismissScheduleModal}
-            onFieldChange={updateScheduleField}
-            onSave={saveConfirmedSchedules}
-            onStartEdit={startScheduleEdit}
-          />
-        )}
-
-        {showExtractFailureModal && (
-          <ScheduleExtractFailureModal
-            onDismiss={() => setShowExtractFailureModal(false)}
-            onManualInput={startManualScheduleInput}
-            onRetryUpload={resetScheduleUpload}
-          />
-        )}
-
-        {editingScheduleDraft && (
-          <ScheduleEditCard
-            draft={editingScheduleDraft}
-            canSave={hasEditedScheduleDraft}
-            onBack={() => {
-              setEditingScheduleDraft(null)
-              setEditingScheduleOriginalSignature('')
-              setPickerState(null)
-            }}
-            onChange={setEditingScheduleDraft}
-            onOpenDatePicker={openScheduleDatePicker}
-            onOpenTimePicker={openScheduleTimePicker}
-            onSave={saveScheduleDraft}
-          />
-        )}
-
-        {pickerState && (
-          <WheelPickerSheet
-            type={pickerState.type}
-            value={pickerState.value}
-            onChange={updatePickerValue}
-            onClose={closePicker}
-          />
-        )}
-
-        {showCompleteModal && (
-          <NoticeModal
-            message="프로필이 완성되었어요!"
-            onDismiss={() => setShowCompleteModal(false)}
-          />
-        )}
+        {overlays}
       </section>
     </div>
   )

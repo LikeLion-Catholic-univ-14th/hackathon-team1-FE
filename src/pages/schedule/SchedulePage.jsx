@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/common/AppHeader.jsx'
+import ScheduleSetup from '../onboarding/ScheduleSetup.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import MonthCalendar, {
   CalendarLegend,
@@ -28,13 +28,13 @@ const shiftMonth = (monthStr, diff) => {
 }
 
 function SchedulePage() {
-  const navigate = useNavigate()
-
   const [month, setMonth] = useState('2026-08')
   const [calendar, setCalendar] = useState(null)
   const [daily, setDaily] = useState(null)
   const [selectedDate, setSelectedDate] = useState(TODAY)
   const [outing, setOuting] = useState(true)
+  const [showRegister, setShowRegister] = useState(false)
+  const [registerDraft, setRegisterDraft] = useState({ files: [], schedules: [] })
 
   // 달력 — 월이 바뀔 때마다
   useEffect(() => {
@@ -63,8 +63,8 @@ function SchedulePage() {
   const hasSchedule = calendar.days.some((day) => day.scheduleId != null)
   const canGoPrev = calendar.month > MIN_MONTH
 
-  // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 재사용한다
-  const goRegister = () => navigate('/schedule/register')
+  // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 모달로 재사용한다
+  const goRegister = () => setShowRegister(true)
 
   return (
     <div className={stageClass}>
@@ -149,6 +149,16 @@ function SchedulePage() {
         </div>
 
         <BottomNavigation />
+
+        {showRegister && (
+          <ScheduleSetup
+            embedded
+            value={registerDraft}
+            onChange={setRegisterDraft}
+            onBack={() => setShowRegister(false)}
+            onComplete={() => setShowRegister(false)}
+          />
+        )}
       </div>
     </div>
   )
