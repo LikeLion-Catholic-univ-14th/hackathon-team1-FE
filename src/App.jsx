@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import Splash from './pages/onboarding/Splash.jsx'
 import ProfileSetup from './pages/onboarding/ProfileSetup.jsx'
 import ScheduleSetup from './pages/onboarding/ScheduleSetup.jsx'
@@ -14,6 +14,7 @@ import SchedulePage from './pages/schedule/SchedulePage.jsx'
 import ReportPage from './pages/report/ReportPage.jsx'
 import PouchEdit from './pages/mypage/PouchEdit.jsx'
 import ProfileEdit from './pages/mypage/ProfileEdit.jsx'
+import TreatmentHistory from './pages/mypage/TreatmentHistory.jsx'
 
 const initialOnboardingData = {
   profile: {
@@ -42,6 +43,7 @@ const initialOnboardingData = {
 }
 
 function OnboardingFlow() {
+  const navigate = useNavigate()
   const [showSplash, setShowSplash] = useState(true)
   const [onboardingStep, setOnboardingStep] = useState('profile')
   const [onboardingData, setOnboardingData] = useState(initialOnboardingData)
@@ -70,6 +72,11 @@ function OnboardingFlow() {
     setOnboardingStep('schedule')
   }
 
+  const completeScheduleSetup = (schedule) => {
+    updateOnboardingData('schedule', schedule ?? initialOnboardingData.schedule)
+    navigate('/home')
+  }
+
   if (showSplash) {
     return <Splash onFinish={() => setShowSplash(false)} />
   }
@@ -91,6 +98,7 @@ function OnboardingFlow() {
         value={onboardingData.schedule}
         onChange={(schedule) => updateOnboardingData('schedule', schedule)}
         onBack={() => setOnboardingStep('sunscreen')}
+        onComplete={completeScheduleSetup}
       />
     )
   }
@@ -100,6 +108,20 @@ function OnboardingFlow() {
       value={onboardingData.profile}
       onChange={(profile) => updateOnboardingData('profile', profile)}
       onComplete={completeProfileSetup}
+    />
+  )
+}
+
+function ScheduleRegisterPage() {
+  const navigate = useNavigate()
+  const [schedule, setSchedule] = useState(initialOnboardingData.schedule)
+
+  return (
+    <ScheduleSetup
+      value={schedule}
+      onChange={setSchedule}
+      onBack={() => navigate('/home')}
+      onComplete={() => navigate('/home')}
     />
   )
 }
@@ -118,10 +140,12 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/calendar" element={<SchedulePage />} />
+          <Route path="/schedule/register" element={<ScheduleRegisterPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/reports" element={<ReportPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
+          <Route path="/mypage/treatment-history" element={<TreatmentHistory />} />
         </Route>
       </Routes>
     </BrowserRouter>

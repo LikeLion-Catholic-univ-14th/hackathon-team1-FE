@@ -2,6 +2,30 @@ import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
 import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
 import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
 
+const todaySolutions = [
+  {
+    id: 'solution-today-1',
+    icon: 'sun',
+    timing: '외출 전',
+    title: '무기자차 크림 도포',
+    description: '500원 동전 크기 · 얼굴 + 목 뒤 + 귀 + 손등',
+  },
+  {
+    id: 'solution-today-2',
+    icon: 'plane',
+    timing: '외출 중',
+    title: '선스프레이 보충',
+    description: '화장 위에 15cm 거리로 분사',
+  },
+  {
+    id: 'solution-today-3',
+    icon: 'moon',
+    timing: '복귀 후',
+    title: '클렌징 + 진정',
+    description: '더블 클렌징 후 수분 앰플 팩',
+  },
+]
+
 export const mockHomeData = {
   user: {
     name: '도영',
@@ -53,27 +77,15 @@ export const mockHomeData = {
     tags: ['비오는 날', '자외선 약함'],
     text: '무기자차와 선스틱을 활용하시는 것을 추천해요!',
   },
-  solutions: [
+  solutions: todaySolutions,
+  solutionDays: [
     {
-      id: 'solution-1',
-      icon: 'sun',
-      timing: '외출 전',
-      title: '무기자차 크림 도포',
-      description: '500원 동전 크기 · 얼굴 + 목 뒤 + 귀 + 손등',
-    },
-    {
-      id: 'solution-2',
-      icon: 'plane',
-      timing: '외출 중',
-      title: '선스프레이 보충',
-      description: '화장 위에 15cm 거리로 분사',
-    },
-    {
-      id: 'solution-3',
-      icon: 'moon',
-      timing: '복귀 후',
-      title: '클렌징 + 진정',
-      description: '더블 클렌징 후 수분 앰플 팩',
+      id: 'solution-day-today',
+      date: '2026-08-06',
+      title: '오늘의 솔루션',
+      offset: 0,
+      isToday: true,
+      solutions: todaySolutions,
     },
   ],
   outdoor: {

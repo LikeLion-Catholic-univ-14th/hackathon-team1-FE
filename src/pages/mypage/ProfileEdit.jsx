@@ -29,10 +29,16 @@ const airportMap = {
   GMP: 'GMP',
 }
 
+const toSelectionArray = (value) =>
+  Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []
+
 const normalizeProfile = (profile) => ({
   name: profile?.name ?? '',
   baseAirport: airportMap[profile?.baseAirport] ?? 'ICN',
-  skinType: profile?.skinType ?? '복합성',
+  skinType:
+    toSelectionArray(profile?.skinType).length > 0
+      ? toSelectionArray(profile?.skinType)
+      : ['복합성'],
   skinConcerns:
     Array.isArray(profile?.skinConcerns) && profile.skinConcerns.length > 0
       ? profile.skinConcerns
@@ -44,6 +50,7 @@ const getProfileSnapshot = (profile) =>
   JSON.stringify({
     ...profile,
     name: profile.name.trim(),
+    skinType: toSelectionArray(profile.skinType).sort(),
     skinConcerns: [...profile.skinConcerns].sort(),
   })
 
@@ -118,7 +125,7 @@ function ProfileEdit() {
   const isValid =
     form.name.trim() &&
     form.baseAirport &&
-    form.skinType &&
+    toSelectionArray(form.skinType).length > 0 &&
     form.skinConcerns.length > 0 &&
     form.treatmentHistory
   const canSubmit = Boolean(isDirty && isValid)
@@ -139,6 +146,20 @@ function ProfileEdit() {
         skinConcerns: hasConcern
           ? prevForm.skinConcerns.filter((item) => item !== concern)
           : [...prevForm.skinConcerns, concern],
+      }
+    })
+  }
+
+  const toggleSkinType = (type) => {
+    setForm((prevForm) => {
+      const selectedSkinTypes = toSelectionArray(prevForm.skinType)
+      const hasType = selectedSkinTypes.includes(type)
+
+      return {
+        ...prevForm,
+        skinType: hasType
+          ? selectedSkinTypes.filter((item) => item !== type)
+          : [...selectedSkinTypes, type],
       }
     })
   }
@@ -211,8 +232,8 @@ function ProfileEdit() {
                 {skinTypeOptions.map((type) => (
                   <OptionButton
                     key={type}
-                    selected={form.skinType === type}
-                    onClick={() => updateField('skinType', type)}
+                    selected={toSelectionArray(form.skinType).includes(type)}
+                    onClick={() => toggleSkinType(type)}
                   >
                     {type}
                   </OptionButton>

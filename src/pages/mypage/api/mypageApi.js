@@ -6,6 +6,13 @@ const readString = (value, fallback = '') =>
 const readArray = (value, fallback = []) =>
   Array.isArray(value) ? value.filter(Boolean) : fallback
 
+const readStringArray = (value, fallback = []) =>
+  Array.isArray(value)
+    ? value.map((item) => readString(item)).filter(Boolean)
+    : readString(value)
+      ? [readString(value)]
+      : fallback
+
 export function normalizeMyPageData(payload) {
   const source = payload?.data ?? payload
 
@@ -33,7 +40,7 @@ export function normalizeMyPageData(payload) {
           profileSource.airport ??
           profileSource.airportCode,
       ),
-      skinType: readString(profileSource.skinType),
+      skinType: readStringArray(profileSource.skinType ?? profileSource.skinTypes),
       skinConcerns: readArray(
         profileSource.skinConcerns ?? profileSource.concerns,
       ),

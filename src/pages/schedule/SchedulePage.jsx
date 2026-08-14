@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import MonthCalendar, {
@@ -8,12 +9,8 @@ import MonthCalendar, {
 import FlightInfoBar from './components/FlightInfoBar.jsx'
 import DayUvCard from './components/DayUvCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
-import ScheduleUploadModal from './components/ScheduleUploadModal.jsx'
-import ScheduleConfirmModal from './components/ScheduleConfirmModal.jsx'
-import CompleteToast from './components/CompleteToast.jsx'
 import { mockCalendar } from './mocks/mockCalendar.js'
 import { getMockDaily } from './mocks/mockDailyDetail.js'
-import { mockExtractedSchedules } from './mocks/mockExtractedSchedules.js'
 import { parseMonth } from './utils/calendar.js'
 import { readOuting, TODAY } from './utils/schedule.js'
 
@@ -31,15 +28,13 @@ const shiftMonth = (monthStr, diff) => {
 }
 
 function SchedulePage() {
+  const navigate = useNavigate()
+
   const [month, setMonth] = useState('2026-08')
   const [calendar, setCalendar] = useState(null)
   const [daily, setDaily] = useState(null)
   const [selectedDate, setSelectedDate] = useState(TODAY)
   const [outing, setOuting] = useState(true)
-
-  const [showUpload, setShowUpload] = useState(false)
-  const [extracted, setExtracted] = useState(null)
-  const [toastMessage, setToastMessage] = useState('')
 
   // 달력 — 월이 바뀔 때마다
   useEffect(() => {
@@ -68,19 +63,8 @@ function SchedulePage() {
   const hasSchedule = calendar.days.some((day) => day.scheduleId != null)
   const canGoPrev = calendar.month > MIN_MONTH
 
-  const handleUpload = () => {
-    // 연동 시: extractSchedules(file).then(setExtracted)
-    setShowUpload(false)
-    setExtracted(mockExtractedSchedules)
-  }
-
-  const handleSave = () => {
-    // 연동 시: createSchedules(rows) 또는 patchSchedule(id)
-    setExtracted(null)
-    setToastMessage(
-      hasSchedule ? '비행 일정이 수정되었어요' : '비행 일정이 등록되었어요',
-    )
-  }
+  // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 재사용한다
+  const goRegister = () => navigate('/schedule/register')
 
   return (
     <div className={stageClass}>
@@ -116,7 +100,7 @@ function SchedulePage() {
               <button
                 type="button"
                 className="rounded-full bg-[#eceef2] px-[13px] py-[7px] text-[12px] text-[#1d2b44]"
-                onClick={() => setShowUpload(true)}
+                onClick={goRegister}
               >
                 + 일정 등록
               </button>
@@ -138,7 +122,7 @@ function SchedulePage() {
 
                 <CalendarLegend />
 
-                <FlightInfoBar daily={daily} onEdit={() => setShowUpload(true)} />
+                <FlightInfoBar daily={daily} onEdit={goRegister} />
 
                 {cards.length > 0 ? (
                   cards.map((card, index) => (
@@ -159,35 +143,12 @@ function SchedulePage() {
                 )}
               </>
             ) : (
-              <EmptySchedule onRegister={() => setShowUpload(true)} />
+              <EmptySchedule onRegister={goRegister} />
             )}
           </div>
         </div>
 
         <BottomNavigation />
-
-        {showUpload && (
-          <ScheduleUploadModal
-            onClose={() => setShowUpload(false)}
-            onUpload={handleUpload}
-          />
-        )}
-
-        {extracted && (
-          <ScheduleConfirmModal
-            fileName={extracted.fileName}
-            schedules={extracted.schedules}
-            onClose={() => setExtracted(null)}
-            onSave={handleSave}
-          />
-        )}
-
-        {toastMessage && (
-          <CompleteToast
-            message={toastMessage}
-            onDismiss={() => setToastMessage('')}
-          />
-        )}
       </div>
     </div>
   )

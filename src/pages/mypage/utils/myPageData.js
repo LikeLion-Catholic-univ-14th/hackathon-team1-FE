@@ -1,4 +1,5 @@
 import {
+  hasOnboardingSunscreensStorage,
   readOnboardingProfile,
   readOnboardingSunscreens,
 } from '../../onboarding/storage/onboardingProfileStorage.js'
@@ -8,8 +9,9 @@ import { mockMyPage } from '../mocks/mockMyPage.js'
 export function getFallbackMyPageData() {
   const onboardingProfile = readOnboardingProfile()
   const onboardingSunscreens = readOnboardingSunscreens()
+  const hasStoredOnboardingSunscreens = hasOnboardingSunscreensStorage()
 
-  if (!onboardingProfile && !onboardingSunscreens) {
+  if (!onboardingProfile && !hasStoredOnboardingSunscreens) {
     return mockMyPage
   }
 
@@ -25,14 +27,32 @@ export function getFallbackMyPageData() {
               : mockMyPage.profile.skinConcerns,
         }
       : mockMyPage.profile,
-    pouch: onboardingSunscreens ?? mockMyPage.pouch,
+    pouch: hasStoredOnboardingSunscreens
+      ? onboardingSunscreens ?? []
+      : mockMyPage.pouch,
   }
 }
 
 export async function loadMyPageData() {
+  const fallbackData = getFallbackMyPageData()
+  const shouldKeepStoredEmptyPouch =
+    hasOnboardingSunscreensStorage() &&
+    Array.isArray(fallbackData.pouch) &&
+    fallbackData.pouch.length === 0
+
   try {
-    return await getMyPage()
+    const apiData = await getMyPage()
+
+    if (shouldKeepStoredEmptyPouch) {
+      return {
+        ...apiData,
+        profile: fallbackData.profile,
+        pouch: [],
+      }
+    }
+
+    return apiData
   } catch {
-    return getFallbackMyPageData()
+    return fallbackData
   }
 }
