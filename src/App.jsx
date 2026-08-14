@@ -139,8 +139,10 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/calendar" element={<SchedulePage />} />
           <Route path="/schedule/register" element={<ScheduleRegisterPage />} />
           <Route path="/report" element={<ReportPage />} />
+          <Route path="/reports" element={<ReportPage />} />
           <Route path="/mypage/profile-edit" element={<ProfileEdit />} />
           <Route path="/mypage/pouch-edit" element={<PouchEdit />} />
           <Route path="/mypage/treatment-history" element={<TreatmentHistory />} />
