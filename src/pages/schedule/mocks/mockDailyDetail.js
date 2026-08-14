@@ -206,7 +206,41 @@ const futureSydneyDay = {
   },
 }
 
+// 오늘(8/14) — 진입하자마자 보이는 화면. 비행 정보 바 + 카드 2장
+const todayFlightDay = {
+  scheduleId: 109,
+  date: '2026-08-14',
+  flightNumber: 'KE121',
+  departureAirport: 'ICN',
+  arrivalAirport: 'SYD',
+  departureTime: '2026-08-14T09:00:00',
+  arrivalTime: '2026-08-14T13:00:00',
+  departureInfo: {
+    cityName: '인천',
+    displayDate: '8월 14일 (금)',
+    timeDifference: null,
+    outing: true,
+    riskLevel: 'CAUTION',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(8),
+    },
+  },
+  arrivalInfo: {
+    cityName: '시드니',
+    displayDate: '8월 14일 (금) · 한국 +1시간',
+    timeDifference: '한국 +1시간',
+    outing: true,
+    riskLevel: 'DANGER',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(11),
+    },
+  },
+}
+
 const byDate = {
+  '2026-08-14': todayFlightDay,
   '2026-08-09': flightDay,
   '2026-08-08': layoverDay,
   '2026-08-11': indoorDay,
