@@ -31,7 +31,7 @@ const initialOnboardingData = {
       productName: '',
       type: '선크림',
       blockingMethod: '유기자차',
-      spf: '',
+      spf: '50',
       pa: 'PA+',
     },
     products: [],

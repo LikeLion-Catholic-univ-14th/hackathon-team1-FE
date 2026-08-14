@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import checkActiveIcon from '../assets/solution/check-active.svg'
 import checkInactiveIcon from '../assets/solution/check-inactive.svg'
 import HomeEmptyState from './HomeEmptyState.jsx'
@@ -112,7 +112,6 @@ function SunscreenSection({
   const dragStateRef = useRef({
     active: false,
     dragged: false,
-    pointerId: null,
     scrollLeft: 0,
     startX: 0,
   })
@@ -129,15 +128,12 @@ function SunscreenSection({
     dragStateRef.current = {
       active: true,
       dragged: false,
-      pointerId: event.pointerId,
       scrollLeft: scrollElement.scrollLeft,
       startX: event.clientX,
     }
-
-    scrollElement.setPointerCapture?.(event.pointerId)
   }
 
-  const handlePointerMove = (event) => {
+  const handlePointerMove = useCallback((event) => {
     const scrollElement = scrollRef.current
     const dragState = dragStateRef.current
 
@@ -151,11 +147,12 @@ function SunscreenSection({
       dragState.dragged = true
     }
 
-    scrollElement.scrollLeft = dragState.scrollLeft - deltaX
-  }
+    if (dragState.dragged) {
+      scrollElement.scrollLeft = dragState.scrollLeft - deltaX
+    }
+  }, [])
 
-  const endPointerDrag = (event) => {
-    const scrollElement = scrollRef.current
+  const endPointerDrag = useCallback(() => {
     const dragState = dragStateRef.current
 
     if (!dragState.active) {
@@ -163,8 +160,19 @@ function SunscreenSection({
     }
 
     dragState.active = false
-    scrollElement?.releasePointerCapture?.(event.pointerId)
-  }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('pointermove', handlePointerMove)
+    document.addEventListener('pointerup', endPointerDrag)
+    document.addEventListener('pointercancel', endPointerDrag)
+
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerup', endPointerDrag)
+      document.removeEventListener('pointercancel', endPointerDrag)
+    }
+  }, [handlePointerMove, endPointerDrag])
 
   const handleClickCapture = (event) => {
     if (!dragStateRef.current.dragged) {
@@ -179,7 +187,7 @@ function SunscreenSection({
   return (
     <section className="mt-[14px] rounded-[16px] bg-white px-[20px] pb-[18px] pt-[24px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <h2
-        className={`m-0 text-[17px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
+        className={`m-0 text-[15px] font-bold uppercase leading-[15px] tracking-[-1.4px] text-[#1D2B44] ${headingFontClass}`}
       >
         오늘의 자외선 차단제
       </h2>
@@ -192,13 +200,9 @@ function SunscreenSection({
         <>
           <div
             ref={scrollRef}
-            className="mt-[16px] flex touch-pan-x snap-x select-none items-stretch gap-[12px] overflow-x-auto scroll-smooth pb-[2px] [cursor:grab] active:[cursor:grabbing] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="mt-[16px] flex touch-pan-x snap-x select-none items-stretch gap-[12px] overflow-x-auto pb-[2px] [cursor:grab] active:[cursor:grabbing] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onClickCapture={handleClickCapture}
-            onPointerCancel={endPointerDrag}
             onPointerDown={handlePointerDown}
-            onPointerLeave={endPointerDrag}
-            onPointerMove={handlePointerMove}
-            onPointerUp={endPointerDrag}
           >
             {sunscreens.map((sunscreen) => (
               <SunscreenCard

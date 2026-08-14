@@ -3,10 +3,12 @@ import { extractSchedulesFromFiles } from './api/scheduleApi.js'
 import calendarIcon from './assets/schedule/calendar.svg'
 import checkIcon from './assets/schedule/check.svg'
 import clockIcon from './assets/schedule/clock.svg'
+import editIcon from './assets/schedule/edit.svg'
 import plane2Icon from './assets/schedule/plane2.svg'
 import warningRedIcon from './assets/schedule/warning-red.svg'
 import warningIcon from '../../assets/icons/warning.svg'
 import { ScheduleConfirmModal } from '../../components/common/schedule/index.js'
+import airportSuggestions from '../../components/common/schedule/airports.json'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 
 const emptySchedule = {
@@ -31,11 +33,9 @@ const pickerHours = Array.from({ length: 12 }, (_, index) => index + 1)
 const pickerMinutes = Array.from({ length: 60 }, (_, index) => index)
 const pickerPeriods = ['오전', '오후']
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-const airportLabelMap = {
-  ICN: '인천, ICN',
-  GMP: '김포, GMP',
-  SYD: '시드니, SYD',
-}
+const airportLabelMap = Object.fromEntries(
+  airportSuggestions.map((airport) => [airport.code, `${airport.name}, ${airport.code}`]),
+)
 
 const createId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -238,9 +238,16 @@ const getScheduleDateTimeValue = (dateParts, timeParts) =>
     timeParts.minute,
   ).getTime()
 
-const isArrivalBeforeDeparture = (draft) =>
-  getScheduleDateTimeValue(draft.arrivalDate, draft.arrivalTime) <
-  getScheduleDateTimeValue(draft.departureDate, draft.departureTime)
+const isArrivalBeforeDeparture = (draft) => {
+  if (!draft.arrivalDate || !draft.arrivalTime || !draft.departureDate || !draft.departureTime) {
+    return false
+  }
+
+  return (
+    getScheduleDateTimeValue(draft.arrivalDate, draft.arrivalTime) <
+    getScheduleDateTimeValue(draft.departureDate, draft.departureTime)
+  )
+}
 
 const toAirportLabel = (airport) => {
   const code = String(airport ?? '').trim()
@@ -264,15 +271,15 @@ const createScheduleDraft = (schedule) => ({
   arrivalTime: normalizeTimeParts(schedule.arrivalTime),
 })
 
-const createManualScheduleDraft = () =>
-  createScheduleDraft({
-    id: `manual-schedule-${createId()}`,
-    date: '2026-08-09',
-    departureAirport: 'ICN',
-    arrivalAirport: 'SYD',
-    departureTime: '09:00',
-    arrivalTime: '09:00',
-  })
+const createManualScheduleDraft = () => ({
+  id: `manual-schedule-${createId()}`,
+  departureAirport: '',
+  arrivalAirport: '',
+  departureDate: null,
+  arrivalDate: null,
+  departureTime: null,
+  arrivalTime: null,
+})
 
 const getScheduleDraftSignature = (draft) => {
   if (!draft) {
@@ -282,14 +289,16 @@ const getScheduleDraftSignature = (draft) => {
   return [
     String(draft.departureAirport ?? '').trim(),
     String(draft.arrivalAirport ?? '').trim(),
-    formatStoredDate(draft.departureDate),
-    formatStoredDate(draft.arrivalDate),
-    formatTimeValue(draft.departureTime),
-    formatTimeValue(draft.arrivalTime),
+    draft.departureDate ? formatStoredDate(draft.departureDate) : '',
+    draft.arrivalDate ? formatStoredDate(draft.arrivalDate) : '',
+    draft.departureTime ? formatTimeValue(draft.departureTime) : '',
+    draft.arrivalTime ? formatTimeValue(draft.arrivalTime) : '',
   ].join('|')
 }
 
-function EditFieldButton({ icon, label, value, onClick }) {
+function EditFieldButton({ icon, label, value, placeholder, onClick }) {
+  const hasValue = value && String(value).trim() !== ''
+
   return (
     <div>
       <span
@@ -298,7 +307,7 @@ function EditFieldButton({ icon, label, value, onClick }) {
         {label}
       </span>
       <button
-        className={`box-border flex h-[40px] w-full items-center justify-between rounded-[10px] border-[1.276px] border-[#ECEEF2] bg-white px-[10px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
+        className={`box-border flex h-[40px] w-full items-center justify-between rounded-[10px] border-[1.276px] border-[#ECEEF2] bg-white px-[10px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] ${hasValue ? 'text-[#1D2B44]' : 'text-[#8A9EB8]'} ${headingFontClass}`}
         type="button"
         onClick={onClick}
       >
@@ -308,13 +317,97 @@ function EditFieldButton({ icon, label, value, onClick }) {
               {icon}
             </span>
           )}
-          <span className="truncate">{value}</span>
+          <span className="truncate">{hasValue ? value : placeholder ?? ''}</span>
         </span>
         <span
           className="h-[8px] w-[8px] rotate-45 border-b-[1.7px] border-r-[1.7px] border-[#8A9EB8]"
           aria-hidden="true"
         />
       </button>
+    </div>
+  )
+}
+
+function AirportAutocompleteInput({ value, placeholder, isFocusedBorder, onChange, onSelect }) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [selectedSuggestion, setSelectedSuggestion] = useState('')
+  const selectTimerRef = useRef(null)
+  const query = String(value ?? '').trim().toLowerCase()
+  const filteredSuggestions = query
+    ? airportSuggestions
+        .filter((airport) =>
+          airport.name.toLowerCase().includes(query) ||
+          airport.code.toLowerCase().includes(query),
+        )
+        .slice(0, 4)
+    : []
+  const shouldShowSuggestions = isFocused && filteredSuggestions.length > 0
+
+  const formatAirport = (airport) => `${airport.name}, ${airport.code}`
+
+  const handleFocus = () => {
+    setIsFocused(true)
+  }
+
+  const handleBlur = () => {
+    window.setTimeout(() => setIsFocused(false), 120)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none placeholder:text-[#8A9EB8] ${headingFontClass} ${
+          isFocusedBorder || isFocused ? 'border-[#F5A623]' : 'border-[#ECEEF2]'
+        } ${shouldShowSuggestions ? 'rounded-b-none' : ''}`}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onChange={(event) => {
+          if (selectTimerRef.current) {
+            window.clearTimeout(selectTimerRef.current)
+          }
+          setIsFocused(true)
+          setSelectedSuggestion('')
+          onChange(event.target.value)
+        }}
+      />
+
+      {shouldShowSuggestions && (
+        <div className="absolute left-0 right-0 top-[39px] z-20 overflow-hidden rounded-b-[10px] border-x-[1.276px] border-b-[1.276px] border-[#eceef2] bg-white shadow-[0_8px_18px_0_rgba(29,43,68,0.08)]">
+          {filteredSuggestions.map((airport) => {
+            const label = formatAirport(airport)
+            const isSelected = selectedSuggestion === label
+
+            return (
+              <button
+                className={`flex h-[40px] w-full items-center border-0 border-b border-[#eceef2] px-[13px] text-left text-[12px] font-normal leading-[18px] tracking-[-0.64px] last:border-b-0 ${headingFontClass} ${
+                  isSelected
+                    ? 'bg-[#FFFBF2] text-[#F5A623]'
+                    : 'bg-white text-[#1d2b44]'
+                }`}
+                key={airport.code}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (selectTimerRef.current) {
+                    window.clearTimeout(selectTimerRef.current)
+                  }
+                  setSelectedSuggestion(label)
+                  selectTimerRef.current = window.setTimeout(() => {
+                    onSelect(label)
+                    setIsFocused(false)
+                  }, 1000)
+                }}
+              >
+                <span className="truncate">{label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -344,6 +437,8 @@ function TimeIcon() {
 function ScheduleEditCard({
   draft,
   canSave,
+  title,
+  saveLabel = '정보 수정하기',
   onBack,
   onSave,
   onChange,
@@ -377,7 +472,7 @@ function ScheduleEditCard({
           <h2
             className={`m-0 text-center text-[18px] font-[590] leading-[22px] tracking-[-0.64px] text-[#1D2B44] ${headingFontClass}`}
           >
-            {formatFullDateLabel(draft.departureDate)}
+            {title ?? formatFullDateLabel(draft.departureDate)}
           </h2>
           <span />
         </header>
@@ -389,11 +484,15 @@ function ScheduleEditCard({
             >
               출발
             </span>
-            <input
-              className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] border-[#F5A623] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none ${headingFontClass}`}
+            <AirportAutocompleteInput
               value={draft.departureAirport}
-              onChange={(event) =>
-                onChange({ ...draft, departureAirport: event.target.value })
+              placeholder="공항명"
+              isFocusedBorder={Boolean(draft.departureAirport)}
+              onChange={(nextValue) =>
+                onChange({ ...draft, departureAirport: nextValue })
+              }
+              onSelect={(airport) =>
+                onChange({ ...draft, departureAirport: airport })
               }
             />
           </label>
@@ -409,11 +508,15 @@ function ScheduleEditCard({
             >
               도착
             </span>
-            <input
-              className={`box-border h-[40px] w-full rounded-[10px] border-[1.276px] border-[#ECEEF2] bg-white px-[13px] text-[12px] font-normal leading-[18px] tracking-[-0.64px] text-[#1D2B44] outline-none focus:border-[#F5A623] ${headingFontClass}`}
+            <AirportAutocompleteInput
               value={draft.arrivalAirport}
-              onChange={(event) =>
-                onChange({ ...draft, arrivalAirport: event.target.value })
+              placeholder="공항명"
+              isFocusedBorder={Boolean(draft.arrivalAirport)}
+              onChange={(nextValue) =>
+                onChange({ ...draft, arrivalAirport: nextValue })
+              }
+              onSelect={(airport) =>
+                onChange({ ...draft, arrivalAirport: airport })
               }
             />
           </label>
@@ -423,25 +526,29 @@ function ScheduleEditCard({
           <EditFieldButton
             icon={<DateIcon />}
             label="출발일"
-            value={formatPickerDateLabel(draft.departureDate)}
+            value={draft.departureDate ? formatPickerDateLabel(draft.departureDate) : ''}
+            placeholder="날짜 선택"
             onClick={() => onOpenDatePicker('departureDate')}
           />
           <EditFieldButton
             icon={<TimeIcon />}
             label="출발 시간"
-            value={formatPickerTimeLabel(draft.departureTime)}
+            value={draft.departureTime ? formatPickerTimeLabel(draft.departureTime) : ''}
+            placeholder="시간 선택"
             onClick={() => onOpenTimePicker('departureTime')}
           />
           <EditFieldButton
             icon={<DateIcon />}
             label="도착일"
-            value={formatPickerDateLabel(draft.arrivalDate)}
+            value={draft.arrivalDate ? formatPickerDateLabel(draft.arrivalDate) : ''}
+            placeholder="날짜 선택"
             onClick={() => onOpenDatePicker('arrivalDate')}
           />
           <EditFieldButton
             icon={<TimeIcon />}
             label="도착 시간"
-            value={formatPickerTimeLabel(draft.arrivalTime)}
+            value={draft.arrivalTime ? formatPickerTimeLabel(draft.arrivalTime) : ''}
+            placeholder="시간 선택"
             onClick={() => onOpenTimePicker('arrivalTime')}
           />
         </div>
@@ -472,7 +579,7 @@ function ScheduleEditCard({
           disabled={!isSaveEnabled}
           onClick={onSave}
         >
-          정보 수정하기
+          {saveLabel}
         </button>
       </div>
     </div>
@@ -736,6 +843,129 @@ function NoticeModal({ message, compact = false, onDismiss }) {
   )
 }
 
+function ManualScheduleListModal({
+  schedules,
+  onAddSchedule,
+  onEditSchedule,
+  onSave,
+  onDismiss,
+}) {
+  const hasSchedules = schedules.length > 0
+  const canSave = hasSchedules
+
+  return (
+    <div
+      className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6"
+      onClick={onDismiss}
+    >
+      <div
+        className="relative box-border flex w-full max-w-[340px] flex-col items-start rounded-[24px] bg-white px-5 pb-6 pt-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2
+          className={`m-0 w-full text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
+        >
+          비행 일정을 등록해주세요
+        </h2>
+
+        <button
+          className={`mt-[22px] box-border flex w-full items-center justify-center rounded-[16px] border-[1.276px] border-dashed border-[#ECEEF2] bg-[#F4F6F9] px-[83px] py-[9px] text-[13px] font-[510] leading-[26px] tracking-[-0.64px] text-[#91A4BF] ${headingFontClass}`}
+          type="button"
+          onClick={onAddSchedule}
+        >
+          <span className="mr-[10px] text-[16px] font-normal leading-none">+</span>
+          비행 일정 추가하기
+        </button>
+
+        <div className="mt-[16px] min-h-[180px] w-full px-2">
+          {schedules.map((schedule) => (
+            <div
+              className="flex min-h-10 items-center border-b border-[#eceef2] last:border-b-0"
+              key={schedule.id}
+            >
+              <span
+                className={`text-[12px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+                style={{ width: '48px', minWidth: '48px' }}
+              >
+                {schedule.date}
+              </span>
+              <span className="ml-[18px] flex items-center gap-[2px]">
+                <span
+                  className={`text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+                >
+                  {schedule.departureTime}
+                </span>
+                <span
+                  className={`text-[12px] font-[510] leading-[21px] tracking-[-0.4px] text-[#3F8AE1] ${headingFontClass}`}
+                >
+                  {schedule.departureAirport}
+                </span>
+              </span>
+              <span className="mx-[5px] flex items-center justify-center" aria-hidden="true">
+                <img
+                  className="block h-[17px] w-6 object-contain"
+                  src={plane2Icon}
+                  alt=""
+                />
+              </span>
+              <span className="flex items-center gap-[2px]">
+                <span
+                  className={`text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1d2b44] ${headingFontClass}`}
+                >
+                  {schedule.arrivalTime}
+                </span>
+                <span
+                  className={`text-[12px] font-[510] leading-[21px] tracking-[-0.4px] text-[#3F8AE1] ${headingFontClass}`}
+                >
+                  {schedule.arrivalAirport}
+                </span>
+              </span>
+              <button
+                className="ml-auto flex h-[24px] w-[22px] items-center justify-center border-0 bg-transparent p-0 outline-none"
+                type="button"
+                aria-label={`${schedule.date} 일정 수정`}
+                onClick={() => onEditSchedule(schedule.id)}
+              >
+                <img
+                  className="block h-[15px] w-[15px] object-contain opacity-50"
+                  src={editIcon}
+                  alt=""
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-[18px] flex w-full items-center justify-center gap-[5px]">
+          {Array.from({ length: 3 }, (_, index) => (
+            <span
+              className={
+                index === 0
+                  ? 'h-[6px] w-5 rounded-full bg-[#f6a51a]'
+                  : 'h-[6px] w-[6px] rounded-full bg-[#edf1f6]'
+              }
+              key={index}
+            />
+          ))}
+        </div>
+
+        <button
+          className={`mt-[25px] h-[53px] w-full rounded-2xl border-0 text-[15px] font-bold leading-[23px] ${headingFontClass} ${
+            canSave
+              ? 'cursor-pointer bg-[#f5a623] text-white shadow-[0_4px_12px_0_rgba(245,166,35,0.32)]'
+              : 'cursor-default bg-[#f0f2f6] text-[#91a4bf]'
+          }`}
+          type="button"
+          disabled={!canSave}
+          onClick={onSave}
+        >
+          저장하고 계속
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ScheduleExtractFailureModal({ onDismiss, onManualInput, onRetryUpload }) {
   return (
     <div
@@ -800,6 +1030,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
+  const [showManualListModal, setShowManualListModal] = useState(false)
+  const [manualSchedules, setManualSchedules] = useState([])
   const schedule = value ?? localSchedule
   const files = schedule.files ?? []
   filesRef.current = files
@@ -948,10 +1180,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
       return
     }
 
+    const now = new Date()
+    const defaultDate = {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+    }
+
     setPickerState({
       fieldKey,
       type: 'date',
-      value: editingScheduleDraft[fieldKey],
+      value: editingScheduleDraft[fieldKey] ?? defaultDate,
     })
   }
 
@@ -960,10 +1199,18 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
       return
     }
 
+    const now = new Date()
+    const currentHour = now.getHours()
+    const defaultTime = {
+      period: currentHour >= 12 ? '오후' : '오전',
+      hour: currentHour > 12 ? currentHour - 12 : currentHour === 0 ? 12 : currentHour,
+      minute: now.getMinutes(),
+    }
+
     setPickerState({
       fieldKey,
       type: 'time',
-      value: editingScheduleDraft[fieldKey],
+      value: editingScheduleDraft[fieldKey] ?? defaultTime,
     })
   }
 
@@ -1091,9 +1338,108 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
     setEditingScheduleId('')
     setActiveFieldKey('')
     setDisplaySchedules([])
+    setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
+    setShowManualListModal(true)
+  }
+
+  const openManualScheduleAdd = () => {
     const nextDraft = createManualScheduleDraft()
     setEditingScheduleDraft(nextDraft)
     setEditingScheduleOriginalSignature('')
+  }
+
+  const openManualScheduleEdit = (scheduleId) => {
+    const targetSchedule = manualSchedules.find(
+      (scheduleItem) => scheduleItem.id === scheduleId,
+    )
+
+    if (!targetSchedule) {
+      return
+    }
+
+    const nextDraft = createScheduleDraft(targetSchedule)
+    setEditingScheduleDraft(nextDraft)
+    setEditingScheduleOriginalSignature(getScheduleDraftSignature(nextDraft))
+  }
+
+  const saveManualScheduleDraft = () => {
+    if (!editingScheduleDraft) {
+      return
+    }
+
+    if (isArrivalBeforeDeparture(editingScheduleDraft)) {
+      return
+    }
+
+    const defaultDate = { year: 2026, month: 8, day: 9 }
+    const defaultTime = { period: '오전', hour: 9, minute: 0 }
+    const depDate = editingScheduleDraft.departureDate ?? defaultDate
+    const arrDate = editingScheduleDraft.arrivalDate ?? defaultDate
+    const depTime = editingScheduleDraft.departureTime ?? defaultTime
+    const arrTime = editingScheduleDraft.arrivalTime ?? defaultTime
+
+    const nextScheduleItem = {
+      id: editingScheduleDraft.id,
+      date: formatShortDate(depDate),
+      departureDate: formatStoredDate(depDate),
+      arrivalDate: formatStoredDate(arrDate),
+      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
+      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
+      departureTime: formatTimeValue(depTime),
+      arrivalTime: formatTimeValue(arrTime),
+    }
+
+    const hasExisting = manualSchedules.some(
+      (scheduleItem) => scheduleItem.id === editingScheduleDraft.id,
+    )
+    const nextSchedules = hasExisting
+      ? manualSchedules.map((scheduleItem) =>
+          scheduleItem.id === editingScheduleDraft.id
+            ? { ...scheduleItem, ...nextScheduleItem }
+            : scheduleItem,
+        )
+      : [...manualSchedules, nextScheduleItem]
+
+    setManualSchedules(nextSchedules)
+    setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
+    setPickerState(null)
+  }
+
+  const saveManualScheduleList = () => {
+    if (manualSchedules.length === 0) {
+      return
+    }
+
+    const nextSchedule = {
+      ...schedule,
+      schedules: manualSchedules,
+    }
+
+    updateSchedule(nextSchedule)
+    setShowManualListModal(false)
+    completeAfterNotice(nextSchedule)
+  }
+
+  const reopenScheduleConfirmModal = (file) => {
+    setEditingScheduleId('')
+    setActiveFieldKey('')
+    setEditingScheduleDraft(null)
+    setEditingScheduleOriginalSignature('')
+    setPickerState(null)
+    setShowExtractFailureModal(false)
+
+    if (manualSchedules.length > 0) {
+      setShowScheduleModal(false)
+      setShowManualListModal(true)
+    } else {
+      const existingSchedules = schedule.schedules ?? []
+      setDisplaySchedules(existingSchedules)
+      setModalFileName(file.name)
+      setShowManualListModal(false)
+      setShowScheduleModal(true)
+    }
   }
 
   const handleMainSave = () => {
@@ -1358,9 +1704,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
               <div className="mt-5 grid gap-2">
                 {files.map((file) => (
                   <div
-                    className="grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
+                    className="grid min-h-[57px] grid-cols-[22px_34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
                     key={file.id}
                   >
+                    <button
+                      className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                      type="button"
+                      aria-label={`${file.name} 삭제`}
+                      onClick={() => removeFile(file.id)}
+                    >
+                      ×
+                    </button>
                     <span
                       className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
                       aria-hidden="true"
@@ -1379,12 +1733,15 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
                       {file.name}
                     </span>
                     <button
-                      className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                      className="flex h-[22px] w-[22px] items-center justify-center border-0 bg-transparent p-0"
                       type="button"
-                      aria-label={`${file.name} 삭제`}
-                      onClick={() => removeFile(file.id)}
+                      aria-label={`${file.name} 일정 확인`}
+                      onClick={() => reopenScheduleConfirmModal(file)}
                     >
-                      ×
+                      <span
+                        className="h-[9px] w-[9px] rotate-45 border-r-[2px] border-t-[2px] border-[#8a9eb8]"
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
                 ))}
@@ -1415,7 +1772,92 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
           </form>
         </div>
 
-        {overlays}
+        {showScheduleModal && (
+          <ScheduleConfirmModal
+            activeFieldKey={activeFieldKey}
+            editingScheduleId={editingScheduleId}
+            file={files[files.length - 1]}
+            fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
+            schedules={displaySchedules}
+            onActivateField={activateScheduleField}
+            onDismiss={dismissScheduleModal}
+            onFieldChange={updateScheduleField}
+            onSave={saveConfirmedSchedules}
+            onStartEdit={startScheduleEdit}
+          />
+        )}
+
+        {showExtractFailureModal && (
+          <ScheduleExtractFailureModal
+            onDismiss={() => setShowExtractFailureModal(false)}
+            onManualInput={startManualScheduleInput}
+            onRetryUpload={resetScheduleUpload}
+          />
+        )}
+
+        {showManualListModal && !editingScheduleDraft && (
+          <ManualScheduleListModal
+            schedules={manualSchedules}
+            onAddSchedule={openManualScheduleAdd}
+            onEditSchedule={openManualScheduleEdit}
+            onSave={saveManualScheduleList}
+            onDismiss={() => setShowManualListModal(false)}
+          />
+        )}
+
+        {editingScheduleDraft && showManualListModal && (
+          <ScheduleEditCard
+            draft={editingScheduleDraft}
+            canSave={
+              !isArrivalBeforeDeparture(editingScheduleDraft) &&
+              String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
+              String(editingScheduleDraft.arrivalAirport ?? '').trim() !== ''
+            }
+            title="비행 일정 추가하기"
+            saveLabel="+ 추가하기"
+            onBack={() => {
+              setEditingScheduleDraft(null)
+              setEditingScheduleOriginalSignature('')
+              setPickerState(null)
+            }}
+            onChange={setEditingScheduleDraft}
+            onOpenDatePicker={openScheduleDatePicker}
+            onOpenTimePicker={openScheduleTimePicker}
+            onSave={saveManualScheduleDraft}
+          />
+        )}
+
+        {editingScheduleDraft && !showManualListModal && (
+          <ScheduleEditCard
+            draft={editingScheduleDraft}
+            canSave={hasEditedScheduleDraft}
+            onBack={() => {
+              setEditingScheduleDraft(null)
+              setEditingScheduleOriginalSignature('')
+              setPickerState(null)
+            }}
+            onChange={setEditingScheduleDraft}
+            onOpenDatePicker={openScheduleDatePicker}
+            onOpenTimePicker={openScheduleTimePicker}
+            onSave={saveScheduleDraft}
+          />
+        )}
+
+        {pickerState && (
+          <WheelPickerSheet
+            type={pickerState.type}
+            value={pickerState.value}
+            onChange={updatePickerValue}
+            onClose={closePicker}
+          />
+        )}
+
+        {showCompleteModal && (
+          <NoticeModal
+            message="프로필이 완성되었어요!"
+            onDismiss={() => setShowCompleteModal(false)}
+          />
+        )}
       </section>
     </div>
   )

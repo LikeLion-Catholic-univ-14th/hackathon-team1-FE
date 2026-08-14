@@ -16,6 +16,35 @@ const baseAirportLocationMap = {
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
 
+const weekdayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+
+const getTodayDateLabel = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+  const day = now.getDate()
+  const weekday = weekdayNames[now.getDay()]
+  return `${year}년 ${month}월 ${day}일 ${weekday}`
+}
+
+const getCurrentTimeLabel = (timezone) => {
+  try {
+    const now = new Date()
+    const hours = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: timezone ?? 'Asia/Seoul',
+    }).format(now)
+    return `${hours} 기준`
+  } catch {
+    const now = new Date()
+    const h = String(now.getHours()).padStart(2, '0')
+    const m = String(now.getMinutes()).padStart(2, '0')
+    return `${h}:${m} 기준`
+  }
+}
+
 const getKoreaCurrentTime = () => {
   try {
     const formattedTime = new Intl.DateTimeFormat('en-US', {
@@ -126,6 +155,11 @@ function mergeHomeData(data) {
     ...data,
     solutionDays,
     solutions: todaySolutionDay?.solutions ?? mockHomeData.solutions,
+    uvSummary: {
+      ...mockHomeData.uvSummary,
+      ...data.uvSummary,
+      updatedAt: readString(data.uvSummary?.updatedAt, getCurrentTimeLabel()),
+    },
     user: {
       ...mockHomeData.user,
       ...data.user,
@@ -134,7 +168,7 @@ function mergeHomeData(data) {
       location: hasScheduleLocation
         ? readString(data.user?.location)
         : getBaseAirportFallbackLocation(fallbackBaseAirport),
-      date: readString(data.user?.date, mockHomeData.user.date),
+      date: readString(data.user?.date, getTodayDateLabel()),
       currentTime: hasScheduleLocation
         ? formatDisplayCurrentTime(data.user?.currentTime)
         : getKoreaCurrentTime(),

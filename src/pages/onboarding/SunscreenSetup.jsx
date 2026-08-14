@@ -30,7 +30,7 @@ const emptySunscreen = {
     productName: '',
     type: '선크림',
     blockingMethod: '유기자차',
-    spf: '',
+    spf: '50',
     pa: 'PA+',
   },
   products: [],
@@ -311,7 +311,6 @@ function SunscreenSetup({
 }) {
   const formRef = useRef(null)
   const [openDropdown, setOpenDropdown] = useState('')
-  const [isSpfFocused, setIsSpfFocused] = useState(false)
   const [localSunscreen, setLocalSunscreen] = useState(emptySunscreen)
   const [editingProductId, setEditingProductId] = useState('')
   const [actionProductId, setActionProductId] = useState('')
@@ -576,9 +575,7 @@ function SunscreenSetup({
                   inputMode="numeric"
                   type="text"
                   value={form.spf}
-                  placeholder={isSpfFocused ? '' : '50'}
-                  onFocus={() => setIsSpfFocused(true)}
-                  onBlur={() => setIsSpfFocused(false)}
+                  placeholder=""
                   onChange={(event) => updateForm('spf', event.target.value)}
                 />
               </div>

@@ -105,7 +105,7 @@ function UvSummaryCard({
           >
             {summary.title}
             <span
-              className="ml-[6px] text-[12px] font-[590] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
+              className="ml-[6px] text-[12px] font-[510] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
               style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
             >
               · {summary.updatedAt}
@@ -136,7 +136,7 @@ function UvSummaryCard({
           >
             {summary.title}
             <span
-              className="ml-[6px] text-[12px] font-[590] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
+              className="ml-[6px] text-[12px] font-[510] leading-[15px] tracking-[-1px] text-[rgba(255,255,255,0.55)]"
               style={{ fontFamily: '"SF Pro", "SF_Pro", Arial, sans-serif' }}
             >
               · {summary.updatedAt}
