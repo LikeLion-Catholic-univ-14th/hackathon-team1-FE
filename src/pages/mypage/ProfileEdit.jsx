@@ -44,6 +44,8 @@ const normalizeProfile = (profile) => ({
       ? profile.skinConcerns
       : ['기미', '건조'],
   treatmentHistory: profile?.treatmentHistory ?? '없음',
+  treatmentDetail: profile?.treatmentDetail ?? '',
+  recentTreatment: Boolean(profile?.recentTreatment),
 })
 
 const getProfileSnapshot = (profile) =>
@@ -269,6 +271,35 @@ function ProfileEdit() {
                   </OptionButton>
                 ))}
               </div>
+
+              {form.treatmentHistory === '있음' && (
+                <div className="mt-[14px] flex items-center gap-[12px]">
+                  <input
+                    className={`box-border h-[40px] flex-1 rounded-[10px] border-[1.276px] bg-white px-[14px] font-[SF_Pro] text-[13px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[#8a9eb8] ${
+                      form.treatmentDetail
+                        ? 'border-[#f5a623]'
+                        : 'border-[#eceef2] focus:border-[#f5a623]'
+                    }`}
+                    type="text"
+                    value={form.treatmentDetail}
+                    placeholder="어떤 시술을 받으셨나요?"
+                    onChange={(event) => updateField('treatmentDetail', event.target.value)}
+                  />
+                  <label className={`flex shrink-0 cursor-pointer items-center gap-[6px] text-[12px] font-[510] text-[#8a9eb8] ${headingFontClass}`}>
+                    <input
+                      className="peer sr-only"
+                      type="checkbox"
+                      checked={form.recentTreatment}
+                      onChange={(event) => updateField('recentTreatment', event.target.checked)}
+                    />
+                    <span
+                      className="h-[18px] w-[18px] shrink-0 rounded-[20px] border-[1.276px] border-[#eceef2] bg-white shadow-[0_2px_6px_0_rgba(29,43,68,0.04)] peer-checked:border-[#f5a623] peer-checked:bg-[#f5a623] peer-checked:shadow-none"
+                      aria-hidden="true"
+                    />
+                    최근 한달 내
+                  </label>
+                </div>
+              )}
             </div>
 
             <button

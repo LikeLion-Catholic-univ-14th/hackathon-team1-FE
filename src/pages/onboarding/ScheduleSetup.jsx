@@ -1419,7 +1419,6 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
 
     updateSchedule(nextSchedule)
     setShowManualListModal(false)
-    completeAfterNotice(nextSchedule)
   }
 
   const reopenScheduleConfirmModal = (file) => {
