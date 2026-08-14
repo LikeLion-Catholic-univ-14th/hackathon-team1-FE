@@ -193,7 +193,7 @@ function TreatmentItem({ treatment, onRemove }) {
   return (
     <li className="flex min-h-[48px] items-center gap-[12px] rounded-[12px] border-[1.276px] border-[#ECEEF2] bg-[#F4F6F9] px-[24px] py-[12px]">
       <span
-        className={`min-w-0 flex-1 break-keep text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] [overflow-wrap:anywhere] ${headingFontClass}`}
+        className={`min-w-0 break-keep text-[13px] font-[510] leading-[19.5px] tracking-[-0.4px] text-[#1D2B44] [overflow-wrap:anywhere] ${headingFontClass}`}
       >
         {treatment.name}
       </span>
@@ -222,7 +222,7 @@ function TreatmentList({ treatments, onRemove }) {
   }
 
   return (
-    <section className="min-h-[171px] rounded-[22px] bg-white px-[13px] py-[13px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
+    <section className="rounded-[22px] bg-white px-[13px] py-[13px] shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]">
       <ul className="m-0 flex list-none flex-col gap-[7px] p-0">
         {treatments.map((treatment) => (
           <TreatmentItem

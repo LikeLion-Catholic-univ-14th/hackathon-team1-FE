@@ -203,6 +203,12 @@ function Home() {
 
   const handleSelectSunscreen = (sunscreenId) => {
     setSelectedSunscreenId(sunscreenId)
+
+    const existingSolutionIndex = solutionProductIds.indexOf(sunscreenId)
+
+    if (existingSolutionIndex >= 0) {
+      setSolutionProductIndex(existingSolutionIndex)
+    }
   }
 
   const handleGenerateSolution = () => {
@@ -213,6 +219,13 @@ function Home() {
     }
 
     setSolutionProductIds((currentIds) => {
+      const existingProductIndex = currentIds.indexOf(targetProductId)
+
+      if (existingProductIndex >= 0) {
+        setSolutionProductIndex(existingProductIndex)
+        return currentIds
+      }
+
       const defaultProductId = recommendedSunscreen?.id ?? targetProductId
       const nextIds =
         targetProductId === defaultProductId
@@ -274,7 +287,8 @@ function Home() {
   }
 
   const showGenerateButton =
-    Boolean(selectedSunscreen?.id) && selectedSunscreen.id !== recommendedSunscreen?.id
+    Boolean(selectedSunscreen?.id) &&
+    !solutionProductIds.includes(selectedSunscreen.id)
   const displayedSolutions = currentSolutionSunscreen
     ? buildSunscreenSolutions(currentSolutionSunscreen, todayBaseSolutions)
     : todayBaseSolutions
