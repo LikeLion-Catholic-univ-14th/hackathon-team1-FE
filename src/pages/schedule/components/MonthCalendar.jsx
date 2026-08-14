@@ -1,7 +1,5 @@
 import { buildCalendarCells } from '../utils/calendar.js'
-
-const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+import { isFuture, readDayLevel } from '../utils/schedule.js'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -9,7 +7,7 @@ const DOT_COLOR = {
   DANGER: 'bg-[#b55454]',
   CAUTION: 'bg-[#f5a623]',
   SAFE: 'bg-[#3f8ae1]',
-  INDOOR: 'bg-[#a8b8cc]',
+  INDOOR: 'bg-[#c4cad4]',
 }
 
 const LEGEND = [
@@ -28,7 +26,7 @@ function MonthCalendar({ year, month, days, selectedDate, onSelect }) {
   })
 
   return (
-    <div className={`mx-[14px] rounded-[20px] bg-white px-[8px] py-[14px] ${headingFontClass}`}>
+    <div className="mx-[14px] rounded-[20px] bg-white px-[8px] py-[14px]">
       <div className="grid grid-cols-7">
         {cells.map((cell, index) => {
           if (!cell) {
@@ -36,6 +34,7 @@ function MonthCalendar({ year, month, days, selectedDate, onSelect }) {
           }
 
           const info = dayMap[cell.date]
+          const level = readDayLevel(info)
           const isSelected = cell.date === selectedDate
           const hasSchedule = info?.scheduleId != null
 
@@ -58,15 +57,31 @@ function MonthCalendar({ year, month, days, selectedDate, onSelect }) {
                 {cell.day}
               </span>
 
-              <span className="pt-[3px]">
-                {info && (
-                  <i className={`block size-[5px] rounded-full ${DOT_COLOR[info.status]}`} />
+              <span className="flex h-[8px] items-start pt-[3px]">
+                {/* 미래 날짜는 위험도를 알 수 없어 점을 숨긴다 */}
+                {level && !isFuture(cell.date) && (
+                  <i className={`block size-[5px] rounded-full ${DOT_COLOR[level]}`} />
                 )}
               </span>
             </button>
           )
         })}
       </div>
+    </div>
+  )
+}
+
+export function CalendarWeekdays() {
+  return (
+    <div className="grid grid-cols-7 pt-[14px] text-center text-[13px] text-[#8a9eb8]">
+      {WEEKDAYS.map((weekday, index) => (
+        <span
+          className={index === 0 || index === 6 ? 'text-[#f5a623]' : undefined}
+          key={weekday}
+        >
+          {weekday}
+        </span>
+      ))}
     </div>
   )
 }
