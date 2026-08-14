@@ -6,10 +6,9 @@ import MonthCalendar, {
   CalendarLegend,
   CalendarWeekdays,
 } from './components/MonthCalendar.jsx'
-import FlightInfoBar from './components/FlightInfoBar.jsx'
-import DayUvCard from './components/DayUvCard.jsx'
+import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
-import { mockCalendar } from './mocks/mockCalendar.js'
+import { mockCalendar, mockEmptyCalendar } from './mocks/mockCalendar.js'
 import { getMockDaily } from './mocks/mockDailyDetail.js'
 import { parseMonth } from './utils/calendar.js'
 import { readOuting, TODAY } from './utils/schedule.js'
@@ -20,6 +19,12 @@ const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
 const MIN_MONTH = '2026-01'
+
+// ⚙️ 데모 스위치 — 온보딩에서 스케줄을 등록했는지
+//   true  : 등록 완료 → 달력에 일정이 보임 → 수정 흐름
+//   false : 미등록   → 빈 화면 → 새로 등록 흐름
+// 백엔드에서 등록 여부 boolean 이 나오면 그 값으로 교체한다
+const ONBOARDED = false
 
 const shiftMonth = (monthStr, diff) => {
   const [year, month] = monthStr.split('-').map(Number)
@@ -35,12 +40,14 @@ function SchedulePage() {
   const [outing, setOuting] = useState(true)
   const [showRegister, setShowRegister] = useState(false)
   const [registerDraft, setRegisterDraft] = useState({ files: [], schedules: [] })
+  const [registered, setRegistered] = useState(ONBOARDED)
 
-  // 달력 — 월이 바뀔 때마다
+  // 달력 — 월이 바뀌거나 일정을 새로 등록했을 때
   useEffect(() => {
     // 연동 시: fetchCalendar(month).then(setCalendar).catch(() => setCalendar(null))
-    setCalendar({ ...mockCalendar, month })
-  }, [month])
+    const source = registered ? mockCalendar : mockEmptyCalendar
+    setCalendar({ ...source, month })
+  }, [month, registered])
 
   // 날짜 상세 — 선택 날짜가 바뀔 때마다
   useEffect(() => {
@@ -72,25 +79,25 @@ function SchedulePage() {
         <div className={screenClass}>
           <AppHeader />
 
-          <header className="px-[20px] pt-[4px]">
-            <div className="flex items-center justify-between">
+          <header className="flex flex-col gap-[10px] bg-white px-[20px] pb-[16px] drop-shadow-[0px_2px_6px_rgba(29,43,68,0.04)]">
+            <div className="flex items-center justify-between pt-[4px]">
               <div className="flex items-center gap-[10px]">
                 <button
                   type="button"
                   aria-label="이전 달"
                   disabled={!canGoPrev}
-                  className="text-[18px] text-[#8a9eb8] disabled:opacity-30"
+                  className="px-[6px] py-[4px] text-[18px] leading-none text-[#1d2b44] disabled:opacity-30"
                   onClick={() => setMonth(shiftMonth(calendar.month, -1))}
                 >
                   ‹
                 </button>
-                <p className="text-[22px] font-bold tracking-[-1px] text-[#1d2b44]">
+                <p className="text-[24px] leading-[27.5px] font-bold tracking-[-0.88px] text-[#1d2b44]">
                   {year}년 {monthNumber}월
                 </p>
                 <button
                   type="button"
                   aria-label="다음 달"
-                  className="text-[18px] text-[#8a9eb8]"
+                  className="px-[6px] py-[4px] text-[18px] leading-none text-[#1d2b44]"
                   onClick={() => setMonth(shiftMonth(calendar.month, 1))}
                 >
                   ›
@@ -99,7 +106,7 @@ function SchedulePage() {
 
               <button
                 type="button"
-                className="rounded-full bg-[#eceef2] px-[13px] py-[7px] text-[12px] text-[#1d2b44]"
+                className="rounded-full bg-[#f0f2f6] px-[13px] py-[7px] text-[12px] leading-[18px] tracking-[-0.64px] text-[#3a506b]"
                 onClick={goRegister}
               >
                 + 일정 등록
@@ -122,20 +129,15 @@ function SchedulePage() {
 
                 <CalendarLegend />
 
-                <FlightInfoBar daily={daily} onEdit={goRegister} />
-
                 {cards.length > 0 ? (
-                  cards.map((card, index) => (
-                    <DayUvCard
-                      key={card.cityName}
-                      date={selectedDate}
-                      info={card}
-                      outing={outing}
-                      onToggle={() => setOuting(!outing)}
-                      canToggle
-                      showToggle={index === 0}
-                    />
-                  ))
+                  <DetailCard
+                    daily={daily}
+                    cards={cards}
+                    selectedDate={selectedDate}
+                    outing={outing}
+                    onToggle={() => setOuting(!outing)}
+                    onEdit={goRegister}
+                  />
                 ) : (
                   <p className="mt-10 text-center text-[13px] text-[#8a9eb8]">
                     이 날은 등록된 일정이 없어요
@@ -156,7 +158,11 @@ function SchedulePage() {
             value={registerDraft}
             onChange={setRegisterDraft}
             onBack={() => setShowRegister(false)}
-            onComplete={() => setShowRegister(false)}
+            onComplete={() => {
+              // 등록이 끝나면 달력에 일정이 채워진다
+              setRegistered(true)
+              setShowRegister(false)
+            }}
           />
         )}
       </div>

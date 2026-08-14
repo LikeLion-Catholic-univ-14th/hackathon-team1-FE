@@ -123,6 +123,15 @@ const byDate = {
   '2026-08-11': indoorDay,
 }
 
+// 실제로는 백엔드가 displayDate 를 완성해서 준다. 목데이터용 임시 포맷터
+const WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+const toDisplayDate = (date) => {
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = WEEK[new Date(year, month - 1, day).getDay()]
+  return `${month}월 ${day}일 (${weekday})`
+}
+
 export const mockDailyDetail = flightDay
 
 // 날짜를 눌렀을 때 그날 데이터를 돌려준다. 없으면 대기일 형태로 생성
@@ -136,7 +145,7 @@ export const getMockDaily = (date) => {
     date,
     departureInfo: {
       ...standbyDay.departureInfo,
-      displayDate: date,
+      displayDate: toDisplayDate(date),
     },
   }
 }

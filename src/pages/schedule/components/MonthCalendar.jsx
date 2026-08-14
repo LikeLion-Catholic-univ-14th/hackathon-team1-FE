@@ -1,7 +1,16 @@
 import { buildCalendarCells } from '../utils/calendar.js'
 import { isFuture, readDayLevel } from '../utils/schedule.js'
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+// 일요일 빨강 / 토요일 파랑 / 나머지 회색 (Figma 실측)
+const WEEKDAYS = [
+  { label: '일', color: 'text-[#e05252]' },
+  { label: '월', color: 'text-[#8a9eb8]' },
+  { label: '화', color: 'text-[#8a9eb8]' },
+  { label: '수', color: 'text-[#8a9eb8]' },
+  { label: '목', color: 'text-[#8a9eb8]' },
+  { label: '금', color: 'text-[#8a9eb8]' },
+  { label: '토', color: 'text-[#5c9ce6]' },
+]
 
 const DOT_COLOR = {
   DANGER: 'bg-[#b55454]',
@@ -36,13 +45,11 @@ function MonthCalendar({ year, month, days, selectedDate, onSelect }) {
           const info = dayMap[cell.date]
           const level = readDayLevel(info)
           const isSelected = cell.date === selectedDate
-          const hasSchedule = info?.scheduleId != null
 
+          // 선택된 날짜만 주황 원. 일정 유무로는 배경을 칠하지 않는다
           const numClass = isSelected
             ? 'bg-[#f5a623] text-white'
-            : hasSchedule
-              ? 'bg-[#fdf0e0] text-[#1d2b44]'
-              : 'text-[#1d2b44]'
+            : 'text-[#1d2b44]'
 
           return (
             <button
@@ -73,13 +80,13 @@ function MonthCalendar({ year, month, days, selectedDate, onSelect }) {
 
 export function CalendarWeekdays() {
   return (
-    <div className="grid grid-cols-7 pt-[14px] text-center text-[13px] text-[#8a9eb8]">
-      {WEEKDAYS.map((weekday, index) => (
+    <div className="grid grid-cols-7 pt-[14px]">
+      {WEEKDAYS.map((weekday) => (
         <span
-          className={index === 0 || index === 6 ? 'text-[#f5a623]' : undefined}
-          key={weekday}
+          className={`text-center text-[14px] leading-[16.5px] font-[590] tracking-[-0.64px] ${weekday.color}`}
+          key={weekday.label}
         >
-          {weekday}
+          {weekday.label}
         </span>
       ))}
     </div>

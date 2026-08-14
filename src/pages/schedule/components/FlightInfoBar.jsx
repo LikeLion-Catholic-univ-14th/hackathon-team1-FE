@@ -1,3 +1,4 @@
+import editIcon from '../assets/edit.svg'
 import { readShortDate, readTime } from '../utils/schedule.js'
 
 // 08/09   09:00 ICN ✈ 13:00 SYD        ✏️
@@ -7,7 +8,7 @@ function FlightInfoBar({ daily, onEdit }) {
   }
 
   return (
-    <div className="mx-[14px] mt-[12px] flex items-center gap-[26px] rounded-[10px] bg-white px-[16px] py-[18px] drop-shadow-[0px_3px_6px_rgba(168,184,204,0.15)]">
+    <div className="flex w-full items-center gap-[26px] rounded-[10px] bg-white px-[16px] py-[18px] drop-shadow-[0px_3px_6px_rgba(168,184,204,0.15)]">
       <div className="flex flex-1 items-center justify-center gap-[48px]">
         <p className="text-[16px] leading-[21px] font-bold tracking-[-0.4px] text-[#1d2b44]">
           {readShortDate(daily.date)}
@@ -41,10 +42,10 @@ function FlightInfoBar({ daily, onEdit }) {
       <button
         type="button"
         aria-label="일정 수정"
-        className="size-[15px] shrink-0 text-[13px] leading-none text-[#8a9eb8]"
+        className="size-[15px] shrink-0"
         onClick={onEdit}
       >
-        ✎
+        <img className="size-[15px]" src={editIcon} alt="" />
       </button>
     </div>
   )
