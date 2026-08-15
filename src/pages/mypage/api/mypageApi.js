@@ -168,3 +168,50 @@ export async function updatePouchItem(productId, product) {
     throw new Error(`파우치 수정 실패: ${response.status}`)
   }
 }
+
+// ── GET /users/procedures ─────────────────────────────────────────
+
+export async function getProcedures() {
+  const response = await fetch(`${apiBaseUrl}/users/procedures`, {
+    headers: { Accept: 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 조회 실패: ${response.status}`)
+  }
+
+  const payload = await response.json()
+  const items = Array.isArray(payload) ? payload : payload?.data ?? []
+
+  return items.map((item) => ({
+    id: String(item.procedureId ?? item.id ?? ''),
+    name: readString(item.name),
+    recent: Boolean(item.recentOneMonth),
+  }))
+}
+
+// ── POST /users/procedures ────────────────────────────────────────
+
+export async function addProcedure(name, recentOneMonth = false) {
+  const response = await fetch(`${apiBaseUrl}/users/procedures`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, recentOneMonth }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 추가 실패: ${response.status}`)
+  }
+}
+
+// ── DELETE /users/procedures/{procedureId} ────────────────────────
+
+export async function deleteProcedure(procedureId) {
+  const response = await fetch(`${apiBaseUrl}/users/procedures/${procedureId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 삭제 실패: ${response.status}`)
+  }
+}
