@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
-import LoadFailed from '../../components/common/LoadFailed.jsx'
 import TotalCard from './components/TotalCard.jsx'
 import RouteRanking from './components/RouteRanking.jsx'
 import ExposureChart from './components/ExposureChart.jsx'
@@ -28,16 +27,12 @@ function ReportPage() {
   const [agreed, setAgreed] = useState(false)
   const [showConsent, setShowConsent] = useState(false)
   const [savingPdf, setSavingPdf] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [reloadKey, setReloadKey] = useState(0)
 
   // PDF 로 담을 영역. 상태바(AppHeader)는 제외한다
   const reportRef = useRef(null)
 
   useEffect(() => {
     let alive = true
-
-    setFailed(false)
 
     fetchMonthlyReport(REPORT_YEAR, REPORT_MONTH)
       .then((data) => {
@@ -47,17 +42,12 @@ function ReportPage() {
       })
       .catch((error) => {
         console.error('월간 리포트 조회 실패', error)
-
-        if (alive) {
-          setReport(null)
-          setFailed(true)
-        }
       })
 
     return () => {
       alive = false
     }
-  }, [reloadKey])
+  }, [])
 
   const savePdf = async () => {
     if (savingPdf) {
@@ -79,6 +69,7 @@ function ReportPage() {
     }
   }
 
+  // 리포트를 못 받았을 때. 시안에 없는 화면을 만들지 않고 껍데기만 둔다
   if (!report) {
     return (
       <div className={stageClass}>
@@ -87,16 +78,21 @@ function ReportPage() {
             <StatusBar />
             <AppHeader />
 
-            {failed ? (
-              <LoadFailed
-                message="리포트를 불러오지 못했어요"
-                onRetry={() => setReloadKey((key) => key + 1)}
-              />
-            ) : (
-              <p className="px-[20px] py-[80px] text-center text-[13px] text-[#8a9eb8]">
-                불러오는 중...
-              </p>
-            )}
+            <header className="bg-white px-[20px] pb-[16px] drop-shadow-[0px_2px_6px_rgba(29,43,68,0.04)]">
+              <div className="flex items-center justify-between pt-[11px]">
+                <p className="text-[24px] leading-[25px] font-bold tracking-[-1px] text-[#1d2b44]">
+                  이달의 자외선 리포트
+                </p>
+
+                <button
+                  type="button"
+                  className="flex h-[36px] items-center gap-[6px] rounded-[10px] border-[1.276px] border-[#eceef2] bg-white px-[13.276px] py-[8.276px] text-[13px] leading-[19.5px] font-bold tracking-[-0.64px] text-[#1d2b44]"
+                >
+                  {REPORT_YEAR}년 {REPORT_MONTH}월
+                  <img className="h-[6px] w-[10px]" src={chevronDown} alt="" />
+                </button>
+              </div>
+            </header>
           </div>
 
           <BottomNavigation />

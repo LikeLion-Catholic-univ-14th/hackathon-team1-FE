@@ -3,7 +3,6 @@ import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import ScheduleSetup from '../onboarding/ScheduleSetup.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
-import LoadFailed from '../../components/common/LoadFailed.jsx'
 import MonthCalendar, {
   CalendarLegend,
   CalendarWeekdays,
@@ -21,6 +20,23 @@ const screenClass =
 
 const MIN_MONTH = '2026-01'
 
+// 서버에서 달력을 못 받았을 때 쓰는 빈 달력.
+// 시안에 있는 '일정 미등록' 화면이 그대로 뜬다
+const emptyCalendar = (monthStr) => {
+  const [year, monthNumber] = monthStr.split('-').map(Number)
+  const lastDate = new Date(year, monthNumber, 0).getDate()
+
+  return {
+    month: monthStr,
+    hasScheduleHistory: false,
+    days: Array.from({ length: lastDate }, (_, index) => ({
+      date: `${monthStr}-${String(index + 1).padStart(2, '0')}`,
+      scheduleId: null,
+      status: null,
+    })),
+  }
+}
+
 const shiftMonth = (monthStr, diff) => {
   const [year, month] = monthStr.split('-').map(Number)
   const next = new Date(year, month - 1 + diff, 1)
@@ -35,7 +51,6 @@ function SchedulePage() {
   const [outing, setOuting] = useState(true)
   const [showRegister, setShowRegister] = useState(false)
   const [registerDraft, setRegisterDraft] = useState({ files: [], schedules: [] })
-  const [failed, setFailed] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   const reload = () => setReloadKey((key) => key + 1)
@@ -44,8 +59,6 @@ function SchedulePage() {
   useEffect(() => {
     let alive = true
 
-    setFailed(false)
-
     fetchCalendar(month)
       .then((data) => {
         if (alive) {
@@ -53,11 +66,11 @@ function SchedulePage() {
         }
       })
       .catch((error) => {
+        // 실패해도 시안에 있는 '일정 미등록' 화면을 그대로 띄운다
         console.error('달력 조회 실패', error)
 
         if (alive) {
-          setCalendar(null)
-          setFailed(true)
+          setCalendar(emptyCalendar(month))
         }
       })
 
@@ -91,6 +104,7 @@ function SchedulePage() {
     }
   }, [selectedDate, reloadKey])
 
+  // 첫 요청이 끝나기 전. 껍데기만 두고 기다린다
   if (!calendar) {
     return (
       <div className={stageClass}>
@@ -98,17 +112,6 @@ function SchedulePage() {
           <div className={screenClass}>
             <StatusBar />
             <AppHeader />
-
-            {failed ? (
-              <LoadFailed
-                message="일정을 불러오지 못했어요"
-                onRetry={reload}
-              />
-            ) : (
-              <p className="px-[20px] py-[80px] text-center text-[13px] text-[#8a9eb8]">
-                불러오는 중...
-              </p>
-            )}
           </div>
 
           <BottomNavigation />
