@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { extractSchedulesFromFiles } from './api/scheduleApi.js'
+import { extractSchedulesFromFiles, saveSchedules } from './api/scheduleApi.js'
 import calendarIcon from './assets/schedule/calendar.svg'
 import checkIcon from './assets/schedule/check.svg'
 import clockIcon from './assets/schedule/clock.svg'
@@ -1316,12 +1316,24 @@ function ScheduleSetup({
     setPickerState(null)
   }
 
-  const completeAfterNotice = (nextSchedule) => {
+  // [업로드] — 서버에 실제로 저장한 뒤에 완료 화면을 띄운다.
+  // 저장이 실패하면 완료 화면을 띄우지 않는다 (저장된 척하면 안 된다)
+  const completeAfterNotice = async (nextSchedule) => {
     if (completeTimerRef.current) {
       clearTimeout(completeTimerRef.current)
     }
 
     setShowScheduleModal(false)
+
+    try {
+      await saveSchedules(nextSchedule.schedules)
+    } catch (error) {
+      console.error('일정 저장 실패', error)
+      window.alert('일정 저장에 실패했어요. 잠시 후 다시 시도해주세요.')
+
+      return
+    }
+
     setShowCompleteModal(true)
 
     completeTimerRef.current = setTimeout(() => {
