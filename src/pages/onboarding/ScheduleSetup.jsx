@@ -1265,35 +1265,44 @@ function ScheduleSetup({
       return
     }
 
-    if (!hasEditedScheduleDraft) {
-      return
-    }
-
     if (isArrivalBeforeDeparture(editingScheduleDraft)) {
       return
     }
 
-    const nextScheduleItem = {
-      id: editingScheduleDraft.id,
-      date: formatShortDate(editingScheduleDraft.departureDate),
-      departureDate: formatStoredDate(editingScheduleDraft.departureDate),
-      arrivalDate: formatStoredDate(editingScheduleDraft.arrivalDate),
-      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
-      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
-      departureTime: formatTimeValue(editingScheduleDraft.departureTime),
-      arrivalTime: formatTimeValue(editingScheduleDraft.arrivalTime),
-    }
-
-    const hasExistingSchedule = displaySchedules.some(
+    const isNewSchedule = !displaySchedules.some(
       (scheduleItem) => scheduleItem.id === editingScheduleDraft.id,
     )
+
+    if (!isNewSchedule && !hasEditedScheduleDraft) {
+      return
+    }
+
+    const defaultDate = { year: 2026, month: 8, day: 9 }
+    const defaultTime = { period: '오전', hour: 12, minute: 0 }
+    const depDate = editingScheduleDraft.departureDate ?? defaultDate
+    const arrDate = editingScheduleDraft.arrivalDate ?? defaultDate
+    const depTime = editingScheduleDraft.departureTime ?? defaultTime
+    const arrTime = editingScheduleDraft.arrivalTime ?? defaultTime
+
+    const nextScheduleItem = {
+      id: editingScheduleDraft.id,
+      date: formatShortDate(depDate),
+      departureDate: formatStoredDate(depDate),
+      arrivalDate: formatStoredDate(arrDate),
+      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
+      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
+      departureTime: formatTimeValue(depTime),
+      arrivalTime: formatTimeValue(arrTime),
+    }
+
+    const hasExistingSchedule = !isNewSchedule
     const nextSchedules = hasExistingSchedule
       ? displaySchedules.map((scheduleItem) =>
           scheduleItem.id === editingScheduleDraft.id
             ? { ...scheduleItem, ...nextScheduleItem }
             : scheduleItem,
         )
-      : [nextScheduleItem]
+      : [...displaySchedules, nextScheduleItem]
 
     setDisplaySchedules(nextSchedules)
     updateSchedule((prevSchedule) => ({
@@ -1506,6 +1515,11 @@ function ScheduleSetup({
           onFieldChange={updateScheduleField}
           onSave={saveConfirmedSchedules}
           onStartEdit={startScheduleEdit}
+          onAddSchedule={() => {
+            const nextDraft = createManualScheduleDraft()
+            setEditingScheduleDraft(nextDraft)
+            setEditingScheduleOriginalSignature('')
+          }}
         />
       )}
 
@@ -1566,7 +1580,21 @@ function ScheduleSetup({
       {editingScheduleDraft && !showManualListModal && (
         <ScheduleEditCard
           draft={editingScheduleDraft}
-          canSave={hasEditedScheduleDraft}
+          canSave={
+            displaySchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? hasEditedScheduleDraft
+              : (
+                !isArrivalBeforeDeparture(editingScheduleDraft) &&
+                String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
+                String(editingScheduleDraft.arrivalAirport ?? '').trim() !== '' &&
+                editingScheduleDraft.departureDate !== null &&
+                editingScheduleDraft.arrivalDate !== null &&
+                editingScheduleDraft.departureTime !== null &&
+                editingScheduleDraft.arrivalTime !== null
+              )
+          }
+          title={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? undefined : '비행 일정 추가하기'}
+          saveLabel={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? '정보 수정하기' : '+ 추가하기'}
           onBack={() => {
             setEditingScheduleDraft(null)
             setEditingScheduleOriginalSignature('')
