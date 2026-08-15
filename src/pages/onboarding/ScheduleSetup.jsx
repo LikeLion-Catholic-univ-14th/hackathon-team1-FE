@@ -1500,7 +1500,16 @@ function ScheduleSetup({
   }
 
   const skipSchedule = () => {
-    completeAfterNotice(schedule)
+    if (completeTimerRef.current) {
+      clearTimeout(completeTimerRef.current)
+    }
+
+    setShowScheduleModal(false)
+    setShowCompleteModal(true)
+
+    completeTimerRef.current = setTimeout(() => {
+      onComplete?.(schedule)
+    }, 2000)
   }
 
   // 모달이 겹치면 딤이 여러 겹 깔려서 뒤 카드가 비쳐 보인다.
@@ -1743,6 +1752,15 @@ function ScheduleSetup({
               ))}
             </div>
           )}
+
+          <button
+            className={`mt-[14px] box-border flex w-full items-center justify-center rounded-[16px] border-[1.276px] border-dashed border-[#ECEEF2] bg-[#F4F6F9] py-[9px] text-[13px] font-[510] leading-[26px] tracking-[-0.64px] text-[#91A4BF] ${headingFontClass}`}
+            type="button"
+            onClick={startManualScheduleInput}
+          >
+            <span className="mr-[10px] text-[16px] font-normal leading-none">+</span>
+            일정 직접 입력하기
+          </button>
 
           <button
             className={`mt-[18px] h-[53px] w-full rounded-[16px] border-0 text-[15px] leading-[22.5px] font-[860] tracking-[-0.4px] ${headingFontClass} ${
