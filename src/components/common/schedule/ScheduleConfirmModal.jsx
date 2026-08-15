@@ -1,4 +1,5 @@
 import ScheduleRow, { defaultScheduleFields } from './ScheduleRow.jsx'
+import xButtonIcon from '../../../pages/onboarding/assets/schedule/x-button.svg'
 
 const defaultHeadingFontClass =
   "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
@@ -27,16 +28,24 @@ export default function ScheduleConfirmModal({
   return (
     <div
       className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6"
-      onClick={onDismiss}
     >
       <div
-        className="relative box-border w-full max-w-[340px] overflow-hidden rounded-[24px] bg-white px-5 pb-6 pt-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
+        className="relative box-border w-full max-w-[340px] overflow-hidden rounded-[24px] bg-white px-5 pb-6 pt-[18px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
         style={{
           borderRadius: '24px',
           boxShadow: '0 20px 60px 0 rgba(29, 43, 68, 0.5)',
         }}
         onClick={(event) => event.stopPropagation()}
       >
+        <button
+          className="ml-auto flex h-[28px] w-[28px] items-center justify-center border-0 bg-transparent p-0"
+          type="button"
+          aria-label="닫기"
+          onClick={onDismiss}
+        >
+          <img className="h-[28px] w-[28px] object-contain" src={xButtonIcon} alt="" />
+        </button>
+
         <h2
           className={`m-0 text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
           style={{ fontSize: '19px' }}
@@ -64,7 +73,7 @@ export default function ScheduleConfirmModal({
           </span>
         </div>
 
-        <div className="mt-[17px] px-2">
+        <div className="mt-[17px] max-h-[240px] overflow-y-auto px-2">
           {schedules.map((schedule) => (
             <ScheduleRow
               activeEditIconStyle={activeEditIconStyle}
@@ -83,6 +92,13 @@ export default function ScheduleConfirmModal({
                 onFieldChange(schedule.id, fieldKey, nextValue)
               }
               onStartEdit={onStartEdit}
+            />
+          ))}
+          {Array.from({ length: Math.max(0, 5 - schedules.length) }).map((_, index) => (
+            <div
+              className="min-h-10 border-b border-[#eceef2]"
+              key={`empty-row-${index}`}
+              aria-hidden="true"
             />
           ))}
         </div>

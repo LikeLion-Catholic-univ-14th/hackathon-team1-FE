@@ -45,7 +45,7 @@ export default function ScheduleRow({
   )
 
   return (
-    <div className="flex min-h-10 items-center border-b border-[#eceef2] last:border-b-0">
+    <div className="flex min-h-10 items-center border-b border-[#eceef2]">
       {renderField(fields[0])}
       <span className="ml-[18px] flex items-center gap-[2px]">
         {renderField(fields[1])}

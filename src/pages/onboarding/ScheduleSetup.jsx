@@ -4,6 +4,8 @@ import calendarIcon from './assets/schedule/calendar.svg'
 import checkIcon from './assets/schedule/check.svg'
 import clockIcon from './assets/schedule/clock.svg'
 import editIcon from './assets/schedule/edit.svg'
+import textIcon from './assets/schedule/text.svg'
+import xButtonIcon from './assets/schedule/x-button.svg'
 import plane2Icon from './assets/schedule/plane2.svg'
 import warningRedIcon from './assets/schedule/warning-red.svg'
 import warningIcon from '../../assets/icons/warning.svg'
@@ -854,12 +856,20 @@ function ManualScheduleListModal({
   return (
     <div
       className="absolute inset-0 z-20 flex items-center justify-center bg-black/45 px-6"
-      onClick={onDismiss}
     >
       <div
-        className="relative box-border flex w-full max-w-[340px] flex-col items-start rounded-[24px] bg-white px-5 pb-6 pt-[30px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
+        className="relative box-border flex w-full max-w-[340px] flex-col items-start rounded-[24px] bg-white px-5 pb-6 pt-[18px] shadow-[0_20px_60px_0_rgba(29,43,68,0.50)]"
         onClick={(event) => event.stopPropagation()}
       >
+        <button
+          className="ml-auto flex h-[28px] w-[28px] items-center justify-center border-0 bg-transparent p-0"
+          type="button"
+          aria-label="닫기"
+          onClick={onDismiss}
+        >
+          <img className="h-[28px] w-[28px] object-contain" src={xButtonIcon} alt="" />
+        </button>
+
         <h2
           className={`m-0 w-full text-center text-[19px] font-[510] leading-[21px] tracking-[-0.64px] text-[#1d2b44] ${headingFontClass}`}
         >
@@ -875,10 +885,10 @@ function ManualScheduleListModal({
           비행 일정 추가하기
         </button>
 
-        <div className="mt-[16px] min-h-[180px] w-full px-2">
+        <div className="mt-[16px] w-full max-h-[240px] overflow-y-auto px-2">
           {schedules.map((schedule) => (
             <div
-              className="flex min-h-10 items-center border-b border-[#eceef2] last:border-b-0"
+              className="flex min-h-10 items-center border-b border-[#eceef2]"
               key={schedule.id}
             >
               <span
@@ -931,6 +941,13 @@ function ManualScheduleListModal({
                 />
               </button>
             </div>
+          ))}
+          {Array.from({ length: Math.max(0, 5 - schedules.length) }).map((_, index) => (
+            <div
+              className="min-h-10 border-b border-[#eceef2]"
+              key={`empty-row-${index}`}
+              aria-hidden="true"
+            />
           ))}
         </div>
 
@@ -1197,12 +1214,10 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
       return
     }
 
-    const now = new Date()
-    const currentHour = now.getHours()
     const defaultTime = {
-      period: currentHour >= 12 ? '오후' : '오전',
-      hour: currentHour > 12 ? currentHour - 12 : currentHour === 0 ? 12 : currentHour,
-      minute: now.getMinutes(),
+      period: '오전',
+      hour: 12,
+      minute: 0,
     }
 
     setPickerState({
@@ -1697,7 +1712,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
               onChange={handleFilesChange}
             />
 
-            {files.length > 0 && (
+            {files.length > 0 && manualSchedules.length === 0 && (
               <div className="mt-5 grid gap-2">
                 {files.map((file) => (
                   <div
@@ -1745,9 +1760,52 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
               </div>
             )}
 
+            {manualSchedules.length > 0 && (
+              <div className={`${files.length > 0 ? 'mt-2' : 'mt-5'} grid gap-2`}>
+                <div
+                  className="grid min-h-[57px] grid-cols-[22px_34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
+                >
+                  <button
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                    type="button"
+                    aria-label="직접 등록한 일정 삭제"
+                    onClick={() => setManualSchedules([])}
+                  >
+                    ×
+                  </button>
+                  <span
+                    className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
+                    aria-hidden="true"
+                  >
+                    <img
+                      className="h-[15px] w-[15px] object-contain opacity-50"
+                      src={textIcon}
+                      alt=""
+                    />
+                  </span>
+                  <span
+                    className={`overflow-hidden text-ellipsis whitespace-nowrap text-[14px] font-[510] leading-[21px] tracking-[-0.4px] text-[#1D2B44] ${headingFontClass}`}
+                  >
+                    직접 등록한 일정
+                  </span>
+                  <button
+                    className="flex h-[22px] w-[22px] items-center justify-center border-0 bg-transparent p-0"
+                    type="button"
+                    aria-label="직접 등록한 일정 확인"
+                    onClick={() => setShowManualListModal(true)}
+                  >
+                    <span
+                      className="h-[9px] w-[9px] rotate-45 border-r-[2px] border-t-[2px] border-[#8a9eb8]"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="mt-[27px] grid grid-cols-[0.8fr_1.2fr] gap-[10px]">
               <button
-                className={`box-border h-[53px] cursor-pointer rounded-2xl border-[1.276px] border-[#f5a623] bg-white text-[15px] font-bold leading-[23px] text-[#8a9eb8] ${headingFontClass}`}
+                className={`box-border h-[53px] cursor-pointer rounded-2xl border-[1.276px] border-[#f5a623] bg-white text-[15px] font-bold leading-[23px] text-[#F5A623] ${headingFontClass}`}
                 type="button"
                 onClick={skipSchedule}
               >

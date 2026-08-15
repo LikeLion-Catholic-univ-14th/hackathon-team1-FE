@@ -258,7 +258,7 @@ function Home() {
   }
 
   const handleRegisterSchedule = () => {
-    navigate('/schedule/register')
+    navigate('/schedule')
   }
 
   const canNavigateSolutions = solutionProductIds.length > 1
