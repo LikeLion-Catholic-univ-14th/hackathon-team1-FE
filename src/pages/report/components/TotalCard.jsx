@@ -1,5 +1,5 @@
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const cardGradient =
   'linear-gradient(154.88deg, #FF8C42 0%, #F5A623 55%, #FFD166 100%)'

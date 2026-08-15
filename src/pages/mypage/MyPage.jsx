@@ -14,9 +14,9 @@ import {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
-  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] text-[#1D2B44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
+  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-[SF_Pro,Pretendard,sans-serif] text-[#1D2B44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const getSpfSummary = (product) => {
   const spf = product.spf || '50'

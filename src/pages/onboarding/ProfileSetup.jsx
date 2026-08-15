@@ -21,9 +21,9 @@ const toSelectionArray = (value) =>
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 const profileLabelClass = `mb-2 block text-[14px] font-bold leading-[15px] text-[#8a9eb8] ${headingFontClass}`
 const profileOptionBaseClass = `box-border flex h-[39px] min-w-0 cursor-pointer flex-row items-center justify-center whitespace-nowrap rounded-full border-[1.276px] px-[11px] py-[9px] text-[13px] font-bold leading-[15px] transition-colors ${headingFontClass}`
 
@@ -64,7 +64,7 @@ function ProfileCard({
           이름
         </label>
         <input
-          className={`box-border h-[34px] w-full rounded-none border-0 border-b-[1.276px] bg-transparent px-0 pb-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f6a51a] ${
+          className={`box-border h-[34px] w-full rounded-none border-0 border-b-[1.276px] bg-transparent px-0 pb-4 font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f6a51a] ${
             profile.name ? 'border-[#f6a51a]' : 'border-[#eceef2]'
           }`}
           id="profile-name"
@@ -142,7 +142,7 @@ function ProfileCard({
       {shouldShowTreatmentInput && (
         <div className="-mt-[3px] mb-[18px] grid grid-cols-[minmax(0,1fr)_max-content] items-center gap-x-3 overflow-visible">
           <input
-            className={`box-border h-[46px] min-w-0 flex-1 rounded-xl border-[1.276px] bg-[#f7f8fb] px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.4)] focus:border-[#f5a623] focus:shadow-none ${
+            className={`box-border h-[46px] min-w-0 flex-1 rounded-xl border-[1.276px] bg-[#f7f8fb] px-4 font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.4)] focus:border-[#f5a623] focus:shadow-none ${
               profile.treatmentDetail ? 'border-[#f5a623]' : 'border-[#eceef2]'
             }`}
             type="text"

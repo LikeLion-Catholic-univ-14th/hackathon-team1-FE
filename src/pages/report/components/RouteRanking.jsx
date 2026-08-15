@@ -1,5 +1,5 @@
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const BAR_COLOR = ['#ff6b4a', '#f5a623', '#5c9ce6', '#8a9eb8']
 

@@ -1,14 +1,4 @@
-import {
-  hasOnboardingSunscreensStorage,
-  readOnboardingProfile,
-  readOnboardingSunscreens,
-} from '../../onboarding/storage/onboardingProfileStorage.js'
 import { getHome } from '../api/homeApi.js'
-import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
-import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
-import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
-
-const sunscreenIcons = [sunscreenIcon01, sunscreenIcon02, sunscreenIcon03]
 
 const baseAirportLocationMap = {
   ICN: '인천, 대한민국',
@@ -77,30 +67,6 @@ const formatDisplayCurrentTime = (value) => {
 const getBaseAirportFallbackLocation = (baseAirport) =>
   baseAirportLocationMap[baseAirport] ?? baseAirportLocationMap.ICN
 
-const normalizeStoredSunscreensForHome = (sunscreens) =>
-  Array.isArray(sunscreens)
-    ? sunscreens
-        .map((sunscreen, index) => ({
-          id: readString(sunscreen.id, `onboarding-home-sunscreen-${index}`),
-          name: readString(sunscreen.productName ?? sunscreen.name),
-          type: readString(sunscreen.type),
-          method: readString(sunscreen.blockingMethod ?? sunscreen.method),
-          spf: readString(sunscreen.spf),
-          pa: readString(sunscreen.pa),
-          icon: readString(sunscreen.icon, sunscreenIcons[index % sunscreenIcons.length]),
-          recommended:
-            typeof sunscreen.recommended === 'boolean'
-              ? sunscreen.recommended
-              : index === 0,
-        }))
-        .filter((sunscreen) => sunscreen.name)
-    : []
-
-const readStoredHomeSunscreens = () =>
-  hasOnboardingSunscreensStorage()
-    ? normalizeStoredSunscreensForHome(readOnboardingSunscreens() ?? [])
-    : null
-
 // 빈 상태 기본값
 const emptyHomeData = {
   mode: '',
@@ -132,11 +98,7 @@ const emptyHomeData = {
 }
 
 function mergeHomeData(data) {
-  const onboardingProfile = readOnboardingProfile()
-  const baseAirport = readString(
-    data.user?.baseAirport || onboardingProfile?.baseAirport,
-    'ICN',
-  )
+  const baseAirport = readString(data.user?.baseAirport, 'ICN')
   const hasScheduleLocation = Boolean(
     readString(data.user?.location) && readString(data.user?.currentTime) && data.user?.hasScheduleLocation,
   )
@@ -152,7 +114,7 @@ function mergeHomeData(data) {
     user: {
       ...emptyHomeData.user,
       ...data.user,
-      name: readString(data.user?.name, onboardingProfile?.name ?? ''),
+      name: readString(data.user?.name),
       baseAirport,
       location: hasScheduleLocation
         ? readString(data.user?.location)
@@ -166,46 +128,20 @@ function mergeHomeData(data) {
   }
 }
 
+// 서버 응답이 오기 전에 쓰는 초기값.
+// 예전에는 localStorage 값을 채웠지만, 서버가 원본이라 이제 빈 값을 쓴다
 export function getFallbackHomeData() {
-  const onboardingProfile = readOnboardingProfile()
-  const storedSunscreens = readStoredHomeSunscreens()
-
-  return mergeHomeData({
-    user: {
-      name: readString(onboardingProfile?.name),
-      baseAirport: readString(onboardingProfile?.baseAirport),
-    },
-    sunscreens: storedSunscreens ?? [],
-  })
+  return mergeHomeData({})
 }
 
+// 서버가 원본이다. 실패하면 localStorage 로 가리지 않고 빈 값을 돌려준다.
+// (가려버리면 연동이 깨진 걸 아무도 모르고, 다른 기기에서는 어차피 빈 화면이다)
 export async function loadHomeData() {
-  const fallbackData = getFallbackHomeData()
-  const storedSunscreens = readStoredHomeSunscreens()
-
   try {
-    const homeData = await getHome()
-    const mergedHomeData = mergeHomeData(homeData)
+    return mergeHomeData(await getHome())
+  } catch (error) {
+    console.error('홈 조회 실패', error)
 
-    // localStorage에 선크림이 있으면 그걸 우선 사용 (온보딩 직후)
-    if (storedSunscreens !== null && storedSunscreens.length > 0) {
-      return {
-        ...mergedHomeData,
-        sunscreens: storedSunscreens,
-      }
-    }
-
-    // API에서 선크림이 왔으면 사용
-    if (mergedHomeData.sunscreens.length > 0) {
-      return mergedHomeData
-    }
-
-    // 둘 다 없으면 fallback
-    return {
-      ...mergedHomeData,
-      sunscreens: fallbackData.sunscreens,
-    }
-  } catch {
-    return fallbackData
+    return emptyHomeData
   }
 }

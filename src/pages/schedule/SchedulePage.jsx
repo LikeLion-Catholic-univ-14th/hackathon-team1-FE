@@ -10,6 +10,8 @@ import MonthCalendar, {
 import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
 import { fetchCalendar, fetchDailyDetail, patchOuting } from './api/scheduleApi.js'
+import { mockCalendar } from './mocks/mockCalendar.js'
+import { getMockDaily } from './mocks/mockDailyDetail.js'
 import { parseMonth } from './utils/calendar.js'
 import { readOuting, TODAY } from './utils/schedule.js'
 
@@ -19,6 +21,11 @@ const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
 const MIN_MONTH = '2026-01'
+
+// ⚙️ .env 의 VITE_USE_MOCK
+//   'true' : 서버를 안 부르고 목데이터로 화면을 그린다 (서버 점검 중 / 시안 대조용)
+//   그 외   : 서버에서 받아온다
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 // 서버에서 달력을 못 받았을 때 쓰는 빈 달력.
 // 시안에 있는 '일정 미등록' 화면이 그대로 뜬다
@@ -57,6 +64,12 @@ function SchedulePage() {
 
   // 달력 — 월이 바뀌거나 일정을 새로 등록했을 때
   useEffect(() => {
+    if (USE_MOCK) {
+      setCalendar({ ...mockCalendar, month })
+
+      return
+    }
+
     let alive = true
 
     fetchCalendar(month)
@@ -81,6 +94,15 @@ function SchedulePage() {
 
   // 날짜 상세 — 선택 날짜가 바뀔 때마다
   useEffect(() => {
+    if (USE_MOCK) {
+      const next = getMockDaily(selectedDate)
+
+      setDaily(next)
+      setOuting(readOuting(next?.departureInfo))
+
+      return
+    }
+
     let alive = true
 
     fetchDailyDetail(selectedDate)
@@ -139,6 +161,10 @@ function SchedulePage() {
   const toggleOuting = () => {
     const next = !outing
     setOuting(next)
+
+    if (USE_MOCK) {
+      return
+    }
 
     patchOuting(daily?.scheduleId, next, selectedDate)
       .then((data) => {

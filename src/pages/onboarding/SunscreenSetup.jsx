@@ -39,9 +39,9 @@ const emptySunscreen = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 const sunscreenLabelClass = `mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16.5px] text-[#8a9eb8] ${headingFontClass}`
 const sunscreenControlClass = `box-border flex h-[46px] w-full items-center justify-between rounded-[10px] border-[1.276px] bg-white px-[14px] text-left text-[13px] font-normal leading-[19.5px] tracking-[0] text-[#1d2b44] outline-none ${headingFontClass}`
 
@@ -247,7 +247,7 @@ function ProductNameField({
   return (
     <div className="relative">
       <input
-        className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#eceef2] ${
+        className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#eceef2] ${
           value ? 'border-[#f5a623]' : 'border-[#eceef2]'
         } ${shouldShowSuggestions ? 'rounded-b-none' : ''}`}
         type="text"
@@ -566,7 +566,7 @@ function SunscreenSetup({
                   SPF
                 </label>
                 <input
-                  className={`box-border flex h-[46px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-[14px] font-[SF_Pro] text-[13px] font-normal leading-[19.5px] tracking-[0] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+                  className={`box-border flex h-[46px] w-full items-center rounded-[10px] border-[1.276px] bg-white px-[14px] font-[SF_Pro,Pretendard,sans-serif] text-[13px] font-normal leading-[19.5px] tracking-[0] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
                     form.spf
                       ? 'border-[#eceef2] text-[#1d2b44]'
                       : 'border-[#eceef2] text-[rgba(29,43,68,0.5)]'

@@ -8,7 +8,7 @@ import {
 } from 'recharts'
 
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 function ExposureChart({ dailyExposure, trend }) {
   return (

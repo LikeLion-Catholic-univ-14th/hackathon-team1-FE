@@ -3,7 +3,7 @@ import defaultFlightIcon from '../../../pages/onboarding/assets/schedule/flight.
 import ScheduleField from './ScheduleField.jsx'
 
 const defaultHeadingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const defaultActiveEditIconStyle = {
   filter:

@@ -15,7 +15,7 @@ import { ONBOARDING_SUNSCREEN_UPDATED_EVENT } from '../onboarding/storage/onboar
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-hidden text-left font-[SF_Pro] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-hidden text-left font-[SF_Pro,Pretendard,sans-serif] text-[#1d2b44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
 const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
   if (Array.isArray(sunscreen?.solutions) && sunscreen.solutions.length > 0) {

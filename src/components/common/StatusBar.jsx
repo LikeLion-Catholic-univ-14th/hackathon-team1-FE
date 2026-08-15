@@ -9,7 +9,7 @@ import batteryIcon from '../../assets/status-bar/battery.svg'
 //   아이콘    셀룰러 19.2x12.226 · 와이파이 17.142x12.328 · 배터리 27.328x13, 간격 7px
 
 const timeFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 // 9:41 처럼 앞자리 0 없이
 const readNow = () => {

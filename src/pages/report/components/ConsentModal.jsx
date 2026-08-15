@@ -1,5 +1,5 @@
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const TERMS = [
   { label: '제공받는 자', value: '회원이 선택한 제휴 피부과 1개소' },
