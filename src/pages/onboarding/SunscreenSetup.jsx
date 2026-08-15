@@ -661,7 +661,7 @@ function SunscreenSetup({
 
             <div className="mt-[27px] grid grid-cols-[0.8fr_1.2fr] gap-[10px]">
               <button
-                className={`box-border h-[53px] cursor-pointer rounded-2xl border-[1.276px] border-[#f5a623] bg-white text-[15px] font-bold leading-[23px] text-[#8a9eb8] ${headingFontClass}`}
+                className={`box-border h-[53px] cursor-pointer rounded-2xl border-[1.276px] border-[#f5a623] bg-white text-[15px] font-bold leading-[23px] text-[#F5A623] ${headingFontClass}`}
                 type="button"
                 onClick={() => onComplete?.([])}
               >
