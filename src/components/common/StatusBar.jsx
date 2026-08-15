@@ -17,7 +17,9 @@ const readNow = () => {
   return `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-function StatusBar({ time }) {
+// className 으로 배경만 갈아끼운다.
+// 기본은 시안대로 흰색, 부모가 이미 배경을 칠했으면 bg-transparent 를 넘긴다
+function StatusBar({ time, className = 'bg-white' }) {
   const [now, setNow] = useState(readNow)
 
   useEffect(() => {
@@ -45,7 +47,9 @@ function StatusBar({ time }) {
   }, [time])
 
   return (
-    <div className="flex h-[62px] w-full shrink-0 items-center justify-center gap-[154px] bg-white px-[24px] pt-[21px] pb-[19px]">
+    <div
+      className={`flex h-[62px] w-full shrink-0 items-center justify-center gap-[154px] px-[24px] pt-[21px] pb-[19px] ${className}`}
+    >
       <div className="flex h-[22px] min-w-px flex-1 items-center justify-center pt-[1.5px]">
         <p
           className={`${timeFontClass} text-center text-[17px] leading-[22px] font-[590] whitespace-nowrap text-black`}

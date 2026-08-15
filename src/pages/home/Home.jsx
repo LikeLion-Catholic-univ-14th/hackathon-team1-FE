@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import headerLogoNoBackground from '../../assets/navigation/header-logo-nobackground.svg'
-import statusBar from '../onboarding/assets/status-bar.svg'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import GenerateSolutionButton from './components/GenerateSolutionButton.jsx'
 import HomeTopSection from './components/HomeTopSection.jsx'
 import OutdoorModeCard from './components/OutdoorModeCard.jsx'
@@ -301,12 +301,7 @@ function Home() {
       >
         <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto pb-[124px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className={isOutdoor ? 'bg-[#284663]' : 'bg-white'}>
-            <img
-              className="h-[62px] w-full object-contain"
-              src={statusBar}
-              alt=""
-              aria-hidden="true"
-            />
+            <StatusBar className="bg-transparent" />
             <HomeHeader isOutdoor={isOutdoor} />
           </div>
 

@@ -9,7 +9,7 @@ import sunscreenIcon06 from '../../assets/sunscreen/sunscreen-icon-06.svg'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import warningIcon from '../../assets/icons/warning.svg'
-import statusBar from '../onboarding/assets/status-bar.svg'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
 import {
   findSunscreenProductByName,
@@ -598,12 +598,7 @@ function PouchEdit() {
   return (
     <div className={stageClass}>
       <section className={screenClass}>
-        <img
-          className="h-[62px] w-full object-contain"
-          src={statusBar}
-          alt=""
-          aria-hidden="true"
-        />
+        <StatusBar className="bg-transparent" />
 
         <header className="relative flex h-[60px] items-center justify-center bg-white">
           <BackButton onClick={() => navigate('/mypage')} />

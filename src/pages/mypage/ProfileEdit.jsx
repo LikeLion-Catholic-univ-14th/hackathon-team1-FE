@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import statusBar from '../onboarding/assets/status-bar.svg'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingProfile } from '../onboarding/storage/onboardingProfileStorage.js'
 import {
   getFallbackMyPageData,
@@ -181,12 +181,7 @@ function ProfileEdit() {
   return (
     <div className={stageClass}>
       <section className={screenClass}>
-        <img
-          className="h-[62px] w-full object-contain"
-          src={statusBar}
-          alt=""
-          aria-hidden="true"
-        />
+        <StatusBar className="bg-transparent" />
 
         <header className="relative flex h-[60px] items-center justify-center bg-white">
           <BackButton onClick={() => navigate('/mypage')} />
