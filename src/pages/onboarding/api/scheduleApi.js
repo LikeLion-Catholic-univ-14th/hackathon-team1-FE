@@ -103,23 +103,39 @@ export const extractSchedulesFromFiles = async (files) => {
     throw new Error('Demo: schedule extract failed')
   }
 
-  const formData = new FormData()
-  uploadableFiles.forEach((file) => {
+  // 명세서: multipart/form-data, 필드명은 'image', 한 번에 한 장.
+  // 여러 장이면 한 장씩 보내고 결과를 이어 붙인다
+  const extractOne = async (file) => {
+    const formData = new FormData()
     formData.append('image', file)
-  })
 
-  const response = await fetch(scheduleExtractEndpoint, {
-    method: 'POST',
-    body: formData,
-  })
+    const response = await fetch(scheduleExtractEndpoint, {
+      method: 'POST',
+      body: formData,
+    })
 
-  if (!response.ok) {
-    throw new Error(`Schedule extract failed: ${response.status}`)
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '')
+
+      console.error('[일정 인식] 서버 응답', response.status, detail)
+
+      throw new Error(`Schedule extract failed: ${response.status} ${detail}`)
+    }
+
+    return normalizeSchedulesResponse(await response.json())
   }
 
-  const responseData = await response.json()
+  const results = []
 
-  return normalizeSchedulesResponse(responseData)
+  for (const file of uploadableFiles) {
+    results.push(...(await extractOne(file)))
+  }
+
+  // 여러 장을 합치면 id 가 겹칠 수 있어 다시 매긴다
+  return results.map((schedule, index) => ({
+    ...schedule,
+    id: `${schedule.id ?? 'schedule'}-${index + 1}`,
+  }))
 }
 
 // ── 등록 (POST /schedules) ──────────────────────────────────────────
@@ -168,14 +184,21 @@ const toScheduleItem = (schedule) => {
   const isOvernight = schedule.arrivalTime < schedule.departureTime
   const arrivalDate = isOvernight ? nextDay(isoDate) : isoDate
 
-  return {
-    flightNumber: schedule.flightNumber ?? null,
+  const item = {
     departureAirport: schedule.departureAirport,
     arrivalAirport: schedule.arrivalAirport,
     departureTime: `${isoDate}T${schedule.departureTime}:00`,
     arrivalTime: `${arrivalDate}T${schedule.arrivalTime}:00`,
     isQuickTurn: schedule.isQuickTurn ?? false,
   }
+
+  // 직접 입력 화면에는 편명 칸이 없다.
+  // null 을 보내면 서버가 거를 수 있어, 값이 있을 때만 담는다
+  if (schedule.flightNumber) {
+    item.flightNumber = schedule.flightNumber
+  }
+
+  return item
 }
 
 export const saveSchedules = async (schedules) => {
@@ -185,15 +208,28 @@ export const saveSchedules = async (schedules) => {
     throw new Error('저장할 일정이 없습니다')
   }
 
+  const payload = { schedules: items }
+
+  // 무엇을 보냈는지 콘솔에서 바로 볼 수 있게 남긴다
+  console.log('[일정 저장] 보내는 값', JSON.stringify(payload, null, 2))
+
   const response = await fetch(`${apiBaseUrl}/schedules`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ schedules: items }),
+    body: JSON.stringify(payload),
   })
 
   if (!response.ok) {
-    throw new Error(`일정 저장 실패: ${response.status}`)
+    // 서버가 왜 거절했는지 본문에 적혀 있다
+    const detail = await response.text().catch(() => '')
+
+    console.error('[일정 저장] 서버 응답', response.status, detail)
+
+    throw new Error(`일정 저장 실패: ${response.status} ${detail}`)
   }
 
-  return response.json()
+  // 200 인데 본문이 비어 있을 수도 있다
+  const text = await response.text()
+
+  return text ? JSON.parse(text) : null
 }
