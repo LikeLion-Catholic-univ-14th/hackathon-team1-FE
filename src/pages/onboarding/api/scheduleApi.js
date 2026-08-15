@@ -105,7 +105,7 @@ export const extractSchedulesFromFiles = async (files) => {
 
   const formData = new FormData()
   uploadableFiles.forEach((file) => {
-    formData.append('files', file)
+    formData.append('image', file)
   })
 
   const response = await fetch(scheduleExtractEndpoint, {

@@ -1838,6 +1838,15 @@ function ScheduleSetup({
               onChange={handleFilesChange}
             />
 
+            <button
+              className={`mt-[14px] box-border flex w-full items-center justify-center rounded-[16px] border-[1.276px] border-dashed border-[#ECEEF2] bg-[#F4F6F9] py-[9px] text-[13px] font-[510] leading-[26px] tracking-[-0.64px] text-[#91A4BF] ${headingFontClass}`}
+              type="button"
+              onClick={startManualScheduleInput}
+            >
+              <span className="mr-[10px] text-[16px] font-normal leading-none">+</span>
+              일정 직접 입력하기
+            </button>
+
             {files.length > 0 && manualSchedules.length === 0 && (
               <div className="mt-5 grid gap-2">
                 {files.map((file) => (

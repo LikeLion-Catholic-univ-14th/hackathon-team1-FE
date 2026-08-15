@@ -8,6 +8,8 @@ import {
   saveOnboardingProfile,
   saveOnboardingSunscreens,
 } from './pages/onboarding/storage/onboardingProfileStorage.js'
+import { saveProfile } from './pages/onboarding/api/profileApi.js'
+import { saveSunscreens } from './pages/onboarding/api/sunscreenApi.js'
 import Home from './pages/home/Home.jsx'
 import MyPage from './pages/mypage/MyPage.jsx'
 import SchedulePage from './pages/schedule/SchedulePage.jsx'
@@ -58,6 +60,7 @@ function OnboardingFlow() {
   const completeProfileSetup = (profile) => {
     saveOnboardingProfile(profile)
     updateOnboardingData('profile', profile)
+    saveProfile(profile).catch(() => {})
     setOnboardingStep('sunscreen')
   }
 
@@ -69,6 +72,7 @@ function OnboardingFlow() {
 
     saveOnboardingSunscreens(sunscreen)
     updateOnboardingData('sunscreen', sunscreen)
+    saveSunscreens(products).catch(() => {})
     setOnboardingStep('schedule')
   }
 
