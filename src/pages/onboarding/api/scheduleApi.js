@@ -44,35 +44,58 @@ export const normalizeSchedulesResponse = (responseData) => {
     throw new Error('No schedules found in response')
   }
 
-  const schedules = rawSchedules.map((schedule, index) => ({
-    id: pickValue(schedule, ['id', 'scheduleId']) || `schedule-${index + 1}`,
-    date: pickValue(schedule, ['date', 'flightDate', 'departureDate']),
-    departureTime: pickValue(schedule, [
+  const schedules = rawSchedules.map((schedule, index) => {
+    const departureTime = pickValue(schedule, [
       'departureTime',
       'departure_time',
       'startTime',
-    ]),
-    departureAirport: pickValue(schedule, [
-      'departureAirport',
-      'departure_airport',
-      'origin',
-      'from',
-    ]),
-    arrivalTime: pickValue(schedule, ['arrivalTime', 'arrival_time', 'endTime']),
-    arrivalAirport: pickValue(schedule, [
-      'arrivalAirport',
-      'arrival_airport',
-      'destination',
-      'to',
-    ]),
-  }))
+    ])
+    const arrivalTime = pickValue(schedule, ['arrivalTime', 'arrival_time', 'endTime'])
+
+    // date 추출: 서버가 '2026-08-09T09:00:00' 형태로 주면 앞부분에서 MM/DD 추출
+    let date = pickValue(schedule, ['date', 'flightDate', 'departureDate'])
+    if (!date && departureTime) {
+      const match = departureTime.match(/(\d{4})-(\d{2})-(\d{2})/)
+      if (match) {
+        date = `${match[2]}/${match[3]}`
+      }
+    }
+
+    // 시간 추출: '2026-08-09T09:00:00' → '09:00'
+    const extractTime = (value) => {
+      if (!value) return ''
+      const timeMatch = value.match(/T(\d{2}:\d{2})/)
+      if (timeMatch) return timeMatch[1]
+      const shortMatch = value.match(/(\d{2}:\d{2})/)
+      if (shortMatch) return shortMatch[1]
+      return value
+    }
+
+    return {
+      id: pickValue(schedule, ['id', 'scheduleId']) || `schedule-${index + 1}`,
+      date,
+      departureTime: extractTime(departureTime),
+      departureAirport: pickValue(schedule, [
+        'departureAirport',
+        'departure_airport',
+        'origin',
+        'from',
+      ]),
+      arrivalTime: extractTime(arrivalTime),
+      arrivalAirport: pickValue(schedule, [
+        'arrivalAirport',
+        'arrival_airport',
+        'destination',
+        'to',
+      ]),
+      flightNumber: pickValue(schedule, ['flightNumber', 'flight_number']),
+      isQuickTurn: Boolean(schedule.isQuickTurn),
+    }
+  })
 
   const hasInvalidSchedule = schedules.some(
     (schedule) =>
-      !schedule.date ||
-      !schedule.departureTime ||
       !schedule.departureAirport ||
-      !schedule.arrivalTime ||
       !schedule.arrivalAirport,
   )
 

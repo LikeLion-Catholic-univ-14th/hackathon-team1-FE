@@ -11,6 +11,7 @@ import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import warningIcon from '../../assets/icons/warning.svg'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
+import { deletePouchItem } from './api/mypageApi.js'
 import {
   findSunscreenProductByName,
   mockSunscreenProducts,
@@ -592,6 +593,7 @@ function PouchEdit() {
     }
 
     persistProducts(products.filter((product) => product.id !== id))
+    deletePouchItem(id).catch(() => {})
     setActionProductId('')
   }
 
