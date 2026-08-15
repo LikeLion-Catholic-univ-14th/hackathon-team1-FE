@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
+import LoadFailed from '../../components/common/LoadFailed.jsx'
 import TotalCard from './components/TotalCard.jsx'
 import RouteRanking from './components/RouteRanking.jsx'
 import ExposureChart from './components/ExposureChart.jsx'
@@ -10,7 +11,6 @@ import NextMonthCard from './components/NextMonthCard.jsx'
 import ClinicCard from './components/ClinicCard.jsx'
 import ReportLockCard from './components/ReportLockCard.jsx'
 import ConsentModal from './components/ConsentModal.jsx'
-import { mockMonthlyReport } from './mocks/mockMonthlyReport.js'
 import { fetchMonthlyReport } from './api/reportApi.js'
 import { exportBlocksToPdf } from './utils/exportPdf.js'
 import chevronDown from './assets/chevron-down.svg'
@@ -20,11 +20,6 @@ const stageClass =
 const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
-// ⚙️ 데모 스위치 — .env 의 VITE_USE_MOCK
-//   'true'  : 서버를 아예 안 부르고 목데이터만 쓴다 (시연 영상 찍을 때)
-//   그 외    : 서버를 부르고, 실패하면 목데이터로 떨어진다
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-
 const REPORT_YEAR = 2026
 const REPORT_MONTH = 8
 
@@ -33,17 +28,16 @@ function ReportPage() {
   const [agreed, setAgreed] = useState(false)
   const [showConsent, setShowConsent] = useState(false)
   const [savingPdf, setSavingPdf] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   // PDF 로 담을 영역. 상태바(AppHeader)는 제외한다
   const reportRef = useRef(null)
 
   useEffect(() => {
-    if (USE_MOCK) {
-      setReport(mockMonthlyReport)
-      return
-    }
-
     let alive = true
+
+    setFailed(false)
 
     fetchMonthlyReport(REPORT_YEAR, REPORT_MONTH)
       .then((data) => {
@@ -52,18 +46,18 @@ function ReportPage() {
         }
       })
       .catch((error) => {
-        // 서버가 죽어도 화면은 떠야 한다
-        console.warn('월간 리포트 조회 실패 — 목데이터로 표시합니다', error)
+        console.error('월간 리포트 조회 실패', error)
 
         if (alive) {
-          setReport(mockMonthlyReport)
+          setReport(null)
+          setFailed(true)
         }
       })
 
     return () => {
       alive = false
     }
-  }, [])
+  }, [reloadKey])
 
   const savePdf = async () => {
     if (savingPdf) {
@@ -86,7 +80,29 @@ function ReportPage() {
   }
 
   if (!report) {
-    return <p className="p-6">불러오는 중...</p>
+    return (
+      <div className={stageClass}>
+        <div className="relative">
+          <div className={screenClass}>
+            <StatusBar />
+            <AppHeader />
+
+            {failed ? (
+              <LoadFailed
+                message="리포트를 불러오지 못했어요"
+                onRetry={() => setReloadKey((key) => key + 1)}
+              />
+            ) : (
+              <p className="px-[20px] py-[80px] text-center text-[13px] text-[#8a9eb8]">
+                불러오는 중...
+              </p>
+            )}
+          </div>
+
+          <BottomNavigation />
+        </div>
+      </div>
+    )
   }
 
   return (

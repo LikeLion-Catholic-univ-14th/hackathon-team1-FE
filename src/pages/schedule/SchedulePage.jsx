@@ -3,14 +3,13 @@ import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import ScheduleSetup from '../onboarding/ScheduleSetup.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
+import LoadFailed from '../../components/common/LoadFailed.jsx'
 import MonthCalendar, {
   CalendarLegend,
   CalendarWeekdays,
 } from './components/MonthCalendar.jsx'
 import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
-import { mockCalendar, mockEmptyCalendar } from './mocks/mockCalendar.js'
-import { getMockDaily } from './mocks/mockDailyDetail.js'
 import { fetchCalendar, fetchDailyDetail, patchOuting } from './api/scheduleApi.js'
 import { parseMonth } from './utils/calendar.js'
 import { readOuting, TODAY } from './utils/schedule.js'
@@ -21,17 +20,6 @@ const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
 const MIN_MONTH = '2026-01'
-
-// ⚙️ 데모 스위치 — .env 의 VITE_USE_MOCK
-//   'true'  : 서버를 아예 안 부르고 목데이터만 쓴다 (시연 영상 찍을 때)
-//   그 외    : 서버를 부르고, 실패하면 목데이터로 떨어진다
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-
-// 목데이터로 돌 때 등록 여부
-//   true  : 등록 완료 → 달력에 일정이 보임 → 수정 흐름
-//   false : 미등록   → 빈 화면 → 새로 등록 흐름
-// 서버를 쓸 땐 응답의 hasScheduleHistory 가 이 값을 대신한다
-const ONBOARDED = false
 
 const shiftMonth = (monthStr, diff) => {
   const [year, month] = monthStr.split('-').map(Number)
@@ -47,21 +35,16 @@ function SchedulePage() {
   const [outing, setOuting] = useState(true)
   const [showRegister, setShowRegister] = useState(false)
   const [registerDraft, setRegisterDraft] = useState({ files: [], schedules: [] })
-  const [registered, setRegistered] = useState(ONBOARDED)
+  const [failed, setFailed] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  const reload = () => setReloadKey((key) => key + 1)
 
   // 달력 — 월이 바뀌거나 일정을 새로 등록했을 때
   useEffect(() => {
-    const fallback = () => {
-      const source = registered ? mockCalendar : mockEmptyCalendar
-      setCalendar({ ...source, month })
-    }
-
-    if (USE_MOCK) {
-      fallback()
-      return
-    }
-
     let alive = true
+
+    setFailed(false)
 
     fetchCalendar(month)
       .then((data) => {
@@ -70,53 +53,68 @@ function SchedulePage() {
         }
       })
       .catch((error) => {
-        console.warn('달력 조회 실패 — 목데이터로 표시합니다', error)
+        console.error('달력 조회 실패', error)
 
         if (alive) {
-          fallback()
+          setCalendar(null)
+          setFailed(true)
         }
       })
 
     return () => {
       alive = false
     }
-  }, [month, registered])
+  }, [month, reloadKey])
 
   // 날짜 상세 — 선택 날짜가 바뀔 때마다
   useEffect(() => {
-    const apply = (next) => {
-      setDaily(next)
-      setOuting(readOuting(next?.departureInfo))
-    }
-
-    if (USE_MOCK) {
-      apply(getMockDaily(selectedDate))
-      return
-    }
-
     let alive = true
 
     fetchDailyDetail(selectedDate)
       .then((data) => {
         if (alive) {
-          apply(data)
+          setDaily(data)
+          setOuting(readOuting(data?.departureInfo))
         }
       })
       .catch((error) => {
-        console.warn('날짜 상세 조회 실패 — 목데이터로 표시합니다', error)
+        // 그날 일정이 없으면 404 가 날 수 있다. 화면은 "일정 없음"으로 둔다
+        console.warn('날짜 상세 조회 실패', error)
 
         if (alive) {
-          apply(getMockDaily(selectedDate))
+          setDaily(null)
         }
       })
 
     return () => {
       alive = false
     }
-  }, [selectedDate])
+  }, [selectedDate, reloadKey])
 
   if (!calendar) {
-    return <p className="p-6">불러오는 중...</p>
+    return (
+      <div className={stageClass}>
+        <div className="relative">
+          <div className={screenClass}>
+            <StatusBar />
+            <AppHeader />
+
+            {failed ? (
+              <LoadFailed
+                message="일정을 불러오지 못했어요"
+                onRetry={reload}
+              />
+            ) : (
+              <p className="px-[20px] py-[80px] text-center text-[13px] text-[#8a9eb8]">
+                불러오는 중...
+              </p>
+            )}
+          </div>
+
+          <BottomNavigation />
+        </div>
+      </div>
+    )
   }
 
   const { year, month: monthNumber } = parseMonth(calendar.month)
@@ -138,10 +136,6 @@ function SchedulePage() {
   const toggleOuting = () => {
     const next = !outing
     setOuting(next)
-
-    if (USE_MOCK) {
-      return
-    }
 
     patchOuting(daily?.scheduleId, next, selectedDate)
       .then((data) => {
@@ -248,9 +242,9 @@ function SchedulePage() {
             onChange={setRegisterDraft}
             onBack={() => setShowRegister(false)}
             onComplete={() => {
-              // 등록이 끝나면 달력에 일정이 채워진다
-              setRegistered(true)
+              // 서버에 저장이 끝난 시점. 달력을 다시 불러온다
               setShowRegister(false)
+              reload()
             }}
           />
         )}
