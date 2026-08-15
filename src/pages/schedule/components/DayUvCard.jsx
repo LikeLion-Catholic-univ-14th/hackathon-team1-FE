@@ -1,11 +1,64 @@
 import UvChart from './UvChart.jsx'
 import { isFuture } from '../utils/schedule.js'
 
+// 위험도 배지 — Figma 실측값
+// 위험만 테두리(#B55454)와 글자(#E05252) 색이 다르다
 const LEVEL = {
-  DANGER: { text: '위험', color: '#b55454', bg: '#fdf0f0' },
-  CAUTION: { text: '주의', color: '#f5a623', bg: '#fef7e6' },
-  SAFE: { text: '안전', color: '#3f8ae1', bg: '#eef4fd' },
-  INDOOR: { text: '실내', color: '#8a9eb8', bg: '#f1f3f5' },
+  DANGER: { label: '위험', border: '#b55454', message: '#e05252', bg: '#fff0f0' },
+  CAUTION: { label: '주의', border: '#f5a623', message: '#f5a623', bg: '#fef7e6' },
+  SAFE: { label: '안전', border: '#3f8ae1', message: '#3f8ae1', bg: '#ebf5ff' },
+  INDOOR: { label: '실내', border: '#8a9eb8', message: '#8a9eb8', bg: '#f1f3f5' },
+}
+
+function OutingToggle({ outing, disabled, onToggle }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      className="flex shrink-0 items-center gap-[6px] rounded-full bg-[#f1f3f5] px-[10px] py-[5px] disabled:opacity-40"
+      onClick={onToggle}
+    >
+      <span
+        className={`text-[11px] leading-[16.5px] font-bold tracking-[-0.64px] ${
+          outing ? 'text-[#f5a623]' : 'text-[#8a9eb8]'
+        }`}
+      >
+        외출
+      </span>
+      <span
+        className={`relative h-[18px] w-[32px] rounded-full ${
+          outing ? 'bg-[#f5a623]' : 'bg-[#8a9eb8]'
+        }`}
+      >
+        <span
+          className={`absolute top-[2px] size-[14px] rounded-full bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.18)] transition-[left] ${
+            outing ? 'left-[16px]' : 'left-[2px]'
+          }`}
+        />
+      </span>
+    </button>
+  )
+}
+
+// 미래 날짜 — 그래프 자리에 안내 문구
+function NoForecast() {
+  return (
+    <div className="flex w-full flex-col items-center rounded-[20px] bg-white pt-[41px] pb-[32px] drop-shadow-[0px_4px_9px_rgba(29,43,68,0.06)]">
+      <div className="flex flex-col items-center gap-[16px] px-[15px]">
+        <span className="flex size-[24px] items-center justify-center text-[20px] leading-none text-[#8a9eb8]">
+          ···
+        </span>
+        <div className="flex flex-col items-center">
+          <p className="text-[15px] leading-[15px] font-[510] tracking-[-1.4px] text-[#8a9eb8]">
+            아직 자외선 예보가 없어요
+          </p>
+          <p className="p-[10px] text-[13px] leading-[15px] font-[510] tracking-[-1.4px] text-[#8a9eb8]">
+            당일부터 확인할 수 있어요
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function DayUvCard({
@@ -20,8 +73,8 @@ function DayUvCard({
   const showGraph = !isFuture(date)
 
   return (
-    <section className="mx-[14px] mt-[12px] px-[19px] py-[25px]">
-      <div className="flex items-start justify-between">
+    <section className="w-[335.605px]">
+      <div className="flex w-full items-start justify-between">
         <div>
           <p className="text-[14px] leading-[15px] font-[590] tracking-[-1px] text-[#8a9eb8]">
             {info.displayDate}
@@ -32,62 +85,44 @@ function DayUvCard({
         </div>
 
         {showToggle && (
-          <button
-            type="button"
-            disabled={!canToggle}
-            className="flex shrink-0 items-center gap-[6px] rounded-full bg-[#f1f3f5] px-[10px] py-[5px] disabled:opacity-40"
-            onClick={onToggle}
-          >
-            <span className="text-[11px] leading-[16.5px] font-bold tracking-[-0.64px] text-[#f5a623]">
-              외출
-            </span>
-            <span
-              className={`relative h-[18px] w-[32px] rounded-full ${
-                outing ? 'bg-[#f5a623]' : 'bg-[#c9d0d8]'
-              }`}
-            >
-              <span
-                className={`absolute top-[2px] size-[14px] rounded-full bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.18)] transition-[left] ${
-                  outing ? 'left-[16px]' : 'left-[2px]'
-                }`}
-              />
-            </span>
-          </button>
+          <OutingToggle outing={outing} disabled={!canToggle} onToggle={onToggle} />
         )}
       </div>
 
-      {showGraph ? (
-        <>
-          <p className="pt-[14px] pl-[4px] text-[12px] leading-[15px] font-[590] tracking-[-1px] text-[#8a9eb8]">
-            자외선 그래프
-          </p>
+      <p className="h-[29px] pt-[14px] pl-[4px] text-[12px] leading-[15px] font-[590] tracking-[-1px] text-[#8a9eb8]">
+        자외선 그래프
+      </p>
 
-          <div className="mt-[7px] rounded-[20px] bg-white pt-[16px] pb-[21px] drop-shadow-[0px_4px_9px_rgba(29,43,68,0.06)]">
+      <div className="pt-[7px]">
+        {showGraph ? (
+          <div className="w-full rounded-[20px] bg-white pt-[16px] pb-[21px] drop-shadow-[0px_4px_9px_rgba(29,43,68,0.06)]">
             <UvChart graph={info.uvDetail.graph} level={info.riskLevel} />
           </div>
+        ) : (
+          <NoForecast />
+        )}
+      </div>
 
+      {showGraph && (
+        <div className="pt-[12px]">
           <div
-            className="mt-[12px] flex items-center gap-[10px] rounded-[12px] px-[14px] py-[11px]"
+            className="flex w-full items-center gap-[10px] rounded-[12px] px-[14px] py-[11px]"
             style={{ backgroundColor: level.bg }}
           >
             <span
               className="shrink-0 rounded-full border-[1.8px] px-[9.8px] py-[3.8px] text-[11px] leading-[16.5px] font-[1000] tracking-[-0.64px]"
-              style={{ borderColor: level.color, color: level.color }}
+              style={{ borderColor: level.border, color: level.border }}
             >
-              {level.text}
+              {level.label}
             </span>
             <p
               className="text-[13px] leading-[18px] font-bold tracking-[-1px]"
-              style={{ color: level.color }}
+              style={{ color: level.message }}
             >
               {info.uvDetail.warningMessage}
             </p>
           </div>
-        </>
-      ) : (
-        <p className="mt-[16px] rounded-[12px] bg-[#f1f3f5] px-[14px] py-[16px] text-center text-[13px] leading-[18px] text-[#8a9eb8]">
-          아직 자외선 예보가 나오지 않은 날이에요
-        </p>
+        </div>
       )}
     </section>
   )

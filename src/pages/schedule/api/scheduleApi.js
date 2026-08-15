@@ -1,8 +1,15 @@
-// 서버가 배포되면 VITE_API_BASE_URL 만 채우면 동작한다.
-// 현재 스웨거는 daily 응답이 평평한 구조(route/riskLevel/uvDetail)라
-// 화면이 쓰는 departureInfo / arrivalInfo 형태로 여기서 변환한다.
-// 백엔드 DTO가 바뀌면 이 파일만 고치면 되고 컴포넌트는 안 건드려도 된다.
-import { airportToCity, parseRoute } from '../utils/schedule.js'
+// api-docs (1).json 기준 — schedule-controller / daily-outing-controller
+//
+// 서버 응답과 화면이 쓰는 모양이 다른 부분은 여기서 맞춘다.
+// 컴포넌트는 이 파일이 만들어 주는 모양만 알면 되고, 백엔드 DTO 가 바뀌어도
+// 이 파일만 고치면 된다.
+//
+// 서버 LocationInfo = { airportCode, riskLevel, uvDetail }
+// 화면이 필요한 것   = { cityName, displayDate, timeDifference, outing, riskLevel, uvDetail }
+//   cityName    → airportCode 로 만든다 (airports.json)
+//   displayDate → date 로 만든다
+//   timeDifference → 서버에 없음. 백엔드 추가 필요 (지금은 null → 화면에서 숨김)
+import { airportToCity, parseRoute, toDisplayDate } from '../utils/schedule.js'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -16,61 +23,141 @@ const request = async (path, options) => {
   return response.json()
 }
 
-// 평평한 응답 → 화면용 카드 형태
-export const normalizeDaily = (raw) => {
+// GET /schedules/calendar?month=YYYY-MM
+// → { month, hasScheduleHistory, days: [{ date, scheduleId, status }] }
+export const fetchCalendar = (month) =>
+  request(`/schedules/calendar?month=${month}`)
+
+// 시차 → "한국 +1시간"
+// 백엔드 koreaTimeDifference 의 형태를 아직 못 봐서 세 가지를 모두 받는다.
+//   숫자 1        → "한국 +1시간"
+//   문자열 "+1"   → "한국 +1시간"
+//   문장 "한국 +1시간" → 그대로
+const formatTimeDifference = (value) => {
+  if (value == null || value === '') {
+    return null
+  }
+
+  if (typeof value === 'number') {
+    if (value === 0) {
+      return '한국과 시차 없음'
+    }
+
+    return `한국 ${value > 0 ? '+' : '-'}${Math.abs(value)}시간`
+  }
+
+  const text = String(value).trim()
+
+  // 이미 완성된 문장이면 그대로 쓴다
+  if (text.includes('한국')) {
+    return text
+  }
+
+  const hours = Number(text)
+
+  if (Number.isNaN(hours)) {
+    return text
+  }
+
+  if (hours === 0) {
+    return '한국과 시차 없음'
+  }
+
+  return `한국 ${hours > 0 ? '+' : '-'}${Math.abs(hours)}시간`
+}
+
+// 서버 LocationInfo → 화면용 카드 한 장
+const toCard = (info, fallbackCode, date, outing) => {
+  if (!info) {
+    return null
+  }
+
+  // 필드명이 koreaTimeDifference / timeDifference 어느 쪽으로 와도 받는다
+  const timeDifference = formatTimeDifference(
+    info.koreaTimeDifference ?? info.timeDifference,
+  )
+
+  // 시안: "8월 9일 (일) · 한국 +1시간" — 시차가 없으면 날짜만
+  const dateText = toDisplayDate(date)
+
+  return {
+    ...info,
+    cityName: airportToCity(info.airportCode ?? fallbackCode),
+    displayDate: timeDifference ? `${dateText} · ${timeDifference}` : dateText,
+    timeDifference,
+    outing,
+    riskLevel: info.riskLevel ?? 'CAUTION',
+    uvDetail: info.uvDetail ?? { warningMessage: '', graph: [] },
+  }
+}
+
+// GET /schedules/daily 응답 → 화면용
+export const normalizeDaily = (raw, date) => {
   if (!raw) {
     return null
   }
 
-  // 백엔드가 departureInfo/arrivalInfo 를 주기 시작하면 그대로 사용
-  if (raw.departureInfo) {
-    return raw
-  }
-
+  const day = raw.date ?? date
   const { from, to } = parseRoute(raw.route)
-  const outing = raw.outing ?? raw.isOuting ?? true
+  const outing = raw.isOuting ?? raw.outing ?? true
 
-  const makeSide = (code, timeDifference) => ({
-    cityName: airportToCity(code),
-    displayDate: raw.date,
-    timeDifference,
-    outing,
-    riskLevel: raw.riskLevel ?? 'CAUTION',
-    uvDetail: raw.uvDetail ?? { warningMessage: '', graph: [] },
-  })
+  const departureCode = raw.departureInfo?.airportCode ?? from ?? null
+  const arrivalCode = raw.arrivalInfo?.airportCode ?? to ?? null
 
   return {
     ...raw,
-    departureAirport: raw.departureAirport ?? from ?? null,
-    arrivalAirport: raw.arrivalAirport ?? to ?? null,
-    departureInfo: makeSide(from, null),
-    arrivalInfo: to && to !== from ? makeSide(to, null) : null,
+    date: day,
+    // 비행 정보 바가 쓰는 값들
+    departureAirport: departureCode,
+    arrivalAirport: arrivalCode,
+    // 비행 시각. 응답 최상위에 오는 게 기본이고,
+    // LocationInfo 안에 담겨 오는 경우도 대비해 둔다
+    flightNumber: raw.flightNumber ?? null,
+    departureTime:
+      raw.departureTime ?? raw.departureInfo?.departureTime ?? null,
+    arrivalTime: raw.arrivalTime ?? raw.arrivalInfo?.arrivalTime ?? null,
+    departureInfo: toCard(raw.departureInfo, from, day, outing),
+    arrivalInfo: toCard(raw.arrivalInfo, to, day, outing),
   }
 }
 
-export const fetchCalendar = (month) =>
-  request(`/schedules/calendar?month=${month}`)
-
+// GET /schedules/daily?date=YYYY-MM-DD
 export const fetchDailyDetail = (date) =>
-  request(`/schedules/daily?date=${date}`).then(normalizeDaily)
+  request(`/schedules/daily?date=${date}`).then((raw) =>
+    normalizeDaily(raw, date),
+  )
 
-export const patchOuting = (scheduleId, outing) =>
-  request(`/schedules/${scheduleId}/outing`, {
+// 외출 토글.
+// 비행 일정이 있는 날은 scheduleId 로, 없는 날은 날짜로 보낸다
+export const patchOuting = (scheduleId, outing, date) => {
+  if (scheduleId != null) {
+    return request(`/schedules/${scheduleId}/outing`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outing }),
+    }).then((raw) => normalizeDaily(raw, date))
+  }
+
+  // PATCH /daily-outing?date= → { date, isOuting } 만 돌아온다
+  return request(`/daily-outing?date=${date}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ outing }),
-  }).then(normalizeDaily)
-
-export const extractSchedules = (file) => {
-  const formData = new FormData()
-  formData.append('image', file)
-
-  return request('/schedules/extract', { method: 'POST', body: formData })
+  })
 }
 
+// POST /schedules
 export const createSchedules = (schedules) =>
   request('/schedules', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ schedules }),
+  })
+
+// PATCH /schedules/{scheduleId}
+export const updateSchedule = (scheduleId, schedule) =>
+  request(`/schedules/${scheduleId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(schedule),
   })
