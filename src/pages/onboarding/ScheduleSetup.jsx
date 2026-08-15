@@ -1011,7 +1011,14 @@ function ScheduleExtractFailureModal({ onDismiss, onManualInput, onRetryUpload }
 
 // embedded=true 이면 온보딩 껍데기(상태바·뒤로가기·타이틀·진행점) 없이
 // 업로드 카드와 모달만 렌더한다. 일정 탭에서 모달로 띄울 때 사용.
-function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }) {
+function ScheduleSetup({
+  value,
+  onChange,
+  onBack,
+  onComplete,
+  embedded = false,
+  completeMessage,
+}) {
   const fileInputRef = useRef(null)
   const filesRef = useRef([])
   const completeTimerRef = useRef(null)
@@ -1298,6 +1305,8 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
     }, 2000)
   }
 
+  // [저장하고 계속] — 확인 모달을 닫고 업로드 모달(파일 목록)로 돌아간다.
+  // 최종 완료는 업로드 모달의 [업로드] 버튼에서 처리한다.
   const saveConfirmedSchedules = () => {
     const nextSchedule = {
       ...schedule,
@@ -1305,7 +1314,9 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
     }
 
     updateSchedule(nextSchedule)
-    completeAfterNotice(nextSchedule)
+    setShowScheduleModal(false)
+    setEditingScheduleId('')
+    setActiveFieldKey('')
   }
 
   const dismissScheduleModal = () => {
@@ -1456,9 +1467,19 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
     completeAfterNotice(schedule)
   }
 
+  // 모달이 겹치면 딤이 여러 겹 깔려서 뒤 카드가 비쳐 보인다.
+  // 더 깊은 모달이 열리면 앞 단계는 감춘다.
+  const isEditingSchedule = Boolean(editingScheduleDraft) || Boolean(pickerState)
+  const hasOverlay =
+    showScheduleModal ||
+    showExtractFailureModal ||
+    showManualListModal ||
+    showCompleteModal ||
+    isEditingSchedule
+
   const overlays = (
     <>
-      {showScheduleModal && (
+      {showScheduleModal && !isEditingSchedule && (
         <ScheduleConfirmModal
           activeFieldKey={activeFieldKey}
           editingScheduleId={editingScheduleId}
@@ -1481,7 +1502,53 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
         />
       )}
 
-      {editingScheduleDraft && (
+      {showManualListModal && !editingScheduleDraft && (
+        <ManualScheduleListModal
+          schedules={manualSchedules}
+          onAddSchedule={openManualScheduleAdd}
+          onEditSchedule={openManualScheduleEdit}
+          onSave={saveManualScheduleList}
+          onDismiss={() => setShowManualListModal(false)}
+        />
+      )}
+
+      {/* 직접 입력 흐름의 편집 카드 */}
+      {editingScheduleDraft && showManualListModal && (
+        <ScheduleEditCard
+          draft={editingScheduleDraft}
+          canSave={
+            !isArrivalBeforeDeparture(editingScheduleDraft) &&
+            String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
+            String(editingScheduleDraft.arrivalAirport ?? '').trim() !== '' &&
+            editingScheduleDraft.departureDate !== null &&
+            editingScheduleDraft.arrivalDate !== null &&
+            editingScheduleDraft.departureTime !== null &&
+            editingScheduleDraft.arrivalTime !== null &&
+            (manualSchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? getScheduleDraftSignature(editingScheduleDraft) !==
+                editingScheduleOriginalSignature
+              : true)
+          }
+          title="비행 일정 추가하기"
+          saveLabel={
+            manualSchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? '정보 수정하기'
+              : '+ 추가하기'
+          }
+          onBack={() => {
+            setEditingScheduleDraft(null)
+            setEditingScheduleOriginalSignature('')
+            setPickerState(null)
+          }}
+          onChange={setEditingScheduleDraft}
+          onOpenDatePicker={openScheduleDatePicker}
+          onOpenTimePicker={openScheduleTimePicker}
+          onSave={saveManualScheduleDraft}
+        />
+      )}
+
+      {/* 사진 인식 흐름의 편집 카드. 피커는 바텀시트라 위에 겹쳐 뜬다 */}
+      {editingScheduleDraft && !showManualListModal && (
         <ScheduleEditCard
           draft={editingScheduleDraft}
           canSave={hasEditedScheduleDraft}
@@ -1508,7 +1575,10 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
 
       {showCompleteModal && (
         <NoticeModal
-          message={embedded ? '비행 일정이 등록되었어요!' : '프로필이 완성되었어요!'}
+          message={
+            completeMessage ??
+            (embedded ? '비행 일정이 등록되었어요!' : '프로필이 완성되었어요!')
+          }
           onDismiss={() => setShowCompleteModal(false)}
         />
       )}
@@ -1519,7 +1589,12 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
   if (embedded) {
     return (
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-[rgba(29,43,68,0.4)] px-[18px]">
-        <div className="w-full rounded-[26px] bg-white px-[22px] pt-[24px] pb-[26px] drop-shadow-[0px_-8px_20px_rgba(29,43,68,0.16)]">
+        {/* 다음 단계 모달이 열리면 업로드 카드는 감춘다 (딤이 겹치지 않게) */}
+        <div
+          className={`w-full rounded-[26px] bg-white px-[22px] pt-[24px] pb-[26px] drop-shadow-[0px_-8px_20px_rgba(29,43,68,0.16)] ${
+            hasOverlay ? 'invisible' : ''
+          }`}
+        >
           <div className="flex items-center justify-between pl-[6px]">
             <p
               className={`text-[20px] leading-[22.5px] font-[860] tracking-[-0.72px] text-[#1d2b44] ${headingFontClass}`}
@@ -1570,9 +1645,17 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
             <div className="mt-4 grid gap-2">
               {files.map((file) => (
                 <div
-                  className="grid min-h-[57px] grid-cols-[34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
+                  className="grid min-h-[57px] grid-cols-[22px_34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
                   key={file.id}
                 >
+                  <button
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 text-[22px] leading-[22px] font-light text-[#8a9eb8]"
+                    type="button"
+                    aria-label={`${file.name} 삭제`}
+                    onClick={() => removeFile(file.id)}
+                  >
+                    ×
+                  </button>
                   <span
                     className="h-[34px] w-[34px] overflow-hidden rounded-[9px] bg-white shadow-[0_4px_12px_0_rgba(29,43,68,0.06)]"
                     aria-hidden="true"
@@ -1591,12 +1674,15 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
                     {file.name}
                   </span>
                   <button
-                    className="h-[22px] w-[22px] rounded-full border-0 bg-transparent p-0 text-[22px] leading-[22px] font-light text-[#8a9eb8]"
+                    className="flex h-[22px] w-[22px] items-center justify-center border-0 bg-transparent p-0"
                     type="button"
-                    aria-label={`${file.name} 삭제`}
-                    onClick={() => removeFile(file.id)}
+                    aria-label={`${file.name} 일정 확인`}
+                    onClick={() => reopenScheduleConfirmModal(file)}
                   >
-                    ×
+                    <span
+                      className="h-[9px] w-[9px] rotate-45 border-t-[2px] border-r-[2px] border-[#8a9eb8]"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               ))}
@@ -1769,99 +1855,7 @@ function ScheduleSetup({ value, onChange, onBack, onComplete, embedded = false }
           </form>
         </div>
 
-        {showScheduleModal && (
-          <ScheduleConfirmModal
-            activeFieldKey={activeFieldKey}
-            editingScheduleId={editingScheduleId}
-            file={files[files.length - 1]}
-            fileName={modalFileName || files[0]?.name || '업로드한 일정 파일'}
-            schedules={displaySchedules}
-            onActivateField={activateScheduleField}
-            onDismiss={dismissScheduleModal}
-            onFieldChange={updateScheduleField}
-            onSave={saveConfirmedSchedules}
-            onStartEdit={startScheduleEdit}
-          />
-        )}
-
-        {showExtractFailureModal && (
-          <ScheduleExtractFailureModal
-            onDismiss={() => setShowExtractFailureModal(false)}
-            onManualInput={startManualScheduleInput}
-            onRetryUpload={resetScheduleUpload}
-          />
-        )}
-
-        {showManualListModal && !editingScheduleDraft && (
-          <ManualScheduleListModal
-            schedules={manualSchedules}
-            onAddSchedule={openManualScheduleAdd}
-            onEditSchedule={openManualScheduleEdit}
-            onSave={saveManualScheduleList}
-            onDismiss={() => setShowManualListModal(false)}
-          />
-        )}
-
-        {editingScheduleDraft && showManualListModal && (
-          <ScheduleEditCard
-            draft={editingScheduleDraft}
-            canSave={
-              !isArrivalBeforeDeparture(editingScheduleDraft) &&
-              String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
-              String(editingScheduleDraft.arrivalAirport ?? '').trim() !== '' &&
-              editingScheduleDraft.departureDate !== null &&
-              editingScheduleDraft.arrivalDate !== null &&
-              editingScheduleDraft.departureTime !== null &&
-              editingScheduleDraft.arrivalTime !== null &&
-              (manualSchedules.some((s) => s.id === editingScheduleDraft.id)
-                ? getScheduleDraftSignature(editingScheduleDraft) !== editingScheduleOriginalSignature
-                : true)
-            }
-            title={manualSchedules.some((s) => s.id === editingScheduleDraft.id) ? '비행 일정 추가하기' : '비행 일정 추가하기'}
-            saveLabel={manualSchedules.some((s) => s.id === editingScheduleDraft.id) ? '정보 수정하기' : '+ 추가하기'}
-            onBack={() => {
-              setEditingScheduleDraft(null)
-              setEditingScheduleOriginalSignature('')
-              setPickerState(null)
-            }}
-            onChange={setEditingScheduleDraft}
-            onOpenDatePicker={openScheduleDatePicker}
-            onOpenTimePicker={openScheduleTimePicker}
-            onSave={saveManualScheduleDraft}
-          />
-        )}
-
-        {editingScheduleDraft && !showManualListModal && (
-          <ScheduleEditCard
-            draft={editingScheduleDraft}
-            canSave={hasEditedScheduleDraft}
-            onBack={() => {
-              setEditingScheduleDraft(null)
-              setEditingScheduleOriginalSignature('')
-              setPickerState(null)
-            }}
-            onChange={setEditingScheduleDraft}
-            onOpenDatePicker={openScheduleDatePicker}
-            onOpenTimePicker={openScheduleTimePicker}
-            onSave={saveScheduleDraft}
-          />
-        )}
-
-        {pickerState && (
-          <WheelPickerSheet
-            type={pickerState.type}
-            value={pickerState.value}
-            onChange={updatePickerValue}
-            onClose={closePicker}
-          />
-        )}
-
-        {showCompleteModal && (
-          <NoticeModal
-            message="프로필이 완성되었어요!"
-            onDismiss={() => setShowCompleteModal(false)}
-          />
-        )}
+        {overlays}
       </section>
     </div>
   )

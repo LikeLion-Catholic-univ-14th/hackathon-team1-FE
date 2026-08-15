@@ -117,10 +117,146 @@ const standbyDay = {
   arrivalInfo: null,
 }
 
+// 미래 비행 — 카드 2장. 그래프 자리에는 "아직 자외선 예보가 없어요"가 뜬다
+const futureFlightDay = {
+  scheduleId: 110,
+  date: '2026-08-20',
+  flightNumber: 'KE901',
+  departureAirport: 'ICN',
+  arrivalAirport: 'CDG',
+  departureTime: '2026-08-20T13:30:00',
+  arrivalTime: '2026-08-20T18:40:00',
+  departureInfo: {
+    cityName: '인천',
+    displayDate: '8월 20일 (목)',
+    timeDifference: null,
+    outing: true,
+    riskLevel: 'DANGER',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(10),
+    },
+  },
+  arrivalInfo: {
+    cityName: '파리',
+    displayDate: '8월 20일 (목) · 한국 -7시간',
+    timeDifference: '한국 -7시간',
+    outing: true,
+    riskLevel: 'CAUTION',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(7),
+    },
+  },
+}
+
+// 미래 레이오버 체류일 — 카드 1장
+const futureLayoverDay = {
+  scheduleId: 111,
+  date: '2026-08-21',
+  flightNumber: null,
+  departureAirport: null,
+  arrivalAirport: null,
+  departureTime: null,
+  arrivalTime: null,
+  departureInfo: {
+    cityName: '파리',
+    displayDate: '8월 21일 (금) · 한국 -7시간',
+    timeDifference: '한국 -7시간',
+    outing: true,
+    riskLevel: 'CAUTION',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(7),
+    },
+  },
+  arrivalInfo: null,
+}
+
+// 미래 비행 — 시드니
+const futureSydneyDay = {
+  scheduleId: 112,
+  date: '2026-08-27',
+  flightNumber: 'KE121',
+  departureAirport: 'ICN',
+  arrivalAirport: 'SYD',
+  departureTime: '2026-08-27T19:50:00',
+  arrivalTime: '2026-08-28T06:20:00',
+  departureInfo: {
+    cityName: '인천',
+    displayDate: '8월 27일 (목)',
+    timeDifference: null,
+    outing: true,
+    riskLevel: 'CAUTION',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(8),
+    },
+  },
+  arrivalInfo: {
+    cityName: '시드니',
+    displayDate: '8월 27일 (목) · 한국 +1시간',
+    timeDifference: '한국 +1시간',
+    outing: true,
+    riskLevel: 'DANGER',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(11),
+    },
+  },
+}
+
+// 오늘(8/14) — 진입하자마자 보이는 화면. 비행 정보 바 + 카드 2장
+const todayFlightDay = {
+  scheduleId: 109,
+  date: '2026-08-14',
+  flightNumber: 'KE121',
+  departureAirport: 'ICN',
+  arrivalAirport: 'SYD',
+  departureTime: '2026-08-14T09:00:00',
+  arrivalTime: '2026-08-14T13:00:00',
+  departureInfo: {
+    cityName: '인천',
+    displayDate: '8월 14일 (금)',
+    timeDifference: null,
+    outing: true,
+    riskLevel: 'CAUTION',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(8),
+    },
+  },
+  arrivalInfo: {
+    cityName: '시드니',
+    displayDate: '8월 14일 (금) · 한국 +1시간',
+    timeDifference: '한국 +1시간',
+    outing: true,
+    riskLevel: 'DANGER',
+    uvDetail: {
+      warningMessage: '09–17시 자외선 주의 — SPF 50+ 권장',
+      graph: makeGraph(11),
+    },
+  },
+}
+
 const byDate = {
+  '2026-08-14': todayFlightDay,
   '2026-08-09': flightDay,
   '2026-08-08': layoverDay,
   '2026-08-11': indoorDay,
+  // 미래 (오늘 = 2026-08-14 기준)
+  '2026-08-20': futureFlightDay,
+  '2026-08-21': futureLayoverDay,
+  '2026-08-27': futureSydneyDay,
+}
+
+// 실제로는 백엔드가 displayDate 를 완성해서 준다. 목데이터용 임시 포맷터
+const WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+const toDisplayDate = (date) => {
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = WEEK[new Date(year, month - 1, day).getDay()]
+  return `${month}월 ${day}일 (${weekday})`
 }
 
 export const mockDailyDetail = flightDay
@@ -136,7 +272,7 @@ export const getMockDaily = (date) => {
     date,
     departureInfo: {
       ...standbyDay.departureInfo,
-      displayDate: date,
+      displayDate: toDisplayDate(date),
     },
   }
 }

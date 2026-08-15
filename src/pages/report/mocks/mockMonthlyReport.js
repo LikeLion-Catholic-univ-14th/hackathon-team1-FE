@@ -90,6 +90,6 @@ export const mockMonthlyReport = {
     exposurePercentage: 75,
     description:
       '3개월 누적 노출이 상위 구간에 진입했습니다. 색소 관리 시점을 상담해보실 수 있습니다.',
-    reservationUrl: 'https://www.dernaclinic.com/ko',
+    reservationUrl: 'https://www.wellnesshouse-seoul.com/ko',
   },
 }

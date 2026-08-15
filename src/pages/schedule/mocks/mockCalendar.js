@@ -33,13 +33,14 @@ const buildDays = (year, month) => {
       }
     }
 
-    // 일정 없는 날. 외출 토글은 daily-outing API로 별도 관리 예정
+    // 일정 없는 대기일. 외출은 켜져 있고 위험도는 국내 기준으로 온다
+    // (daily-outing API 로 토글 가능하도록 백엔드 수정 예정)
     return {
       date,
       scheduleId: null,
-      mode: 'INDOOR',
+      mode: 'OUTING',
       riskLevel: 'SAFE',
-      status: 'INDOOR',
+      status: 'SAFE',
     }
   })
 }

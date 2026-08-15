@@ -34,20 +34,69 @@ export const readDayLevel = (day) => {
   return day.riskLevel ?? day.status ?? null
 }
 
+import airports from '../../../components/common/schedule/airports.json'
+
+// 주요 노선은 도시명을 직접 둔다.
+// airports.json 은 도시명이 아니라 공항명이라 그대로 쓰면
+// SYD → "킹스포트 스미스 공항" 처럼 시안과 달라진다.
 const AIRPORT_CITY = {
   ICN: '인천',
   GMP: '김포',
   SYD: '시드니',
+  MEL: '멜버른',
+  BNE: '브리즈번',
   NRT: '도쿄',
   HND: '도쿄',
+  KIX: '오사카',
+  PEK: '베이징',
+  PVG: '상하이',
+  HKG: '홍콩',
+  BKK: '방콕',
+  SIN: '싱가포르',
   CDG: '파리',
+  LHR: '런던',
+  FRA: '프랑크푸르트',
+  FCO: '로마',
+  MAD: '마드리드',
   DXB: '두바이',
+  AUH: '아부다비',
   HNL: '호놀룰루',
-  BNE: '브리즈번',
   LAX: '로스앤젤레스',
+  JFK: '뉴욕',
+  SFO: '샌프란시스코',
+  YVR: '밴쿠버',
 }
 
-export const airportToCity = (code) => AIRPORT_CITY[code] ?? code
+// 코드로 빠르게 찾기 위한 표
+const airportByCode = {}
+airports.forEach((airport) => {
+  airportByCode[airport.code] = airport.name
+})
+
+// "인천 국제공항" → "인천"
+const stripAirportSuffix = (name) =>
+  name
+    .replace(/(국제)?공항.*$/, '')
+    .replace(/지역$/, '')
+    .trim()
+
+export const airportToCity = (code) => {
+  if (!code) {
+    return ''
+  }
+
+  if (AIRPORT_CITY[code]) {
+    return AIRPORT_CITY[code]
+  }
+
+  const name = airportByCode[code]
+
+  if (name) {
+    return stripAirportSuffix(name) || name
+  }
+
+  return code
+}
 
 // "ICN → SYD" → { from: 'ICN', to: 'SYD' }
 export const parseRoute = (route) => {
@@ -55,8 +104,36 @@ export const parseRoute = (route) => {
   return { from, to }
 }
 
-// "2026-08-09T09:00:00" → "09:00"
-export const readTime = (isoString) => (isoString ?? '').slice(11, 16)
+// 비행 시각 → "09:00"
+// 서버가 어떤 형식으로 줄지 몰라 세 가지를 모두 받는다.
+//   "2026-08-09T09:00:00"  → "09:00"
+//   "2026-08-09 09:00:00"  → "09:00"
+//   "09:00" / "09:00:00"   → "09:00"
+export const readTime = (value) => {
+  if (!value) {
+    return ''
+  }
+
+  const text = String(value)
+  const matched = text.match(/(\d{2}):(\d{2})/)
+
+  return matched ? `${matched[1]}:${matched[2]}` : ''
+}
 
 // "2026-08-09" → "08/09"
 export const readShortDate = (date) => (date ?? '').slice(5).replace('-', '/')
+
+const WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+// "2026-08-09" → "8월 9일 (일)"
+// 서버 LocationInfo 에 displayDate 가 없어 프론트에서 만든다
+export const toDisplayDate = (date) => {
+  if (!date) {
+    return ''
+  }
+
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = WEEK[new Date(year, month - 1, day).getDay()]
+
+  return `${month}월 ${day}일 (${weekday})`
+}

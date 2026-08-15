@@ -1,3 +1,5 @@
+import { mockSchedules } from '../mocks/mockSchedules.js'
+
 const scheduleExtractEndpoint =
   import.meta.env.VITE_SCHEDULE_EXTRACT_API_URL ?? '/api/schedules/extract'
 
@@ -81,6 +83,22 @@ export const normalizeSchedulesResponse = (responseData) => {
   return schedules
 }
 
+// 서버가 아직 안 열려 있어 추출이 실패하면 목데이터로 대체한다.
+// .env 에 VITE_USE_MOCK_EXTRACT=false 를 넣으면 이 대체를 끌 수 있다.
+const useMockFallback = import.meta.env.VITE_USE_MOCK_EXTRACT !== 'false'
+
+// 🎬 시연용 — 파일명에 'fail' 또는 '실패'가 들어가면 인식 실패로 처리한다.
+//    "사진이 흐려서 못 읽었을 때 → 직접 입력" 흐름을 보여주기 위한 장치.
+//    서버 연동이 끝나면 이 함수와 호출부를 지우면 된다.
+const isDemoFailureFile = (uploadableFiles) =>
+  uploadableFiles.some((file) => /fail|실패/i.test(file.name ?? ''))
+
+const withMockIds = () =>
+  mockSchedules.map((schedule, index) => ({
+    ...schedule,
+    id: `${schedule.id ?? 'mock-schedule'}-${Date.now()}-${index}`,
+  }))
+
 export const extractSchedulesFromFiles = async (files) => {
   const uploadableFiles = files
     .map((file) => file.sourceFile)
@@ -90,21 +108,36 @@ export const extractSchedulesFromFiles = async (files) => {
     throw new Error('No uploadable files')
   }
 
+  // 🎬 시연용 — 파일명에 fail/실패 가 있으면 바로 인식 실패로 보낸다
+  if (isDemoFailureFile(uploadableFiles)) {
+    throw new Error('Demo: schedule extract failed')
+  }
+
   const formData = new FormData()
   uploadableFiles.forEach((file) => {
     formData.append('files', file)
   })
 
-  const response = await fetch(scheduleExtractEndpoint, {
-    method: 'POST',
-    body: formData,
-  })
+  try {
+    const response = await fetch(scheduleExtractEndpoint, {
+      method: 'POST',
+      body: formData,
+    })
 
-  if (!response.ok) {
-    throw new Error(`Schedule extract failed: ${response.status}`)
+    if (!response.ok) {
+      throw new Error(`Schedule extract failed: ${response.status}`)
+    }
+
+    const responseData = await response.json()
+
+    return normalizeSchedulesResponse(responseData)
+  } catch (error) {
+    if (!useMockFallback) {
+      throw error
+    }
+
+    console.warn('[schedule] 추출 API 실패 — 목데이터로 대체합니다.', error)
+
+    return withMockIds()
   }
-
-  const responseData = await response.json()
-
-  return normalizeSchedulesResponse(responseData)
 }

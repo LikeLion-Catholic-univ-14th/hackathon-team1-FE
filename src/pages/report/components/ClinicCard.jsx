@@ -4,7 +4,7 @@ const headingFontClass =
 const headerGradient =
   'linear-gradient(150.18deg, #1B3A61 0%, #345072 49.52%, #3E6495 100%)'
 
-function ClinicCard({ month, clinic }) {
+function ClinicCard({ month, clinic, onSavePdf, saving }) {
   return (
     <section
       className={`mx-4 mt-3 overflow-hidden rounded-[22px] bg-white shadow-[0px_4px_18px_0px_rgba(29,43,68,0.06)] ${headingFontClass}`}
@@ -61,12 +61,18 @@ function ClinicCard({ month, clinic }) {
           웰니스하우스 서울 예약하기 →
         </a>
 
-        <div className="flex justify-center gap-[24px] pt-[12px]">
+        {/* data-pdf-hide — 저장된 PDF 안에는 이 버튼이 찍히지 않게 한다 */}
+        <div
+          data-pdf-hide="true"
+          className="flex justify-center gap-[24px] pt-[12px]"
+        >
           <button
             type="button"
-            className="text-[13px] leading-[19.5px] tracking-[-0.64px] text-[#8a9eb8]"
+            disabled={saving}
+            onClick={onSavePdf}
+            className="text-[13px] leading-[19.5px] tracking-[-0.64px] text-[#8a9eb8] disabled:opacity-50"
           >
-            PDF 저장하기
+            {saving ? 'PDF 만드는 중...' : 'PDF 저장하기'}
           </button>
         </div>
       </div>
