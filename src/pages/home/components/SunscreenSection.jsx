@@ -25,7 +25,7 @@ function CheckMark({ selected }) {
 function SunscreenCard({ sunscreen, selected, onSelect }) {
   return (
     <button
-      className={`relative flex min-h-[164px] flex-none flex-col items-center rounded-[16px] border-[1.276px] px-[6px] pb-[12px] pt-[33px] text-left transition-colors ${
+      className={`relative flex min-h-[164px] flex-none flex-col items-center rounded-[16px] border-[2px] px-[6px] pb-[12px] pt-[33px] text-left transition-colors ${
         selected
           ? 'border-[#F5A623] bg-[#FFFBF2]'
           : 'border-[#eef2f7] bg-[#F5F7FB]'
@@ -107,6 +107,7 @@ function SunscreenSection({
   onSelect,
   empty = false,
   onRegisterSunscreen,
+  disabled = false,
 }) {
   const scrollRef = useRef(null)
   const dragStateRef = useRef({
@@ -208,8 +209,8 @@ function SunscreenSection({
               <SunscreenCard
                 key={sunscreen.id}
                 sunscreen={sunscreen}
-                selected={sunscreen.id === selectedId}
-                onSelect={onSelect}
+                selected={!disabled && sunscreen.id === selectedId}
+                onSelect={disabled ? () => {} : onSelect}
               />
             ))}
             {Array.from({ length: placeholderCount }).map((_, index) => (
@@ -217,7 +218,7 @@ function SunscreenSection({
             ))}
           </div>
 
-          <SunscreenTip tip={tip} />
+          {!disabled && tip && <SunscreenTip tip={tip} />}
         </>
       )}
     </section>

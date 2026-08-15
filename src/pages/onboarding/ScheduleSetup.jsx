@@ -1043,6 +1043,7 @@ function ScheduleSetup({
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [showExtractFailureModal, setShowExtractFailureModal] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
+  const [fileSizeError, setFileSizeError] = useState(false)
   const [editingScheduleId, setEditingScheduleId] = useState('')
   const [activeFieldKey, setActiveFieldKey] = useState('')
   const [editingScheduleDraft, setEditingScheduleDraft] = useState(null)
@@ -1130,6 +1131,17 @@ function ScheduleSetup({
     if (selectedFiles.length === 0) {
       return
     }
+
+    const maxSize = 10 * 1024 * 1024
+    const oversized = selectedFiles.some((file) => file.size > maxSize)
+
+    if (oversized) {
+      setFileSizeError(true)
+      event.target.value = ''
+      return
+    }
+
+    setFileSizeError(false)
 
     const preparedFiles = await Promise.all(
       selectedFiles.map((file) => prepareScheduleFile(file)),
@@ -1751,6 +1763,20 @@ function ScheduleSetup({
                 </div>
               ))}
             </div>
+          )}
+
+          {fileSizeError && (
+            <p className={`mt-[10px] flex items-center gap-[6px] text-[12px] font-[510] leading-[18px] tracking-[-0.64px] text-[#ED3333] ${headingFontClass}`}>
+              <span className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#ED3333] text-[9px] font-bold text-white">!</span>
+              10MB 이하의 파일로 다시 올려주세요
+            </p>
+          )}
+
+          {fileSizeError && (
+            <p className={`mt-[10px] flex items-center gap-[6px] text-[12px] font-[510] leading-[18px] tracking-[-0.64px] text-[#ED3333] ${headingFontClass}`}>
+              <span className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#ED3333] text-[9px] font-bold text-white">!</span>
+              10MB 이하의 파일로 다시 올려주세요
+            </p>
           )}
 
           <button

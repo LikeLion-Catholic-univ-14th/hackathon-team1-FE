@@ -246,12 +246,12 @@ function TreatmentHistory() {
   useEffect(() => {
     getProcedures()
       .then((data) => {
-        if (data.length > 0) {
-          setTreatments(data)
-          saveTreatments(data)
-        }
+        setTreatments(data)
+        saveTreatments(data)
       })
-      .catch(() => {})
+      .catch(() => {
+        setTreatments([])
+      })
   }, [])
 
   const updateTreatments = (nextTreatments) => {
@@ -266,7 +266,10 @@ function TreatmentHistory() {
 
   const handleRemoveTreatment = (id) => {
     updateTreatments(treatments.filter((treatment) => treatment.id !== id))
-    deleteProcedure(id).catch(() => {})
+    const numericId = Number(id)
+    if (!isNaN(numericId)) {
+      deleteProcedure(numericId).catch(() => {})
+    }
   }
 
   return (

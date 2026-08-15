@@ -112,11 +112,11 @@ function ProfileEdit() {
     let ignore = false
 
     loadMyPageData().then((data) => {
-      if (!ignore) {
-        const nextProfile = normalizeProfile(data.profile)
-        setInitialProfile(nextProfile)
-        setForm(nextProfile)
-      }
+      if (ignore) return
+
+      const nextProfile = normalizeProfile(data.profile)
+      setInitialProfile(nextProfile)
+      setForm(nextProfile)
     })
 
     return () => {

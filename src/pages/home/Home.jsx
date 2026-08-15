@@ -22,37 +22,7 @@ const buildSunscreenSolutions = (sunscreen, baseSolutions = []) => {
     return sunscreen.solutions
   }
 
-  const productName = sunscreen?.name || '선택한 차단제'
-  const type = sunscreen?.type || '차단제'
-  const method = sunscreen?.method || sunscreen?.blockingMethod || ''
-  const productLabel = `${method} ${type}`.trim() || type
-
-  return [
-    {
-      ...(baseSolutions[0] ?? {}),
-      id: `${sunscreen?.id ?? 'selected'}-solution-before`,
-      icon: 'sun',
-      timing: '외출 전',
-      title: `${productLabel} 도포`,
-      description: '500원 동전 크기 · 얼굴 + 목 뒤 + 귀 + 손등',
-    },
-    {
-      ...(baseSolutions[1] ?? {}),
-      id: `${sunscreen?.id ?? 'selected'}-solution-during`,
-      icon: 'plane',
-      timing: '외출 중',
-      title: `${type} 보충`,
-      description: '땀이나 마찰이 생긴 부위는 닦아낸 뒤 다시 발라주세요.',
-    },
-    {
-      ...(baseSolutions[2] ?? {}),
-      id: `${sunscreen?.id ?? 'selected'}-solution-after`,
-      icon: 'moon',
-      timing: '복귀 후',
-      title: '클렌징 + 진정',
-      description: '더블 클렌징 후 수분 앰플 팩',
-    },
-  ]
+  return baseSolutions
 }
 
 const getRecommendedSunscreens = (sunscreens) => {
@@ -91,6 +61,7 @@ function Home() {
   const [data, setData] = useState(() => getFallbackHomeData())
   const sunscreens = Array.isArray(data.sunscreens) ? data.sunscreens : []
   const hasRegisteredSunscreens = sunscreens.length > 0
+  const hasSchedule = Boolean(data.user?.hasScheduleLocation) || Boolean(data.uvSummary?.value)
   const recommendedSunscreens = useMemo(
     () => getRecommendedSunscreens(sunscreens),
     [sunscreens],
@@ -321,61 +292,44 @@ function Home() {
               graph={data.uvGraph}
               expanded={isGraphExpanded}
               isOutdoor={isOutdoor}
-              empty={!hasRegisteredSunscreens}
+              empty={!data.user?.hasScheduleLocation && !data.uvSummary?.value}
               onRegisterSchedule={handleRegisterSchedule}
               onRegisterSunscreen={handleRegisterSunscreen}
               onToggleGraph={() => setIsGraphExpanded((prevExpanded) => !prevExpanded)}
             />
 
-            {!hasRegisteredSunscreens ? (
-              <>
-                <SunscreenSection
-                  sunscreens={[]}
-                  tip={data.sunscreenTip}
-                  selectedId=""
-                  onSelect={handleSelectSunscreen}
-                  empty
-                  onRegisterSunscreen={handleRegisterSunscreen}
-                />
-
-                <SolutionList
-                  solutions={[]}
-                  title="오늘의 솔루션"
-                  selectedProductName=""
-                  onPrevious={goToPreviousSolution}
-                  onNext={goToNextSolution}
-                  empty
-                  onRegisterSunscreen={handleRegisterSunscreen}
-                  canNavigate={false}
-                  canGoPrevious={false}
-                  canGoNext={false}
-                />
-              </>
-            ) : isOutdoor ? (
+            {isOutdoor ? (
               <OutdoorModeCard data={data.outdoor} />
             ) : (
               <>
                 <SunscreenSection
                   sunscreens={sunscreens}
-                  tip={data.sunscreenTip}
-                  selectedId={selectedSunscreenId}
-                  onSelect={handleSelectSunscreen}
+                  tip={hasSchedule ? data.sunscreenTip : null}
+                  selectedId={hasSchedule ? selectedSunscreenId : ''}
+                  onSelect={hasSchedule ? handleSelectSunscreen : () => {}}
+                  empty={!hasRegisteredSunscreens}
+                  onRegisterSunscreen={handleRegisterSunscreen}
+                  disabled={!hasSchedule}
                 />
 
-                <GenerateSolutionButton
-                  visible={showGenerateButton}
-                  onClick={handleGenerateSolution}
-                />
+                {hasSchedule && hasRegisteredSunscreens && showGenerateButton && (
+                  <GenerateSolutionButton
+                    visible={showGenerateButton}
+                    onClick={handleGenerateSolution}
+                  />
+                )}
 
                 <SolutionList
-                  solutions={displayedSolutions}
+                  solutions={hasSchedule && hasRegisteredSunscreens ? displayedSolutions : []}
                   title="오늘의 솔루션"
-                  selectedProductName={selectedProductName}
+                  selectedProductName={hasSchedule && hasRegisteredSunscreens ? selectedProductName : ''}
                   onPrevious={goToPreviousSolution}
                   onNext={goToNextSolution}
-                  canNavigate={canNavigateSolutions}
-                  canGoPrevious={canGoPreviousSolution}
-                  canGoNext={canGoNextSolution}
+                  empty={!hasSchedule || !hasRegisteredSunscreens || displayedSolutions.length === 0}
+                  onRegisterSunscreen={handleRegisterSunscreen}
+                  canNavigate={hasSchedule && hasRegisteredSunscreens && canNavigateSolutions}
+                  canGoPrevious={hasSchedule && hasRegisteredSunscreens && canGoPreviousSolution}
+                  canGoNext={hasSchedule && hasRegisteredSunscreens && canGoNextSolution}
                 />
               </>
             )}

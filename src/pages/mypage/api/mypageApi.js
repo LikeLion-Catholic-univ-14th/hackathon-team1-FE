@@ -74,9 +74,9 @@ export function normalizeMyPageData(payload) {
       baseAirport: toKoreanBaseAirport(profileSource.baseAirport),
       skinType: toKoreanSkinTypes(profileSource.skinTypes ?? profileSource.skinType),
       skinConcerns: toKoreanSkinConcerns(profileSource.skinConcerns ?? profileSource.concerns ?? []),
-      treatmentHistory: '',
-      treatmentDetail: '',
-      recentTreatment: false,
+      treatmentHistory: profileSource.procedureHistory?.hasHistory ? '있음' : '없음',
+      treatmentDetail: readString(profileSource.procedureHistory?.detail),
+      recentTreatment: Boolean(profileSource.procedureHistory?.recentOneMonth ?? profileSource.procedureHistory?.isRecentOneMonth),
     },
     pouch: (Array.isArray(pouchSource) ? pouchSource : []).map((item, index) => ({
       id: String(item.productId ?? item.id ?? `sunscreen-${index}`),
