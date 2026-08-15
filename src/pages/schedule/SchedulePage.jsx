@@ -10,6 +10,7 @@ import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
 import { mockCalendar, mockEmptyCalendar } from './mocks/mockCalendar.js'
 import { getMockDaily } from './mocks/mockDailyDetail.js'
+import { fetchCalendar, fetchDailyDetail, patchOuting } from './api/scheduleApi.js'
 import { parseMonth } from './utils/calendar.js'
 import { readOuting, TODAY } from './utils/schedule.js'
 
@@ -20,10 +21,15 @@ const screenClass =
 
 const MIN_MONTH = '2026-01'
 
-// ⚙️ 데모 스위치 — 온보딩에서 스케줄을 등록했는지
+// ⚙️ 데모 스위치 — .env 의 VITE_USE_MOCK
+//   'true'  : 서버를 아예 안 부르고 목데이터만 쓴다 (시연 영상 찍을 때)
+//   그 외    : 서버를 부르고, 실패하면 목데이터로 떨어진다
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+
+// 목데이터로 돌 때 등록 여부
 //   true  : 등록 완료 → 달력에 일정이 보임 → 수정 흐름
 //   false : 미등록   → 빈 화면 → 새로 등록 흐름
-// 백엔드에서 등록 여부 boolean 이 나오면 그 값으로 교체한다
+// 서버를 쓸 땐 응답의 hasScheduleHistory 가 이 값을 대신한다
 const ONBOARDED = false
 
 const shiftMonth = (monthStr, diff) => {
@@ -44,17 +50,68 @@ function SchedulePage() {
 
   // 달력 — 월이 바뀌거나 일정을 새로 등록했을 때
   useEffect(() => {
-    // 연동 시: fetchCalendar(month).then(setCalendar).catch(() => setCalendar(null))
-    const source = registered ? mockCalendar : mockEmptyCalendar
-    setCalendar({ ...source, month })
+    const fallback = () => {
+      const source = registered ? mockCalendar : mockEmptyCalendar
+      setCalendar({ ...source, month })
+    }
+
+    if (USE_MOCK) {
+      fallback()
+      return
+    }
+
+    let alive = true
+
+    fetchCalendar(month)
+      .then((data) => {
+        if (alive) {
+          setCalendar({ ...data, month })
+        }
+      })
+      .catch((error) => {
+        console.warn('달력 조회 실패 — 목데이터로 표시합니다', error)
+
+        if (alive) {
+          fallback()
+        }
+      })
+
+    return () => {
+      alive = false
+    }
   }, [month, registered])
 
   // 날짜 상세 — 선택 날짜가 바뀔 때마다
   useEffect(() => {
-    // 연동 시: fetchDailyDetail(selectedDate).then(setDaily).catch(() => setDaily(null))
-    const next = getMockDaily(selectedDate)
-    setDaily(next)
-    setOuting(readOuting(next?.departureInfo))
+    const apply = (next) => {
+      setDaily(next)
+      setOuting(readOuting(next?.departureInfo))
+    }
+
+    if (USE_MOCK) {
+      apply(getMockDaily(selectedDate))
+      return
+    }
+
+    let alive = true
+
+    fetchDailyDetail(selectedDate)
+      .then((data) => {
+        if (alive) {
+          apply(data)
+        }
+      })
+      .catch((error) => {
+        console.warn('날짜 상세 조회 실패 — 목데이터로 표시합니다', error)
+
+        if (alive) {
+          apply(getMockDaily(selectedDate))
+        }
+      })
+
+    return () => {
+      alive = false
+    }
   }, [selectedDate])
 
   if (!calendar) {
@@ -66,12 +123,37 @@ function SchedulePage() {
   // 카드 = 출발지 + 도착지. 레이오버·대기일은 한 장만 온다
   const cards = daily ? [daily.departureInfo, daily.arrivalInfo].filter(Boolean) : []
 
-  // 이 사용자가 스케줄을 등록한 적 있는지 (백엔드 boolean 나오면 교체)
-  const hasSchedule = calendar.days.some((day) => day.scheduleId != null)
+  // 이 사용자가 스케줄을 등록한 적 있는지.
+  // 서버가 hasScheduleHistory 를 주면 그걸 쓰고, 없으면 일정 유무로 판단한다
+  const hasSchedule =
+    calendar.hasScheduleHistory ??
+    calendar.days.some((day) => day.scheduleId != null)
   const canGoPrev = calendar.month > MIN_MONTH
 
   // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 모달로 재사용한다
   const goRegister = () => setShowRegister(true)
+
+  // 외출 토글. 화면을 먼저 바꾸고 서버에 알린다 (실패하면 되돌린다)
+  const toggleOuting = () => {
+    const next = !outing
+    setOuting(next)
+
+    if (USE_MOCK) {
+      return
+    }
+
+    patchOuting(daily?.scheduleId, next, selectedDate)
+      .then((data) => {
+        // 비행 일정이 있는 날은 갱신된 상세가 통째로 돌아온다
+        if (data?.departureInfo) {
+          setDaily(data)
+        }
+      })
+      .catch((error) => {
+        console.warn('외출 상태 변경 실패', error)
+        setOuting(!next)
+      })
+  }
 
   return (
     <div className={stageClass}>
@@ -135,7 +217,7 @@ function SchedulePage() {
                     cards={cards}
                     selectedDate={selectedDate}
                     outing={outing}
-                    onToggle={() => setOuting(!outing)}
+                    onToggle={toggleOuting}
                     onEdit={goRegister}
                   />
                 ) : (
@@ -155,6 +237,11 @@ function SchedulePage() {
         {showRegister && (
           <ScheduleSetup
             embedded
+            completeMessage={
+              hasSchedule
+                ? '비행 일정이 수정되었어요!'
+                : '비행 일정이 등록되었어요!'
+            }
             value={registerDraft}
             onChange={setRegisterDraft}
             onBack={() => setShowRegister(false)}

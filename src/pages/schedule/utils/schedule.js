@@ -104,8 +104,36 @@ export const parseRoute = (route) => {
   return { from, to }
 }
 
-// "2026-08-09T09:00:00" → "09:00"
-export const readTime = (isoString) => (isoString ?? '').slice(11, 16)
+// 비행 시각 → "09:00"
+// 서버가 어떤 형식으로 줄지 몰라 세 가지를 모두 받는다.
+//   "2026-08-09T09:00:00"  → "09:00"
+//   "2026-08-09 09:00:00"  → "09:00"
+//   "09:00" / "09:00:00"   → "09:00"
+export const readTime = (value) => {
+  if (!value) {
+    return ''
+  }
+
+  const text = String(value)
+  const matched = text.match(/(\d{2}):(\d{2})/)
+
+  return matched ? `${matched[1]}:${matched[2]}` : ''
+}
 
 // "2026-08-09" → "08/09"
 export const readShortDate = (date) => (date ?? '').slice(5).replace('-', '/')
+
+const WEEK = ['일', '월', '화', '수', '목', '금', '토']
+
+// "2026-08-09" → "8월 9일 (일)"
+// 서버 LocationInfo 에 displayDate 가 없어 프론트에서 만든다
+export const toDisplayDate = (date) => {
+  if (!date) {
+    return ''
+  }
+
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = WEEK[new Date(year, month - 1, day).getDay()]
+
+  return `${month}월 ${day}일 (${weekday})`
+}
