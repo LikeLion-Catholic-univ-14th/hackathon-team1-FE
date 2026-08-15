@@ -1265,35 +1265,44 @@ function ScheduleSetup({
       return
     }
 
-    if (!hasEditedScheduleDraft) {
-      return
-    }
-
     if (isArrivalBeforeDeparture(editingScheduleDraft)) {
       return
     }
 
-    const nextScheduleItem = {
-      id: editingScheduleDraft.id,
-      date: formatShortDate(editingScheduleDraft.departureDate),
-      departureDate: formatStoredDate(editingScheduleDraft.departureDate),
-      arrivalDate: formatStoredDate(editingScheduleDraft.arrivalDate),
-      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
-      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
-      departureTime: formatTimeValue(editingScheduleDraft.departureTime),
-      arrivalTime: formatTimeValue(editingScheduleDraft.arrivalTime),
-    }
-
-    const hasExistingSchedule = displaySchedules.some(
+    const isNewSchedule = !displaySchedules.some(
       (scheduleItem) => scheduleItem.id === editingScheduleDraft.id,
     )
+
+    if (!isNewSchedule && !hasEditedScheduleDraft) {
+      return
+    }
+
+    const defaultDate = { year: 2026, month: 8, day: 9 }
+    const defaultTime = { period: '오전', hour: 12, minute: 0 }
+    const depDate = editingScheduleDraft.departureDate ?? defaultDate
+    const arrDate = editingScheduleDraft.arrivalDate ?? defaultDate
+    const depTime = editingScheduleDraft.departureTime ?? defaultTime
+    const arrTime = editingScheduleDraft.arrivalTime ?? defaultTime
+
+    const nextScheduleItem = {
+      id: editingScheduleDraft.id,
+      date: formatShortDate(depDate),
+      departureDate: formatStoredDate(depDate),
+      arrivalDate: formatStoredDate(arrDate),
+      departureAirport: toAirportCode(editingScheduleDraft.departureAirport),
+      arrivalAirport: toAirportCode(editingScheduleDraft.arrivalAirport),
+      departureTime: formatTimeValue(depTime),
+      arrivalTime: formatTimeValue(arrTime),
+    }
+
+    const hasExistingSchedule = !isNewSchedule
     const nextSchedules = hasExistingSchedule
       ? displaySchedules.map((scheduleItem) =>
           scheduleItem.id === editingScheduleDraft.id
             ? { ...scheduleItem, ...nextScheduleItem }
             : scheduleItem,
         )
-      : [nextScheduleItem]
+      : [...displaySchedules, nextScheduleItem]
 
     setDisplaySchedules(nextSchedules)
     updateSchedule((prevSchedule) => ({
@@ -1518,6 +1527,11 @@ function ScheduleSetup({
           onFieldChange={updateScheduleField}
           onSave={saveConfirmedSchedules}
           onStartEdit={startScheduleEdit}
+          onAddSchedule={() => {
+            const nextDraft = createManualScheduleDraft()
+            setEditingScheduleDraft(nextDraft)
+            setEditingScheduleOriginalSignature('')
+          }}
         />
       )}
 
@@ -1578,7 +1592,21 @@ function ScheduleSetup({
       {editingScheduleDraft && !showManualListModal && (
         <ScheduleEditCard
           draft={editingScheduleDraft}
-          canSave={hasEditedScheduleDraft}
+          canSave={
+            displaySchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? hasEditedScheduleDraft
+              : (
+                !isArrivalBeforeDeparture(editingScheduleDraft) &&
+                String(editingScheduleDraft.departureAirport ?? '').trim() !== '' &&
+                String(editingScheduleDraft.arrivalAirport ?? '').trim() !== '' &&
+                editingScheduleDraft.departureDate !== null &&
+                editingScheduleDraft.arrivalDate !== null &&
+                editingScheduleDraft.departureTime !== null &&
+                editingScheduleDraft.arrivalTime !== null
+              )
+          }
+          title={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? undefined : '비행 일정 추가하기'}
+          saveLabel={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? '정보 수정하기' : '+ 추가하기'}
           onBack={() => {
             setEditingScheduleDraft(null)
             setEditingScheduleOriginalSignature('')
@@ -1809,6 +1837,15 @@ function ScheduleSetup({
               multiple
               onChange={handleFilesChange}
             />
+
+            <button
+              className={`mt-[14px] box-border flex w-full items-center justify-center rounded-[16px] border-[1.276px] border-dashed border-[#ECEEF2] bg-[#F4F6F9] py-[9px] text-[13px] font-[510] leading-[26px] tracking-[-0.64px] text-[#91A4BF] ${headingFontClass}`}
+              type="button"
+              onClick={startManualScheduleInput}
+            >
+              <span className="mr-[10px] text-[16px] font-normal leading-none">+</span>
+              일정 직접 입력하기
+            </button>
 
             {files.length > 0 && manualSchedules.length === 0 && (
               <div className="mt-5 grid gap-2">

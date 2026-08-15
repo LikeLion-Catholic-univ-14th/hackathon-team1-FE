@@ -24,6 +24,7 @@ export default function ScheduleConfirmModal({
   onFieldChange,
   onDismiss,
   onSave,
+  onAddSchedule,
 }) {
   return (
     <div
@@ -72,6 +73,17 @@ export default function ScheduleConfirmModal({
             {fileName}
           </span>
         </div>
+
+        {onAddSchedule && (
+          <button
+            className={`mt-[14px] box-border flex w-full items-center justify-center rounded-[16px] border-[1.276px] border-dashed border-[#ECEEF2] bg-[#F4F6F9] px-[83px] py-[9px] text-[13px] font-[510] leading-[26px] tracking-[-0.64px] text-[#91A4BF] ${headingFontClass}`}
+            type="button"
+            onClick={onAddSchedule}
+          >
+            <span className="mr-[10px] text-[16px] font-normal leading-none">+</span>
+            비행 일정 추가하기
+          </button>
+        )}
 
         <div className="mt-[17px] max-h-[240px] overflow-y-auto px-2">
           {schedules.map((schedule) => (

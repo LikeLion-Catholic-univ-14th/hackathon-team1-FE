@@ -4,7 +4,11 @@ import {
   readOnboardingSunscreens,
 } from '../../onboarding/storage/onboardingProfileStorage.js'
 import { getHome } from '../api/homeApi.js'
-import { mockHomeData } from '../mocks/mockHome.js'
+import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
+import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
+import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
+
+const sunscreenIcons = [sunscreenIcon01, sunscreenIcon02, sunscreenIcon03]
 
 const baseAirportLocationMap = {
   ICN: '인천, 대한민국',
@@ -27,14 +31,14 @@ const getTodayDateLabel = () => {
   return `${year}년 ${month}월 ${day}일 ${weekday}`
 }
 
-const getCurrentTimeLabel = (timezone) => {
+const getCurrentTimeLabel = () => {
   try {
     const now = new Date()
     const hours = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: false,
-      timeZone: timezone ?? 'Asia/Seoul',
+      timeZone: 'Asia/Seoul',
     }).format(now)
     return `${hours} 기준`
   } catch {
@@ -56,7 +60,7 @@ const getKoreaCurrentTime = () => {
 
     return `현지 ${formattedTime}`
   } catch {
-    return '현지 10:24 AM'
+    return ''
   }
 }
 
@@ -73,14 +77,6 @@ const formatDisplayCurrentTime = (value) => {
 const getBaseAirportFallbackLocation = (baseAirport) =>
   baseAirportLocationMap[baseAirport] ?? baseAirportLocationMap.ICN
 
-const hasUsableScheduleLocation = (user) =>
-  Boolean(readString(user?.location) && readString(user?.currentTime) && user?.hasScheduleLocation)
-
-const readStoredHomeSunscreens = () =>
-  hasOnboardingSunscreensStorage()
-    ? normalizeStoredSunscreensForHome(readOnboardingSunscreens() ?? [])
-    : null
-
 const normalizeStoredSunscreensForHome = (sunscreens) =>
   Array.isArray(sunscreens)
     ? sunscreens
@@ -91,83 +87,76 @@ const normalizeStoredSunscreensForHome = (sunscreens) =>
           method: readString(sunscreen.blockingMethod ?? sunscreen.method),
           spf: readString(sunscreen.spf),
           pa: readString(sunscreen.pa),
-          icon: readString(sunscreen.icon, mockHomeData.sunscreens[index % mockHomeData.sunscreens.length]?.icon),
+          icon: readString(sunscreen.icon, sunscreenIcons[index % sunscreenIcons.length]),
           recommended:
             typeof sunscreen.recommended === 'boolean'
               ? sunscreen.recommended
-              : true,
+              : index === 0,
         }))
         .filter((sunscreen) => sunscreen.name)
     : []
 
-const normalizeSolutionDays = (data) => {
-  const sourceDays = Array.isArray(data.solutionDays)
-    ? data.solutionDays
-    : Array.isArray(data.dailySolutions)
-      ? data.dailySolutions
-      : []
+const readStoredHomeSunscreens = () =>
+  hasOnboardingSunscreensStorage()
+    ? normalizeStoredSunscreensForHome(readOnboardingSunscreens() ?? [])
+    : null
 
-  if (sourceDays.length > 0) {
-    return sourceDays
-      .map((day, index) => ({
-        id: readString(day.id, `solution-day-${index}`),
-        date: readString(day.date),
-        title: readString(day.title),
-        offset: typeof day.offset === 'number' ? day.offset : index,
-        isToday: Boolean(day.isToday),
-        selectedProductName: readString(day.selectedProductName),
-        solutions: Array.isArray(day.solutions) ? day.solutions : [],
-      }))
-      .filter((day) => day.solutions.length > 0)
-  }
-
-  const solutions = Array.isArray(data.solutions) ? data.solutions : []
-
-  if (solutions.length > 0) {
-    return [
-      {
-        id: 'solution-day-today',
-        title: '오늘의 솔루션',
-        offset: 0,
-        isToday: true,
-        solutions,
-      },
-    ]
-  }
-
-  return mockHomeData.solutionDays
+// 빈 상태 기본값
+const emptyHomeData = {
+  mode: '',
+  user: {
+    name: '',
+    baseAirport: '',
+    location: '',
+    date: getTodayDateLabel(),
+    currentTime: getKoreaCurrentTime(),
+    hasScheduleLocation: false,
+  },
+  uvSummary: {
+    title: '오늘 자외선 환산',
+    updatedAt: getCurrentTimeLabel(),
+    city: '',
+    comparison: '',
+    value: 0,
+    badges: [],
+  },
+  uvGraph: null,
+  sunscreens: [],
+  sunscreenTip: { tags: [], text: '' },
+  solutions: [],
+  solutionDays: [],
+  outdoor: {
+    title: '피부 충전 중 ...',
+    description: '외출 시, 버튼을 켜서\n맞춤 자외선 처방을 다시 받아보세요.',
+  },
 }
 
 function mergeHomeData(data) {
-  const baseAirport = readString(data.user?.baseAirport, mockHomeData.user.baseAirport)
   const onboardingProfile = readOnboardingProfile()
-  const fallbackBaseAirport = readString(
-    onboardingProfile?.baseAirport,
-    baseAirport || mockHomeData.user.baseAirport || 'ICN',
+  const baseAirport = readString(
+    data.user?.baseAirport || onboardingProfile?.baseAirport,
+    'ICN',
   )
-  const hasScheduleLocation = hasUsableScheduleLocation(data.user)
-  const solutionDays = normalizeSolutionDays(data)
-  const todaySolutionDay =
-    solutionDays.find((day) => day.isToday || day.offset === 0) ?? solutionDays[0]
+  const hasScheduleLocation = Boolean(
+    readString(data.user?.location) && readString(data.user?.currentTime) && data.user?.hasScheduleLocation,
+  )
 
   return {
-    ...mockHomeData,
+    ...emptyHomeData,
     ...data,
-    solutionDays,
-    solutions: todaySolutionDay?.solutions ?? mockHomeData.solutions,
     uvSummary: {
-      ...mockHomeData.uvSummary,
+      ...emptyHomeData.uvSummary,
       ...data.uvSummary,
       updatedAt: readString(data.uvSummary?.updatedAt, getCurrentTimeLabel()),
     },
     user: {
-      ...mockHomeData.user,
+      ...emptyHomeData.user,
       ...data.user,
-      name: readString(data.user?.name, mockHomeData.user.name),
+      name: readString(data.user?.name, onboardingProfile?.name ?? ''),
       baseAirport,
       location: hasScheduleLocation
         ? readString(data.user?.location)
-        : getBaseAirportFallbackLocation(fallbackBaseAirport),
+        : getBaseAirportFallbackLocation(baseAirport),
       date: readString(data.user?.date, getTodayDateLabel()),
       currentTime: hasScheduleLocation
         ? formatDisplayCurrentTime(data.user?.currentTime)
@@ -181,18 +170,12 @@ export function getFallbackHomeData() {
   const onboardingProfile = readOnboardingProfile()
   const storedSunscreens = readStoredHomeSunscreens()
 
-  if (!onboardingProfile && storedSunscreens === null) {
-    return mockHomeData
-  }
-
-  const baseAirport = readString(onboardingProfile?.baseAirport)
-
   return mergeHomeData({
     user: {
       name: readString(onboardingProfile?.name),
-      baseAirport,
+      baseAirport: readString(onboardingProfile?.baseAirport),
     },
-    ...(storedSunscreens !== null ? { sunscreens: storedSunscreens } : {}),
+    sunscreens: storedSunscreens ?? [],
   })
 }
 
@@ -204,14 +187,24 @@ export async function loadHomeData() {
     const homeData = await getHome()
     const mergedHomeData = mergeHomeData(homeData)
 
-    if (storedSunscreens !== null) {
+    // localStorage에 선크림이 있으면 그걸 우선 사용 (온보딩 직후)
+    if (storedSunscreens !== null && storedSunscreens.length > 0) {
       return {
         ...mergedHomeData,
         sunscreens: storedSunscreens,
       }
     }
 
-    return mergedHomeData
+    // API에서 선크림이 왔으면 사용
+    if (mergedHomeData.sunscreens.length > 0) {
+      return mergedHomeData
+    }
+
+    // 둘 다 없으면 fallback
+    return {
+      ...mergedHomeData,
+      sunscreens: fallbackData.sunscreens,
+    }
   } catch {
     return fallbackData
   }

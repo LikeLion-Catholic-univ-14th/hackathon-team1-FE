@@ -1,4 +1,25 @@
+import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
+import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
+import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
+import sunscreenIcon04 from '../../../assets/sunscreen/sunscreen-icon-04.svg'
+import sunscreenIcon05 from '../../../assets/sunscreen/sunscreen-icon-05.svg'
+import sunscreenIcon06 from '../../../assets/sunscreen/sunscreen-icon-06.svg'
+import {
+  filterTypeReverseMap,
+  productTypeReverseMap,
+  paReverseMap,
+} from '../../onboarding/api/sunscreenApi.js'
+
 const HOME_ENDPOINT = import.meta.env.VITE_HOME_API_URL ?? '/api/home'
+
+const sunscreenIcons = [
+  sunscreenIcon01,
+  sunscreenIcon02,
+  sunscreenIcon03,
+  sunscreenIcon04,
+  sunscreenIcon05,
+  sunscreenIcon06,
+]
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -22,6 +43,32 @@ const formatLocation = (location) => {
   return city || country
 }
 
+const normalizeProduct = (product, index) => ({
+  id: String(product.productId ?? `product-${index}`),
+  name: readString(product.name),
+  type: productTypeReverseMap[product.type] ?? readString(product.type, '선크림'),
+  method: filterTypeReverseMap[product.filterType] ?? readString(product.type, ''),
+  spf: typeof product.spf === 'number' ? `${product.spf}` : readString(String(product.spf ?? '')),
+  icon: sunscreenIcons[index % sunscreenIcons.length],
+  recommended: Boolean(product.recommended),
+})
+
+const normalizeSolutions = (solutions) => {
+  if (!Array.isArray(solutions) || solutions.length === 0) {
+    return []
+  }
+
+  const iconMap = { BEFORE: 'sun', DURING: 'plane', AFTER: 'moon' }
+
+  return solutions.map((sol, index) => ({
+    id: `solution-${index}`,
+    icon: iconMap[sol.phase] ?? ['sun', 'plane', 'moon'][index % 3],
+    timing: sol.phase === 'BEFORE' ? '외출 전' : sol.phase === 'DURING' ? '외출 중' : '복귀 후',
+    title: readString(sol.title),
+    description: readString(sol.description),
+  }))
+}
+
 export function normalizeHomeData(payload) {
   const source = payload?.data ?? payload
 
@@ -29,43 +76,78 @@ export function normalizeHomeData(payload) {
     throw new Error('홈 응답 형식이 올바르지 않습니다.')
   }
 
-  const userSource = source.user ?? source.profile ?? source.member ?? {}
-  const locationSource =
-    source.location ??
-    source.destinationLocation ??
-    source.destination?.location ??
-    source.schedule?.location ??
-    source.flight?.location ??
-    userSource.location ??
-    userSource.city
-  const currentTime = readString(
-    source.currentTime ??
-      source.localTime ??
-      source.schedule?.currentTime ??
-      source.schedule?.localTime ??
-      source.flight?.currentTime ??
-      source.flight?.localTime ??
-      userSource.currentTime ??
-      userSource.localTime,
-  )
+  // TodayResponse 구조에 맞게 정규화
+  const mode = readString(source.mode)
+  const userSource = source.user ?? {}
+  const locationSource = source.location
   const location = formatLocation(locationSource)
+  const currentTime = readString(source.currentTime)
+  const uvSummarySource = source.uvSummary ?? {}
+  const sunProtectionSource = source.sunProtection ?? {}
 
-  if (!userSource || typeof userSource !== 'object') {
-    throw new Error('홈 사용자 응답 형식이 올바르지 않습니다.')
+  // 선크림 제품 정규화
+  const products = Array.isArray(sunProtectionSource.products)
+    ? sunProtectionSource.products.map(normalizeProduct)
+    : []
+
+  // UV 요약 정규화
+  const uvSummary = {
+    title: '오늘 자외선 환산',
+    updatedAt: '',
+    city: readString(uvSummarySource.location),
+    comparison: uvSummarySource.koreaComparison
+      ? `= 서울 8월 한낮의 ${uvSummarySource.koreaComparison}배`
+      : '',
+    value: uvSummarySource.uvIndex ?? 0,
+    badges: [
+      uvSummarySource.flightExposureMinutes
+        ? `밖에서 ${uvSummarySource.flightExposureMinutes}분 = 서울 ${uvSummarySource.koreaEquivalentMinutes ?? 0}분`
+        : '',
+      uvSummarySource.weather
+        ? `${uvSummarySource.weather.condition === 'CLEAR' ? '맑음' : uvSummarySource.weather.condition ?? ''} · ${uvSummarySource.weather.temperature ?? ''}°C`
+        : '',
+    ].filter(Boolean),
+  }
+
+  // 솔루션 정규화
+  const solutions = normalizeSolutions(source.solutions)
+
+  // sunscreenTip 정규화
+  const sunscreenTip = {
+    tags: Array.isArray(sunProtectionSource.tags) ? sunProtectionSource.tags : [],
+    text: readString(sunProtectionSource.message),
   }
 
   return {
-    ...source,
+    mode,
     user: {
-      ...source.user,
       name: readString(userSource.name),
-      baseAirport: readString(
-        userSource.baseAirport ?? userSource.airport ?? userSource.airportCode,
-      ),
+      position: readString(userSource.position),
+      baseAirport: '',
       location,
-      date: readString(userSource.date),
+      date: '',
       currentTime,
       hasScheduleLocation: Boolean(location && currentTime),
+    },
+    uvSummary,
+    uvGraph: uvSummarySource.uvGraph
+      ? { data: uvSummarySource.uvGraph }
+      : null,
+    sunscreens: products,
+    sunscreenTip,
+    solutions,
+    solutionDays: solutions.length > 0
+      ? [{
+          id: 'solution-day-today',
+          title: '오늘의 솔루션',
+          offset: 0,
+          isToday: true,
+          solutions,
+        }]
+      : [],
+    outdoor: {
+      title: '피부 충전 중 ...',
+      description: '외출 시, 버튼을 켜서\n맞춤 자외선 처방을 다시 받아보세요.',
     },
   }
 }

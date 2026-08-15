@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingProfile } from '../onboarding/storage/onboardingProfileStorage.js'
+import { updateProfile } from './api/mypageApi.js'
 import {
   getFallbackMyPageData,
   loadMyPageData,
@@ -171,10 +172,13 @@ function ProfileEdit() {
       return
     }
 
-    saveOnboardingProfile({
+    const updatedProfile = {
       ...form,
       name: form.name.trim(),
-    })
+    }
+
+    saveOnboardingProfile(updatedProfile)
+    updateProfile(updatedProfile).catch(() => {})
     navigate('/mypage')
   }
 
