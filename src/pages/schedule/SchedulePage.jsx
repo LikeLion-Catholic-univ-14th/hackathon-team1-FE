@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import ScheduleSetup from '../onboarding/ScheduleSetup.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
@@ -159,6 +160,7 @@ function SchedulePage() {
     <div className={stageClass}>
       <div className="relative">
         <div className={screenClass}>
+          <StatusBar />
           <AppHeader />
 
           <header className="flex flex-col gap-[10px] bg-white px-[20px] pb-[16px] drop-shadow-[0px_2px_6px_rgba(29,43,68,0.04)]">

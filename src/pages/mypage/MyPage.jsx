@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
-import statusBar from '../onboarding/assets/status-bar.svg'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import profileIcon from './assets/profile-icon.svg'
 import { mockMyPage } from './mocks/mockMyPage.js'
@@ -228,12 +228,7 @@ function MyPage({ onEditProfile, onEditPouch }) {
       <section className={screenClass}>
         <div className="h-full overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="bg-white">
-            <img
-              className="h-[62px] w-full object-contain"
-              src={statusBar}
-              alt=""
-              aria-hidden="true"
-            />
+            <StatusBar className="bg-transparent" />
 
             <AppHeader />
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
-import statusBar from '../onboarding/assets/status-bar.svg'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import { readOnboardingProfile } from '../onboarding/storage/onboardingProfileStorage.js'
 
 const TREATMENT_STORAGE_KEY = 'sst:mypage:treatments'
@@ -259,12 +259,7 @@ function TreatmentHistory() {
     <div className={stageClass}>
       <section className={screenClass}>
         <div className="h-full overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <img
-            className="h-[62px] w-full bg-white object-contain"
-            src={statusBar}
-            alt=""
-            aria-hidden="true"
-          />
+          <StatusBar className="bg-white" />
 
           <header className="relative flex h-[60px] items-center justify-center bg-white">
             <button

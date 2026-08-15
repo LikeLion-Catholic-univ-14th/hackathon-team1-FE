@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import StatusBar from '../../components/common/StatusBar.jsx'
 import AppHeader from '../../components/common/AppHeader.jsx'
 import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import TotalCard from './components/TotalCard.jsx'
@@ -92,6 +93,7 @@ function ReportPage() {
     <div className={stageClass}>
       <div className="relative">
         <div className={screenClass}>
+          <StatusBar />
           <AppHeader />
 
           <div ref={reportRef} className="bg-[#f4f6f9] pb-[16px]">
