@@ -2,8 +2,8 @@ export const mockMyPage = {
   profile: {
     name: '정도영',
     baseAirport: 'ICN',
-    skinType: '복합성',
-    skinConcerns: ['기미', '건조'],
+    skinType: '-',
+    skinConcerns: ['-'],
     treatmentHistory: '없음',
     treatmentDetail: '',
     recentTreatment: false,

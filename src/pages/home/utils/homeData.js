@@ -4,15 +4,13 @@ import {
   readOnboardingSunscreens,
 } from '../../onboarding/storage/onboardingProfileStorage.js'
 import { getHome } from '../api/homeApi.js'
-import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
-import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
-import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
-
-const sunscreenIcons = [sunscreenIcon01, sunscreenIcon02, sunscreenIcon03]
+import { getSunscreenIcon } from '../../../utils/sunscreenIcon.js'
 
 const baseAirportLocationMap = {
   ICN: '인천, 대한민국',
   GMP: '김포, 대한민국',
+  INCHEON: '인천, 대한민국',
+  GIMPO: '김포, 대한민국',
   인천: '인천, 대한민국',
   김포: '김포, 대한민국',
 }
@@ -87,7 +85,7 @@ const normalizeStoredSunscreensForHome = (sunscreens) =>
           method: readString(sunscreen.blockingMethod ?? sunscreen.method),
           spf: readString(sunscreen.spf),
           pa: readString(sunscreen.pa),
-          icon: readString(sunscreen.icon, sunscreenIcons[index % sunscreenIcons.length]),
+          icon: readString(sunscreen.icon, getSunscreenIcon(sunscreen.id ?? index)),
           recommended:
             typeof sunscreen.recommended === 'boolean'
               ? sunscreen.recommended

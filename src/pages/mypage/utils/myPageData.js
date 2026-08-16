@@ -2,6 +2,7 @@ import {
   hasOnboardingSunscreensStorage,
   readOnboardingProfile,
   readOnboardingSunscreens,
+  saveOnboardingSunscreens,
 } from '../../onboarding/storage/onboardingProfileStorage.js'
 import { getMyPage } from '../api/mypageApi.js'
 
@@ -38,6 +39,12 @@ export async function loadMyPageData() {
 
   try {
     const apiData = await getMyPage()
+
+    // API 성공 시 localStorage도 동기화 (아이콘 일관성)
+    if (Array.isArray(apiData.pouch) && apiData.pouch.length > 0) {
+      saveOnboardingSunscreens({ products: apiData.pouch })
+    }
+
     return apiData
   } catch {
     return fallbackData

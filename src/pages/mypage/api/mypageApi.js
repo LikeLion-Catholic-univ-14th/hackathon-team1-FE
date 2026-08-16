@@ -1,3 +1,4 @@
+import { getSunscreenIcon } from '../../../utils/sunscreenIcon.js'
 import {
   skinTypeReverseMap,
   skinConcernReverseMap,
@@ -8,14 +9,9 @@ import {
   productTypeReverseMap,
   paReverseMap,
 } from '../../onboarding/api/sunscreenApi.js'
-import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
-import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
-import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 const MY_PAGE_ENDPOINT = import.meta.env.VITE_MYPAGE_API_URL ?? `${apiBaseUrl}/users/profile`
-
-const sunscreenIcons = [sunscreenIcon01, sunscreenIcon02, sunscreenIcon03]
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -85,7 +81,7 @@ export function normalizeMyPageData(payload) {
       blockingMethod: filterTypeReverseMap[item.filterType] ?? readString(item.blockingMethod ?? item.method, ''),
       spf: readString(item.spf, '50'),
       pa: paReverseMap[item.pa] ?? readString(item.pa, 'PA+'),
-      icon: sunscreenIcons[index % sunscreenIcons.length],
+      icon: getSunscreenIcon(item.productId ?? index),
     })),
   }
 }
