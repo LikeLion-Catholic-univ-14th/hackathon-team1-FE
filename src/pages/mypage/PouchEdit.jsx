@@ -13,10 +13,6 @@ import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
 import { deletePouchItem } from './api/mypageApi.js'
 import {
-  findSunscreenProductByName,
-  mockSunscreenProducts,
-} from '../onboarding/mocks/mockSunscreenProducts.js'
-import {
   getFallbackMyPageData,
   loadMyPageData,
 } from './utils/myPageData.js'
@@ -616,17 +612,30 @@ function PouchEdit() {
             className="box-border rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]"
             ref={formRef}
           >
-            <ProductNameField
-              value={form.productName}
-              suggestions={mockSunscreenProducts}
-              onChange={(productName) => updateForm('productName', productName)}
-              onSelect={selectProductName}
-              onFocus={() => {
-                setFocusedInput('productName')
-                setOpenDropdown('')
-              }}
-              onBlur={() => setFocusedInput('')}
-            />
+            <div>
+              <label
+                className={labelClass}
+                htmlFor="pouch-product-name"
+              >
+                제품명
+              </label>
+              <input
+                className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+                  form.productName ? 'border-[#f5a623]' : 'border-[#eceef2]'
+                }`}
+                id="pouch-product-name"
+                type="text"
+                value={form.productName}
+                placeholder="제품명을 입력해주세요"
+                autoComplete="off"
+                onFocus={() => {
+                  setFocusedInput('productName')
+                  setOpenDropdown('')
+                }}
+                onBlur={() => setFocusedInput('')}
+                onChange={(event) => updateForm('productName', event.target.value)}
+              />
+            </div>
 
             <div className="mt-[18px] grid grid-cols-2 gap-x-[11px] gap-y-[18px]">
               <DropdownField
