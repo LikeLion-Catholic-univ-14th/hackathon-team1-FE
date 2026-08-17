@@ -5,7 +5,6 @@ import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import profileIcon from './assets/profile-icon.svg'
-import { mockMyPage } from './mocks/mockMyPage.js'
 import {
   getFallbackMyPageData,
   loadMyPageData,
@@ -14,9 +13,9 @@ import {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-white max-[520px]:p-0'
 const screenClass =
-  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] text-[#1D2B44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
+  "relative h-[874px] min-h-[874px] w-[402px] overflow-hidden bg-[#f5f7fb] text-left font-[SF_Pro,Pretendard,sans-serif] text-[#1D2B44] max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full"
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 const getSpfSummary = (product) => {
   const spf = product.spf || '50'
@@ -186,24 +185,16 @@ function MyPage({ onEditProfile, onEditPouch }) {
       const skinTypes = toDisplayList(myPageData.profile.skinType)
       const skinConcerns = toDisplayList(myPageData.profile.skinConcerns)
 
+      // 서버 값만 쓴다. 없으면 빈 값 (목데이터로 채우지 않는다)
       return {
-        ...mockMyPage.profile,
         ...myPageData.profile,
-        skinType:
-          skinTypes.length > 0
-            ? skinTypes
-            : toDisplayList(mockMyPage.profile.skinType),
-        skinConcerns:
-          skinConcerns.length > 0
-            ? skinConcerns
-            : toDisplayList(mockMyPage.profile.skinConcerns),
+        skinType: skinTypes,
+        skinConcerns,
       }
     },
     [myPageData.profile],
   )
-  const pouch = Array.isArray(myPageData.pouch)
-    ? myPageData.pouch
-    : mockMyPage.pouch
+  const pouch = Array.isArray(myPageData.pouch) ? myPageData.pouch : []
 
   const handleEditProfile = () => {
     if (onEditProfile) {

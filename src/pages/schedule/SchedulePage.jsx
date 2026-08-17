@@ -11,7 +11,7 @@ import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
 import { fetchCalendar, fetchDailyDetail, patchOuting } from './api/scheduleApi.js'
 import { parseMonth } from './utils/calendar.js'
-import { readOuting, TODAY } from './utils/schedule.js'
+import { readOuting, THIS_MONTH, TODAY } from './utils/schedule.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
@@ -44,7 +44,7 @@ const shiftMonth = (monthStr, diff) => {
 }
 
 function SchedulePage() {
-  const [month, setMonth] = useState('2026-08')
+  const [month, setMonth] = useState(THIS_MONTH)
   const [calendar, setCalendar] = useState(null)
   const [daily, setDaily] = useState(null)
   const [selectedDate, setSelectedDate] = useState(TODAY)
@@ -135,17 +135,17 @@ function SchedulePage() {
   // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 모달로 재사용한다
   const goRegister = () => setShowRegister(true)
 
-  // 외출 토글. 화면을 먼저 바꾸고 서버에 알린다 (실패하면 되돌린다)
+  // 외출 토글. 화면을 먼저 바꾸고 서버에 알린다 (실패하면 되돌린다).
+  // /daily-outing 응답에는 상태만 오므로, 위험도·문구를 갱신하려면 상세를 다시 받는다
   const toggleOuting = () => {
     const next = !outing
     setOuting(next)
 
-    patchOuting(daily?.scheduleId, next, selectedDate)
+    patchOuting(selectedDate, next)
+      .then(() => fetchDailyDetail(selectedDate))
       .then((data) => {
-        // 비행 일정이 있는 날은 갱신된 상세가 통째로 돌아온다
-        if (data?.departureInfo) {
-          setDaily(data)
-        }
+        setDaily(data)
+        setOuting(readOuting(data?.departureInfo))
       })
       .catch((error) => {
         console.warn('외출 상태 변경 실패', error)

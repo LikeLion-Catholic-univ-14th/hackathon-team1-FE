@@ -60,7 +60,10 @@ function OnboardingFlow() {
   const completeProfileSetup = (profile) => {
     saveOnboardingProfile(profile)
     updateOnboardingData('profile', profile)
-    saveProfile(profile).catch(() => {})
+    // 실패를 조용히 삼키면 서버에 저장 안 된 걸 아무도 모른다
+    saveProfile(profile).catch((error) => {
+      console.error('프로필 저장 실패', error)
+    })
     setOnboardingStep('sunscreen')
   }
 
@@ -72,7 +75,9 @@ function OnboardingFlow() {
 
     saveOnboardingSunscreens(sunscreen)
     updateOnboardingData('sunscreen', sunscreen)
-    saveSunscreens(products).catch(() => {})
+    saveSunscreens(products).catch((error) => {
+      console.error('선크림 저장 실패', error)
+    })
     setOnboardingStep('schedule')
   }
 

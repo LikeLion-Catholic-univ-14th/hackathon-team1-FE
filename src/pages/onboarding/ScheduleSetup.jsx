@@ -21,9 +21,9 @@ const emptySchedule = {
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
-  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
+  'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f5f7fb] text-left font-[SF_Pro,Pretendard,sans-serif] text-[15px] font-normal leading-normal tracking-[0] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 const maxScheduleFileSize = 10 * 1024 * 1024
 const imageCompressionType = 'image/jpeg'
 const imageCompressionMaxSides = [2200, 1800, 1400, 1100, 900, 700]
@@ -1899,7 +1899,7 @@ function ScheduleSetup({
                     key={file.id}
                   >
                     <button
-                      className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                      className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro,Pretendard,sans-serif] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
                       type="button"
                       aria-label={`${file.name} 삭제`}
                       onClick={() => removeFile(file.id)}
@@ -1945,7 +1945,7 @@ function ScheduleSetup({
                   className="grid min-h-[57px] grid-cols-[22px_34px_minmax(0,1fr)_22px] items-center gap-3 rounded-xl border border-[#eceef2] bg-[#f7f8fb] px-3"
                 >
                   <button
-                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
+                    className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-0 bg-transparent p-0 font-[SF_Pro,Pretendard,sans-serif] text-[22px] font-light leading-[22px] text-[#8a9eb8]"
                     type="button"
                     aria-label="직접 등록한 일정 삭제"
                     onClick={() => setManualSchedules([])}

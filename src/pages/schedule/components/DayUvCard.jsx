@@ -69,7 +69,10 @@ function DayUvCard({
   canToggle = true,
   showToggle = true,
 }) {
-  const level = LEVEL[info.riskLevel] ?? LEVEL.CAUTION
+  // 위험도는 그날 자외선 세기 그대로 보여준다.
+  // 외출을 껐다고 안전으로 바꾸지 않는다 — 사용자는 그날이 얼마나 센 날인지 알아야 한다
+  const levelKey = info.riskLevel ?? 'CAUTION'
+  const level = LEVEL[levelKey] ?? LEVEL.CAUTION
   const showGraph = !isFuture(date)
 
   return (
@@ -96,7 +99,7 @@ function DayUvCard({
       <div className="pt-[7px]">
         {showGraph ? (
           <div className="w-full rounded-[20px] bg-white pt-[16px] pb-[21px] drop-shadow-[0px_4px_9px_rgba(29,43,68,0.06)]">
-            <UvChart graph={info.uvDetail.graph} level={info.riskLevel} />
+            <UvChart graph={info.uvDetail.graph} level={levelKey} />
           </div>
         ) : (
           <NoForecast />

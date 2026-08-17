@@ -3,7 +3,7 @@ import iconMissed from '../assets/insight-missed.svg'
 import iconGood from '../assets/insight-good.svg'
 
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 function InsightList({ analysis }) {
   const items = [

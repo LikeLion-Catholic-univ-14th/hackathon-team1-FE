@@ -1,7 +1,7 @@
 import lockIcon from '../assets/lock.svg'
 
 const headingFontClass =
-  "font-['SF_Pro',-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]"
+  "font-[SF_Pro,Pretendard,sans-serif]"
 
 function ReportLockCard({ month, onOpen }) {
   return (

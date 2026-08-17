@@ -127,24 +127,16 @@ export const fetchDailyDetail = (date) =>
     normalizeDaily(raw, date),
   )
 
-// 외출 토글.
-// 비행 일정이 있는 날은 scheduleId 로, 없는 날은 날짜로 보낸다
-export const patchOuting = (scheduleId, outing, date) => {
-  if (scheduleId != null) {
-    return request(`/schedules/${scheduleId}/outing`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outing }),
-    }).then((raw) => normalizeDaily(raw, date))
-  }
-
-  // PATCH /daily-outing?date= → { date, isOuting } 만 돌아온다
-  return request(`/daily-outing?date=${date}`, {
+// 외출 토글 — /daily-outing 하나로 통일한다.
+// 백엔드 안내: /schedules/{id}/outing 은 일정이 있는 날만 되지만
+//              /daily-outing 은 일정 유무와 상관없이 날짜만으로 다 된다
+// 응답은 { date, isOuting } 뿐이라, 화면을 갱신하려면 daily 를 다시 불러야 한다
+export const patchOuting = (date, outing) =>
+  request(`/daily-outing?date=${date}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ outing }),
   })
-}
 
 // POST /schedules
 export const createSchedules = (schedules) =>

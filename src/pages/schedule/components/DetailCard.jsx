@@ -21,6 +21,7 @@ function DetailCard({ daily, cards, selectedDate, outing, onToggle, onEdit }) {
 
   return (
     <div className={wrapperClass}>
+      {/* 비행 일정은 외출 여부와 무관한 사실이라 항상 보여준다 */}
       {hasFlight && <FlightInfoBar daily={daily} onEdit={onEdit} />}
 
       {/* 도시가 1개면 1장, 2개면 2장. 토글은 첫 카드에만 */}

@@ -1,5 +1,17 @@
-// 데모 기준일. 실제 배포 시 new Date() 기반으로 교체
-export const TODAY = '2026-08-14'
+// 'YYYY-MM-DD' (기기의 로컬 날짜 기준)
+const toLocalDate = (dateObject) => {
+  const year = dateObject.getFullYear()
+  const month = String(dateObject.getMonth() + 1).padStart(2, '0')
+  const day = String(dateObject.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+// 오늘 날짜. toISOString() 은 UTC 라 한국 시간과 하루 어긋날 수 있어 쓰지 않는다
+export const TODAY = toLocalDate(new Date())
+
+// 오늘이 속한 달 'YYYY-MM'
+export const THIS_MONTH = TODAY.slice(0, 7)
 
 // 'YYYY-MM-DD' 문자열은 그냥 비교해도 날짜 순서가 맞는다
 export const isFuture = (date) => date > TODAY
