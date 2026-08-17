@@ -19,8 +19,10 @@ const stageClass =
 const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
 
-const REPORT_YEAR = 2026
-const REPORT_MONTH = 8
+// 이번 달 리포트를 본다 (연·월 선택 기능이 생기면 상태로 바꾸면 된다)
+const now = new Date()
+const REPORT_YEAR = now.getFullYear()
+const REPORT_MONTH = now.getMonth() + 1
 
 function ReportPage() {
   const [report, setReport] = useState(null)

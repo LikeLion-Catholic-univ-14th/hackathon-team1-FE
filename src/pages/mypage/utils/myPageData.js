@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-=======
-import {
-  hasOnboardingSunscreensStorage,
-  readOnboardingProfile,
-  readOnboardingSunscreens,
-  saveOnboardingSunscreens,
-} from '../../onboarding/storage/onboardingProfileStorage.js'
->>>>>>> origin/main
 import { getMyPage } from '../api/mypageApi.js'
 
 const emptyMyPage = {
@@ -35,23 +26,10 @@ export function getFallbackMyPageData() {
 // (가려버리면 연동이 깨진 걸 아무도 모르고, 다른 기기에서는 어차피 빈 화면이다)
 export async function loadMyPageData() {
   try {
-<<<<<<< HEAD
     return await getMyPage()
   } catch (error) {
     console.error('마이페이지 조회 실패', error)
 
     return emptyMyPage
-=======
-    const apiData = await getMyPage()
-
-    // API 성공 시 localStorage도 동기화 (아이콘 일관성)
-    if (Array.isArray(apiData.pouch) && apiData.pouch.length > 0) {
-      saveOnboardingSunscreens({ products: apiData.pouch })
-    }
-
-    return apiData
-  } catch {
-    return fallbackData
->>>>>>> origin/main
   }
 }
