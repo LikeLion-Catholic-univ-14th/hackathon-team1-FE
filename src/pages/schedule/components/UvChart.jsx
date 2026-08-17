@@ -62,9 +62,10 @@ function UvChart({ graph, level = 'CAUTION' }) {
       className="relative w-full"
       style={{ height: AREA_HEIGHT }}
     >
-      {/* 격자 — 라벨 길이가 달라서 줄마다 선 길이가 다르다 */}
+      {/* 격자 — 라벨 길이가 달라서 줄마다 선 길이가 다르다.
+          Figma: 카드 폭 335.605 안에서 격자 묶음 폭이 약 309 → 좌우 13.3px 씩 안쪽 */}
       <div
-        className="absolute inset-x-0 flex flex-col items-center"
+        className="absolute inset-x-0 flex flex-col items-center px-[13.3px]"
         style={{ top: GRID_TOP, gap: ROW_GAP }}
       >
         {ROWS.map((row) => (
@@ -93,9 +94,12 @@ function UvChart({ graph, level = 'CAUTION' }) {
         <ResponsiveContainer>
           <AreaChart data={graph} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
             <defs>
+              {/* Figma 실측
+                  linear-gradient(180deg, 0.90 0%, 0.30 75%, 0.00 100%) */}
               <linearGradient id={`uvFill-${level}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                <stop offset="0%" stopColor={color} stopOpacity={0.9} />
+                <stop offset="75%" stopColor={color} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -105,7 +109,7 @@ function UvChart({ graph, level = 'CAUTION' }) {
               type="monotone"
               dataKey="uvValue"
               stroke={color}
-              strokeWidth={2}
+              strokeWidth={1.007}
               fill={`url(#uvFill-${level})`}
               isAnimationActive={false}
             />

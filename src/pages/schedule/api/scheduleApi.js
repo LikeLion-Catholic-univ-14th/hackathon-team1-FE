@@ -39,28 +39,26 @@ const formatTimeDifference = (value) => {
   }
 
   if (typeof value === 'number') {
-    if (value === 0) {
-      return '한국과 시차 없음'
-    }
-
-    return `한국 ${value > 0 ? '+' : '-'}${Math.abs(value)}시간`
+    // 인천·김포처럼 시차가 없으면 아예 표시하지 않는다
+    return value === 0 ? null : `한국 ${value > 0 ? '+' : '-'}${Math.abs(value)}시간`
   }
 
   const text = String(value).trim()
+
+  // 숫자를 뽑아서 0 이면 표시하지 않는다 ("0시간", "+0", "한국 0시간" 모두)
+  const hours = Number(text.replace(/[^0-9+-.]/g, ''))
+
+  if (!Number.isNaN(hours) && hours === 0) {
+    return null
+  }
 
   // 이미 완성된 문장이면 그대로 쓴다
   if (text.includes('한국')) {
     return text
   }
 
-  const hours = Number(text)
-
   if (Number.isNaN(hours)) {
     return text
-  }
-
-  if (hours === 0) {
-    return '한국과 시차 없음'
   }
 
   return `한국 ${hours > 0 ? '+' : '-'}${Math.abs(hours)}시간`

@@ -1,7 +1,7 @@
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const scheduleExtractEndpoint =
-  import.meta.env.VITE_SCHEDULE_EXTRACT_API_URL ?? '/api/schedules/extract'
+  import.meta.env.VITE_SCHEDULE_EXTRACT_API_URL ?? `${apiBaseUrl}/schedules/extract`
 
 const scheduleListKeys = ['schedules', 'flights', 'items', 'results']
 

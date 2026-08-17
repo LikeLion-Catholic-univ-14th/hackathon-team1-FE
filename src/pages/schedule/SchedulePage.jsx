@@ -142,10 +142,13 @@ function SchedulePage() {
     setOuting(next)
 
     patchOuting(selectedDate, next)
-      .then(() => fetchDailyDetail(selectedDate))
-      .then((data) => {
-        setDaily(data)
-        setOuting(readOuting(data?.departureInfo))
+      // 외출을 바꾸면 그날 등급이 달라져 달력 점 색도 바뀐다.
+      // 상세와 달력을 같이 다시 받는다
+      .then(() => Promise.all([fetchDailyDetail(selectedDate), fetchCalendar(month)]))
+      .then(([detail, nextCalendar]) => {
+        setDaily(detail)
+        setOuting(readOuting(detail?.departureInfo))
+        setCalendar({ ...nextCalendar, month })
       })
       .catch((error) => {
         console.warn('외출 상태 변경 실패', error)

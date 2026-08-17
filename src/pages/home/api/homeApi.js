@@ -5,7 +5,11 @@ import {
   paReverseMap,
 } from '../../onboarding/api/sunscreenApi.js'
 
-const HOME_ENDPOINT = import.meta.env.VITE_HOME_API_URL ?? '/api/home'
+// 스웨거 기준 홈 데이터는 GET /today 다.
+// 다른 API 들과 같이 VITE_API_BASE_URL 을 쓴다
+// (예전엔 '/api/home' 이라 로컬 개발서버로 요청이 가서 404 가 났다)
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+const HOME_ENDPOINT = import.meta.env.VITE_HOME_API_URL ?? `${apiBaseUrl}/today`
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback

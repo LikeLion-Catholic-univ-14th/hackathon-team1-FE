@@ -11,7 +11,8 @@ import moreVerticalIcon from '../../assets/icons/more-vertical.svg'
 import warningIcon from '../../assets/icons/warning.svg'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import { saveOnboardingSunscreens } from '../onboarding/storage/onboardingProfileStorage.js'
-import { deletePouchItem } from './api/mypageApi.js'
+import { deletePouchItem, updatePouchItem } from './api/mypageApi.js'
+import { saveSunscreens } from '../onboarding/api/sunscreenApi.js'
 import {
   getFallbackMyPageData,
   loadMyPageData,
@@ -552,6 +553,12 @@ function PouchEdit() {
       )
 
       persistProducts(nextProducts)
+
+      // 서버에도 반영한다 (PUT /users/pouch/{productId})
+      updatePouchItem(editingProductId, nextProductValues).catch((error) => {
+        console.error('선크림 수정 실패', error)
+      })
+
       setEditingProductId('')
       setForm(emptyForm)
       setOpenDropdown('')
@@ -575,6 +582,12 @@ function PouchEdit() {
     ]
 
     persistProducts(nextProducts)
+
+    // 서버에도 새로 담는다 (POST /users/{userId}/sunscreen)
+    saveSunscreens([nextProductValues]).catch((error) => {
+      console.error('선크림 등록 실패', error)
+    })
+
     setForm((prevForm) => ({
       ...prevForm,
       productName: '',
@@ -589,7 +602,9 @@ function PouchEdit() {
     }
 
     persistProducts(products.filter((product) => product.id !== id))
-    deletePouchItem(id).catch(() => {})
+    deletePouchItem(id).catch((error) => {
+      console.error('선크림 삭제 실패', error)
+    })
     setActionProductId('')
   }
 
