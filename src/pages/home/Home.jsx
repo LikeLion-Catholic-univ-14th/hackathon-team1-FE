@@ -326,6 +326,8 @@ function Home() {
                   onPrevious={goToPreviousSolution}
                   onNext={goToNextSolution}
                   empty={!hasSchedule || !hasRegisteredSunscreens || displayedSolutions.length === 0}
+                  emptyMessage={!hasSchedule && hasRegisteredSunscreens ? '오늘은 비행이 없는 날이에요' : undefined}
+                  hideRegisterButton={!hasSchedule && hasRegisteredSunscreens}
                   onRegisterSunscreen={handleRegisterSunscreen}
                   canNavigate={hasSchedule && hasRegisteredSunscreens && canNavigateSolutions}
                   canGoPrevious={hasSchedule && hasRegisteredSunscreens && canGoPreviousSolution}
