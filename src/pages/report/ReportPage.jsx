@@ -11,7 +11,6 @@ import ClinicCard from './components/ClinicCard.jsx'
 import ReportLockCard from './components/ReportLockCard.jsx'
 import ConsentModal from './components/ConsentModal.jsx'
 import { fetchMonthlyReport } from './api/reportApi.js'
-import { mockMonthlyReport } from './mocks/mockMonthlyReport.js'
 import { exportBlocksToPdf } from './utils/exportPdf.js'
 import chevronDown from './assets/chevron-down.svg'
 
@@ -19,11 +18,6 @@ const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
 const screenClass =
   'relative h-[874px] min-h-[874px] w-[402px] overflow-x-hidden overflow-y-auto bg-[#f4f6f9] pb-[110px] text-left text-[15px] text-[#1d2b45] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[520px]:h-svh max-[520px]:min-h-svh max-[520px]:w-full'
-
-// ⚙️ .env 의 VITE_USE_MOCK
-//   'true' : 서버를 안 부르고 목데이터로 화면을 그린다 (서버 점검 중 / 시안 대조용)
-//   그 외   : 서버에서 받아온다
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 const REPORT_YEAR = 2026
 const REPORT_MONTH = 8
@@ -38,12 +32,6 @@ function ReportPage() {
   const reportRef = useRef(null)
 
   useEffect(() => {
-    if (USE_MOCK) {
-      setReport(mockMonthlyReport)
-
-      return
-    }
-
     let alive = true
 
     fetchMonthlyReport(REPORT_YEAR, REPORT_MONTH)

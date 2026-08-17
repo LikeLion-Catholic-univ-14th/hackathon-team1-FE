@@ -184,21 +184,15 @@ const toScheduleItem = (schedule) => {
   const isOvernight = schedule.arrivalTime < schedule.departureTime
   const arrivalDate = isOvernight ? nextDay(isoDate) : isoDate
 
-  const item = {
+  return {
+    // 직접 입력 화면에는 편명 칸이 없다. 빈 문자열로 보내면 된다고 백엔드 확인함
+    flightNumber: schedule.flightNumber ?? '',
     departureAirport: schedule.departureAirport,
     arrivalAirport: schedule.arrivalAirport,
     departureTime: `${isoDate}T${schedule.departureTime}:00`,
     arrivalTime: `${arrivalDate}T${schedule.arrivalTime}:00`,
     isQuickTurn: schedule.isQuickTurn ?? false,
   }
-
-  // 직접 입력 화면에는 편명 칸이 없다.
-  // null 을 보내면 서버가 거를 수 있어, 값이 있을 때만 담는다
-  if (schedule.flightNumber) {
-    item.flightNumber = schedule.flightNumber
-  }
-
-  return item
 }
 
 export const saveSchedules = async (schedules) => {

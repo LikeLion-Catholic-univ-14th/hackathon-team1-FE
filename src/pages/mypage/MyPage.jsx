@@ -5,7 +5,6 @@ import BottomNavigation from '../../components/common/BottomNavigation.jsx'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import profileIcon from './assets/profile-icon.svg'
-import { mockMyPage } from './mocks/mockMyPage.js'
 import {
   getFallbackMyPageData,
   loadMyPageData,
@@ -186,24 +185,16 @@ function MyPage({ onEditProfile, onEditPouch }) {
       const skinTypes = toDisplayList(myPageData.profile.skinType)
       const skinConcerns = toDisplayList(myPageData.profile.skinConcerns)
 
+      // 서버 값만 쓴다. 없으면 빈 값 (목데이터로 채우지 않는다)
       return {
-        ...mockMyPage.profile,
         ...myPageData.profile,
-        skinType:
-          skinTypes.length > 0
-            ? skinTypes
-            : toDisplayList(mockMyPage.profile.skinType),
-        skinConcerns:
-          skinConcerns.length > 0
-            ? skinConcerns
-            : toDisplayList(mockMyPage.profile.skinConcerns),
+        skinType: skinTypes,
+        skinConcerns,
       }
     },
     [myPageData.profile],
   )
-  const pouch = Array.isArray(myPageData.pouch)
-    ? myPageData.pouch
-    : mockMyPage.pouch
+  const pouch = Array.isArray(myPageData.pouch) ? myPageData.pouch : []
 
   const handleEditProfile = () => {
     if (onEditProfile) {

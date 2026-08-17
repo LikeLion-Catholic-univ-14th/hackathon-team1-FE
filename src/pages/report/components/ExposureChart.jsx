@@ -46,15 +46,23 @@ function ExposureChart({ dailyExposure, trend }) {
 
       <div className="h-[110px] pt-[8px]">
         <ResponsiveContainer>
-          <BarChart data={dailyExposure} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          {/* barGap 을 막대 굵기만큼 음수로 줘서 두 막대를 같은 자리에 겹친다.
+              쌓지 않는다 — 시안은 실내 막대가 외출 막대 뒤에 가려져 있고,
+              외출이 없는 날에만 회색 머리가 빼꼼 보인다 */}
+          <BarChart
+            data={dailyExposure}
+            barGap={-7.4}
+            margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+          >
             <defs>
               <linearGradient id="barOuting" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#FF6B4A" />
                 <stop offset="100%" stopColor="#F5A623" />
               </linearGradient>
+              {/* 실내 막대도 외출과 같이 위→아래로 옅어진다 */}
               <linearGradient id="barIndoor" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#A8B8CC" />
-                <stop offset="100%" stopColor="#ECEEF2" />
+                <stop offset="100%" stopColor="#D5DDE8" />
               </linearGradient>
             </defs>
 
@@ -67,15 +75,15 @@ function ExposureChart({ dailyExposure, trend }) {
               stroke="#8a9eb8"
             />
 
+            {/* 실내가 먼저(뒤), 외출이 나중(앞). 둘 다 바닥에서 시작하고 머리가 둥글다 */}
             <Bar
               dataKey="indoorValue"
-              stackId="a"
               fill="url(#barIndoor)"
               barSize={7.4}
+              radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="outingValue"
-              stackId="a"
               fill="url(#barOuting)"
               barSize={7.4}
               radius={[4, 4, 0, 0]}
@@ -92,7 +100,8 @@ function ExposureChart({ dailyExposure, trend }) {
 
       <div className="h-[110px] pt-[12px]">
         <ResponsiveContainer>
-          <AreaChart data={trend.months} margin={{ top: 12, right: 20, bottom: 0, left: 20 }}>
+          {/* Figma 574:24011 — 선이 좌우 10% 안쪽에서 시작·끝난다 (약 34px) */}
+          <AreaChart data={trend.months} margin={{ top: 12, right: 34, bottom: 0, left: 34 }}>
             <defs>
               <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f5a623" stopOpacity={0.35} />
@@ -100,13 +109,18 @@ function ExposureChart({ dailyExposure, trend }) {
               </linearGradient>
             </defs>
 
+            {/* Figma 574:24016 — 13px, 590, 자간 -0.39px, #8a9eb8 */}
             <XAxis
               dataKey="month"
               tickFormatter={(m) => `${m}월`}
               tickLine={false}
               axisLine={false}
-              fontSize={13}
-              stroke="#8a9eb8"
+              tick={{
+                fontSize: 13,
+                fontWeight: 590,
+                letterSpacing: '-0.39px',
+                fill: '#8a9eb8',
+              }}
             />
 
             <Area
