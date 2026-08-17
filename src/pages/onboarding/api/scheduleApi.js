@@ -208,17 +208,12 @@ const toScheduleItem = (schedule) => {
   const arrivalDate = isOvernight ? nextDay(isoDate) : isoDate
 
   const item = {
+    flightNumber: schedule.flightNumber || '',
     departureAirport: schedule.departureAirport,
     arrivalAirport: schedule.arrivalAirport,
     departureTime: `${isoDate}T${schedule.departureTime}:00`,
     arrivalTime: `${arrivalDate}T${schedule.arrivalTime}:00`,
     isQuickTurn: schedule.isQuickTurn ?? false,
-  }
-
-  // 직접 입력 화면에는 편명 칸이 없다.
-  // null 을 보내면 서버가 거를 수 있어, 값이 있을 때만 담는다
-  if (schedule.flightNumber) {
-    item.flightNumber = schedule.flightNumber
   }
 
   return item
