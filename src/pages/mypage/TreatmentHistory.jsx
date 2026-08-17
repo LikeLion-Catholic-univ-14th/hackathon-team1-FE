@@ -261,14 +261,18 @@ function TreatmentHistory() {
 
   const handleAddTreatment = (treatment) => {
     updateTreatments([treatment, ...treatments])
-    addProcedure(treatment.name, treatment.recent).catch(() => {})
+    addProcedure(treatment.name, treatment.recent).catch((error) => {
+      console.error('시술 이력 추가 실패', error)
+    })
   }
 
   const handleRemoveTreatment = (id) => {
     updateTreatments(treatments.filter((treatment) => treatment.id !== id))
     const numericId = Number(id)
     if (!isNaN(numericId)) {
-      deleteProcedure(numericId).catch(() => {})
+      deleteProcedure(numericId).catch((error) => {
+        console.error('시술 이력 삭제 실패', error)
+      })
     }
   }
 

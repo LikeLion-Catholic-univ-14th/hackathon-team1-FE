@@ -178,7 +178,9 @@ function ProfileEdit() {
     }
 
     saveOnboardingProfile(updatedProfile)
-    updateProfile(updatedProfile).catch(() => {})
+    updateProfile(updatedProfile).catch((error) => {
+      console.error('프로필 수정 실패', error)
+    })
     navigate('/mypage')
   }
 
