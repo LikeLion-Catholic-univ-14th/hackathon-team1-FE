@@ -1,9 +1,4 @@
-import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
-import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
-import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
-import sunscreenIcon04 from '../../../assets/sunscreen/sunscreen-icon-04.svg'
-import sunscreenIcon05 from '../../../assets/sunscreen/sunscreen-icon-05.svg'
-import sunscreenIcon06 from '../../../assets/sunscreen/sunscreen-icon-06.svg'
+import { getSunscreenIcon } from '../../../utils/sunscreenIcon.js'
 import {
   filterTypeReverseMap,
   productTypeReverseMap,
@@ -11,15 +6,6 @@ import {
 } from '../../onboarding/api/sunscreenApi.js'
 
 const HOME_ENDPOINT = import.meta.env.VITE_HOME_API_URL ?? '/api/home'
-
-const sunscreenIcons = [
-  sunscreenIcon01,
-  sunscreenIcon02,
-  sunscreenIcon03,
-  sunscreenIcon04,
-  sunscreenIcon05,
-  sunscreenIcon06,
-]
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -49,7 +35,7 @@ const normalizeProduct = (product, index) => ({
   type: productTypeReverseMap[product.type] ?? readString(product.type, '선크림'),
   method: filterTypeReverseMap[product.filterType] ?? readString(product.type, ''),
   spf: typeof product.spf === 'number' ? `${product.spf}` : readString(String(product.spf ?? '')),
-  icon: sunscreenIcons[index % sunscreenIcons.length],
+  icon: getSunscreenIcon(product.productId ?? index),
   recommended: Boolean(product.recommended),
 })
 

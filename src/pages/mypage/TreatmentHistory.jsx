@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import moreHorizontalIcon from '../../assets/icons/more-horizontal.svg'
 import StatusBar from '../../components/common/StatusBar.jsx'
 import { readOnboardingProfile } from '../onboarding/storage/onboardingProfileStorage.js'
+import { getProcedures, addProcedure, deleteProcedure } from './api/mypageApi.js'
 
 const TREATMENT_STORAGE_KEY = 'sst:mypage:treatments'
 
@@ -242,6 +243,17 @@ function TreatmentHistory() {
 
   const sortedTreatments = useMemo(() => treatments, [treatments])
 
+  useEffect(() => {
+    getProcedures()
+      .then((data) => {
+        setTreatments(data)
+        saveTreatments(data)
+      })
+      .catch(() => {
+        setTreatments([])
+      })
+  }, [])
+
   const updateTreatments = (nextTreatments) => {
     setTreatments(nextTreatments)
     saveTreatments(nextTreatments)
@@ -249,10 +261,15 @@ function TreatmentHistory() {
 
   const handleAddTreatment = (treatment) => {
     updateTreatments([treatment, ...treatments])
+    addProcedure(treatment.name, treatment.recent).catch(() => {})
   }
 
   const handleRemoveTreatment = (id) => {
     updateTreatments(treatments.filter((treatment) => treatment.id !== id))
+    const numericId = Number(id)
+    if (!isNaN(numericId)) {
+      deleteProcedure(numericId).catch(() => {})
+    }
   }
 
   return (

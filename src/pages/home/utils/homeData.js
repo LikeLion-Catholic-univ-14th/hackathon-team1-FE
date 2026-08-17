@@ -1,8 +1,14 @@
 import { getHome } from '../api/homeApi.js'
+<<<<<<< HEAD
+=======
+import { getSunscreenIcon } from '../../../utils/sunscreenIcon.js'
+>>>>>>> origin/main
 
 const baseAirportLocationMap = {
   ICN: '인천, 대한민국',
   GMP: '김포, 대한민국',
+  INCHEON: '인천, 대한민국',
+  GIMPO: '김포, 대한민국',
   인천: '인천, 대한민국',
   김포: '김포, 대한민국',
 }
@@ -67,6 +73,33 @@ const formatDisplayCurrentTime = (value) => {
 const getBaseAirportFallbackLocation = (baseAirport) =>
   baseAirportLocationMap[baseAirport] ?? baseAirportLocationMap.ICN
 
+<<<<<<< HEAD
+=======
+const normalizeStoredSunscreensForHome = (sunscreens) =>
+  Array.isArray(sunscreens)
+    ? sunscreens
+        .map((sunscreen, index) => ({
+          id: readString(sunscreen.id, `onboarding-home-sunscreen-${index}`),
+          name: readString(sunscreen.productName ?? sunscreen.name),
+          type: readString(sunscreen.type),
+          method: readString(sunscreen.blockingMethod ?? sunscreen.method),
+          spf: readString(sunscreen.spf),
+          pa: readString(sunscreen.pa),
+          icon: readString(sunscreen.icon, getSunscreenIcon(sunscreen.id ?? index)),
+          recommended:
+            typeof sunscreen.recommended === 'boolean'
+              ? sunscreen.recommended
+              : index === 0,
+        }))
+        .filter((sunscreen) => sunscreen.name)
+    : []
+
+const readStoredHomeSunscreens = () =>
+  hasOnboardingSunscreensStorage()
+    ? normalizeStoredSunscreensForHome(readOnboardingSunscreens() ?? [])
+    : null
+
+>>>>>>> origin/main
 // 빈 상태 기본값
 const emptyHomeData = {
   mode: '',

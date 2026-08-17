@@ -10,7 +10,6 @@ import warningIcon from '../../assets/icons/warning.svg'
 import OnboardingStatusBar from './components/OnboardingStatusBar.jsx'
 import {
   findSunscreenProductByName,
-  mockSunscreenProducts,
 } from './mocks/mockSunscreenProducts.js'
 
 const sunscreenTypes = ['선크림', '선스틱', '선스프레이', '선파우더']
@@ -307,7 +306,6 @@ function SunscreenSetup({
   onChange,
   onBack,
   onComplete,
-  sunscreenProductOptions = mockSunscreenProducts,
 }) {
   const formRef = useRef(null)
   const [openDropdown, setOpenDropdown] = useState('')
@@ -530,13 +528,26 @@ function SunscreenSetup({
             className="mb-8 mt-8 box-border w-full rounded-[22px] bg-white p-5 shadow-[0_4px_18px_0_rgba(29,43,68,0.06)]"
             ref={formRef}
           >
-            <ProductNameField
-              value={form.productName}
-              suggestions={sunscreenProductOptions}
-              onChange={(productName) => updateForm('productName', productName)}
-              onSelect={handleProductNameSelect}
-              onFocus={() => setOpenDropdown('')}
-            />
+            <div>
+              <label
+                className={`mb-2 ml-1 block text-[14px] font-[590] uppercase leading-[16.5px] text-[#8a9eb8] ${headingFontClass}`}
+                htmlFor="sunscreen-product-name"
+              >
+                제품명
+              </label>
+              <input
+                className={`box-border h-[48px] w-full rounded-[10px] border-[1.276px] bg-white px-4 font-[SF_Pro] text-[15px] font-normal leading-normal tracking-[-0.64px] text-[#1d2b44] outline-none placeholder:text-[rgba(29,43,68,0.5)] focus:border-[#f5a623] ${
+                  form.productName ? 'border-[#f5a623]' : 'border-[#eceef2]'
+                }`}
+                id="sunscreen-product-name"
+                type="text"
+                value={form.productName}
+                placeholder="제품명을 입력해주세요"
+                autoComplete="off"
+                onFocus={() => setOpenDropdown('')}
+                onChange={(event) => updateForm('productName', event.target.value)}
+              />
+            </div>
 
             <div className="mt-[18px] grid grid-cols-2 gap-x-[11px] gap-y-[18px]">
               <DropdownField

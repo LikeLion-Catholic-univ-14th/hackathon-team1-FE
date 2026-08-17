@@ -1,3 +1,4 @@
+import { getSunscreenIcon } from '../../../utils/sunscreenIcon.js'
 import {
   skinTypeReverseMap,
   skinConcernReverseMap,
@@ -8,14 +9,9 @@ import {
   productTypeReverseMap,
   paReverseMap,
 } from '../../onboarding/api/sunscreenApi.js'
-import sunscreenIcon01 from '../../../assets/sunscreen/sunscreen-icon-01.svg'
-import sunscreenIcon02 from '../../../assets/sunscreen/sunscreen-icon-02.svg'
-import sunscreenIcon03 from '../../../assets/sunscreen/sunscreen-icon-03.svg'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 const MY_PAGE_ENDPOINT = import.meta.env.VITE_MYPAGE_API_URL ?? `${apiBaseUrl}/users/profile`
-
-const sunscreenIcons = [sunscreenIcon01, sunscreenIcon02, sunscreenIcon03]
 
 const readString = (value, fallback = '') =>
   typeof value === 'string' && value.trim() ? value.trim() : fallback
@@ -74,9 +70,9 @@ export function normalizeMyPageData(payload) {
       baseAirport: toKoreanBaseAirport(profileSource.baseAirport),
       skinType: toKoreanSkinTypes(profileSource.skinTypes ?? profileSource.skinType),
       skinConcerns: toKoreanSkinConcerns(profileSource.skinConcerns ?? profileSource.concerns ?? []),
-      treatmentHistory: '',
-      treatmentDetail: '',
-      recentTreatment: false,
+      treatmentHistory: profileSource.procedureHistory?.hasHistory ? '있음' : '없음',
+      treatmentDetail: readString(profileSource.procedureHistory?.detail),
+      recentTreatment: Boolean(profileSource.procedureHistory?.recentOneMonth ?? profileSource.procedureHistory?.isRecentOneMonth),
     },
     pouch: (Array.isArray(pouchSource) ? pouchSource : []).map((item, index) => ({
       id: String(item.productId ?? item.id ?? `sunscreen-${index}`),
@@ -85,7 +81,7 @@ export function normalizeMyPageData(payload) {
       blockingMethod: filterTypeReverseMap[item.filterType] ?? readString(item.blockingMethod ?? item.method, ''),
       spf: readString(item.spf, '50'),
       pa: paReverseMap[item.pa] ?? readString(item.pa, 'PA+'),
-      icon: sunscreenIcons[index % sunscreenIcons.length],
+      icon: getSunscreenIcon(item.productId ?? index),
     })),
   }
 }
@@ -166,5 +162,52 @@ export async function updatePouchItem(productId, product) {
 
   if (!response.ok) {
     throw new Error(`파우치 수정 실패: ${response.status}`)
+  }
+}
+
+// ── GET /users/procedures ─────────────────────────────────────────
+
+export async function getProcedures() {
+  const response = await fetch(`${apiBaseUrl}/users/procedures`, {
+    headers: { Accept: 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 조회 실패: ${response.status}`)
+  }
+
+  const payload = await response.json()
+  const items = Array.isArray(payload) ? payload : payload?.data ?? []
+
+  return items.map((item) => ({
+    id: String(item.procedureId ?? item.id ?? ''),
+    name: readString(item.name),
+    recent: Boolean(item.recentOneMonth),
+  }))
+}
+
+// ── POST /users/procedures ────────────────────────────────────────
+
+export async function addProcedure(name, recentOneMonth = false) {
+  const response = await fetch(`${apiBaseUrl}/users/procedures`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, recentOneMonth }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 추가 실패: ${response.status}`)
+  }
+}
+
+// ── DELETE /users/procedures/{procedureId} ────────────────────────
+
+export async function deleteProcedure(procedureId) {
+  const response = await fetch(`${apiBaseUrl}/users/procedures/${procedureId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error(`시술 이력 삭제 실패: ${response.status}`)
   }
 }
