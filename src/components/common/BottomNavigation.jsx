@@ -39,7 +39,7 @@ function BottomNavigation({ className = '' }) {
 
   return (
     <nav
-      className={`absolute bottom-[20px] left-1/2 z-10 w-[354px] max-w-[calc(100%-48px)] -translate-x-1/2 rounded-[28px] bg-white px-[10px] py-[8px] shadow-[0_8px_28px_0_rgba(29,43,68,0.14)] ${className}`}
+      className={`absolute bottom-[20px] left-1/2 z-50 w-[354px] max-w-[calc(100%-48px)] -translate-x-1/2 rounded-[28px] bg-white px-[10px] py-[8px] shadow-[0_8px_28px_0_rgba(29,43,68,0.14)] ${className}`}
       aria-label="하단 네비게이션"
     >
       <ul className="m-0 grid list-none grid-cols-4 items-center gap-[2px] p-0">
