@@ -1035,6 +1035,9 @@ function ScheduleSetup({
   onComplete,
   embedded = false,
   completeMessage,
+  // 일정 페이지에서 연필로 들어올 때 — 이 일정 하나만 수정 카드로 바로 연다
+  editSchedule = null,
+  onEditSaved,
 }) {
   const fileInputRef = useRef(null)
   const filesRef = useRef([])
@@ -1050,6 +1053,20 @@ function ScheduleSetup({
   const [editingScheduleOriginalSignature, setEditingScheduleOriginalSignature] =
     useState('')
   const [pickerState, setPickerState] = useState(null)
+
+  // 연필 수정 모드 — 열리자마자 그 일정의 수정 카드를 띄운다
+  useEffect(() => {
+    if (!editSchedule) {
+      return
+    }
+
+    const nextDraft = createScheduleDraft(editSchedule)
+
+    setEditingScheduleDraft(nextDraft)
+    setEditingScheduleOriginalSignature(getScheduleDraftSignature(nextDraft))
+    setShowScheduleModal(false)
+    setShowManualListModal(false)
+  }, [editSchedule])
   const [displaySchedules, setDisplaySchedules] = useState([])
   const [modalFileName, setModalFileName] = useState('')
   const [localSchedule, setLocalSchedule] = useState(emptySchedule)
@@ -1278,6 +1295,13 @@ function ScheduleSetup({
     }
 
     if (isArrivalBeforeDeparture(editingScheduleDraft)) {
+      return
+    }
+
+    // 일정 페이지에서 연필로 들어온 경우 — 서버에 있는 일정 하나만 수정한다
+    if (editSchedule) {
+      onEditSaved?.(editingScheduleDraft)
+
       return
     }
 
@@ -1614,7 +1638,9 @@ function ScheduleSetup({
         <ScheduleEditCard
           draft={editingScheduleDraft}
           canSave={
-            displaySchedules.some((s) => s.id === editingScheduleDraft.id)
+            editSchedule
+              ? hasEditedScheduleDraft && !isArrivalBeforeDeparture(editingScheduleDraft)
+              : displaySchedules.some((s) => s.id === editingScheduleDraft.id)
               ? hasEditedScheduleDraft
               : (
                 !isArrivalBeforeDeparture(editingScheduleDraft) &&
@@ -1626,8 +1652,16 @@ function ScheduleSetup({
                 editingScheduleDraft.arrivalTime !== null
               )
           }
-          title={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? undefined : '비행 일정 추가하기'}
-          saveLabel={displaySchedules.some((s) => s.id === editingScheduleDraft.id) ? '정보 수정하기' : '+ 추가하기'}
+          title={
+            editSchedule || displaySchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? undefined
+              : '비행 일정 추가하기'
+          }
+          saveLabel={
+            editSchedule || displaySchedules.some((s) => s.id === editingScheduleDraft.id)
+              ? '정보 수정하기'
+              : '+ 추가하기'
+          }
           onBack={() => {
             setEditingScheduleDraft(null)
             setEditingScheduleOriginalSignature('')

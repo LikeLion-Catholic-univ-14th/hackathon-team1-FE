@@ -97,7 +97,9 @@ export const normalizeDaily = (raw, date) => {
 
   const day = raw.date ?? date
   const { from, to } = parseRoute(raw.route)
-  const outing = raw.isOuting ?? raw.outing ?? true
+  // 서버가 값을 안 주면 undefined 로 둔다.
+  // 여기서 true 로 채우면 방금 끈 토글이 다시 켜져 버린다
+  const outing = raw.isOuting ?? raw.outing
 
   const departureCode = raw.departureInfo?.airportCode ?? from ?? null
   const arrivalCode = raw.arrivalInfo?.airportCode ?? to ?? null
