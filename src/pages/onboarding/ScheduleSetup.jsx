@@ -1075,8 +1075,9 @@ function ScheduleSetup({
   const schedule = value ?? localSchedule
   const files = schedule.files ?? []
   filesRef.current = files
-  const canContinue = files.length > 0 && !isExtracting
   const hasConfirmedSchedules = (schedule.schedules ?? []).length > 0
+  // 직접 입력으로 넣은 일정은 사진이 없다. 그래도 업로드(저장)는 되어야 한다
+  const canContinue = (files.length > 0 || hasConfirmedSchedules) && !isExtracting
 
   useEffect(() => {
     return () => {
