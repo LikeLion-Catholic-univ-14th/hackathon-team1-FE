@@ -1,6 +1,11 @@
 const headingFontClass =
   "font-[SF_Pro,Pretendard,sans-serif]"
 
+// 버튼 문구가 '웰니스하우스 서울'로 고정돼 있어 링크도 거기로 맞춘다.
+// 서버 clinic.reservationUrl 은 다른 병원(amredclinic)을 주고 있어 쓰지 않는다.
+// 병원이 바뀔 수 있다면 병원 이름도 API 에서 받아야 한다
+const RESERVATION_URL = 'https://www.wellnesshouse-seoul.com/ko'
+
 const headerGradient =
   'linear-gradient(150.18deg, #1B3A61 0%, #345072 49.52%, #3E6495 100%)'
 
@@ -54,7 +59,7 @@ function ClinicCard({ month, clinic, onSavePdf, saving }) {
 
         <a
           className="flex h-[52.5px] items-center justify-center rounded-[14px] bg-[#f5a623] text-[16px] leading-[22.5px] font-[860] tracking-[-1px] text-white drop-shadow-[0px_3px_6px_rgba(245,166,35,0.32)]"
-          href={clinic.reservationUrl}
+          href={RESERVATION_URL}
           target="_blank"
           rel="noreferrer"
         >
