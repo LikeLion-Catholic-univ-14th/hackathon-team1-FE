@@ -105,10 +105,9 @@ export async function updateProfile(profile) {
   const body = {
     name: (profile.name ?? '').trim(),
     baseAirport: baseAirportToEnum[profile.baseAirport] ?? 'INCHEON',
-    skinType: (Array.isArray(profile.skinType) ? profile.skinType : [profile.skinType])
+    skinTypes: (Array.isArray(profile.skinType) ? profile.skinType : [profile.skinType])
       .map((t) => skinTypeToEnum[t] ?? t)
-      .filter(Boolean)
-      .join(','),
+      .filter(Boolean),
     skinConcerns: (profile.skinConcerns ?? [])
       .map((c) => skinConcernToEnum[c] ?? c)
       .filter(Boolean),
