@@ -197,15 +197,19 @@ const nextDay = (isoDate) => {
 }
 
 const toScheduleItem = (schedule) => {
-  const isoDate = toIsoDate(schedule.date)
+  // 직접 입력에는 출발일·도착일이 따로 들어온다 (28일 출발 → 31일 도착 같은 경우).
+  // 없으면 date 하나로 두 날짜를 만든다
+  const isoDate = toIsoDate(schedule.departureDate ?? schedule.date)
 
   if (!isoDate) {
-    throw new Error(`날짜를 읽을 수 없습니다: ${schedule.date}`)
+    throw new Error(`날짜를 읽을 수 없습니다: ${schedule.departureDate ?? schedule.date}`)
   }
 
-  // 도착이 출발보다 이르면 다음 날 도착으로 본다 (야간 비행)
+  const storedArrival = toIsoDate(schedule.arrivalDate)
+
+  // 도착일이 따로 없고 도착 시각이 출발보다 이르면 다음 날 도착으로 본다 (야간 비행)
   const isOvernight = schedule.arrivalTime < schedule.departureTime
-  const arrivalDate = isOvernight ? nextDay(isoDate) : isoDate
+  const arrivalDate = storedArrival ?? (isOvernight ? nextDay(isoDate) : isoDate)
 
   return {
     // 직접 입력 화면에는 편명 칸이 없다. 빈 문자열로 보내면 된다고 백엔드 확인함
