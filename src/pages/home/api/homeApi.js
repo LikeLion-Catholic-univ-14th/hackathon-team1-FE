@@ -36,8 +36,8 @@ const formatLocation = (location) => {
 const normalizeProduct = (product, index) => ({
   id: String(product.productId ?? `product-${index}`),
   name: readString(product.name),
-  type: productTypeReverseMap[product.type] ?? readString(product.type, '선크림'),
-  method: filterTypeReverseMap[product.filterType] ?? readString(product.type, ''),
+  type: productTypeReverseMap[product.productType] ?? readString(product.productType, '선크림'),
+  method: readString(product.type, ''),
   spf: typeof product.spf === 'number' ? `${product.spf}` : readString(String(product.spf ?? '')),
   icon: getSunscreenIcon(product.productId ?? index),
   recommended: Boolean(product.recommended),
@@ -48,12 +48,12 @@ const normalizeSolutions = (solutions) => {
     return []
   }
 
-  const iconMap = { BEFORE: 'sun', DURING: 'plane', AFTER: 'moon' }
+  const iconMap = { BEFORE: 'sun', DURING: 'plane', AFTER: 'moon', BEFORE_OUTING: 'sun', DURING_OUTING: 'plane', AFTER_OUTING: 'moon' }
 
   return solutions.map((sol, index) => ({
     id: `solution-${index}`,
     icon: iconMap[sol.phase] ?? ['sun', 'plane', 'moon'][index % 3],
-    timing: sol.phase === 'BEFORE' ? '외출 전' : sol.phase === 'DURING' ? '외출 중' : '복귀 후',
+    timing: sol.phase === 'BEFORE' || sol.phase === 'BEFORE_OUTING' ? '외출 전' : sol.phase === 'DURING' || sol.phase === 'DURING_OUTING' ? '외출 중' : '복귀 후',
     title: readString(sol.title),
     description: readString(sol.description),
   }))
@@ -156,4 +156,61 @@ export async function getHome() {
   const payload = await response.json()
 
   return normalizeHomeData(payload)
+}
+
+// ── POST /schedules/solution/apply?date=YYYY-MM-DD ────────────────
+// 사용자가 선택한 선크림 도포 여부를 날짜 기준으로 저장
+
+const pad2 = (n) => String(n).padStart(2, '0')
+
+const getTodayIsoDate = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`
+}
+
+export async function applySolution(sunscreenId, isApplied = true, date) {
+  const targetDate = date ?? getTodayIsoDate()
+
+  const response = await fetch(
+    `${apiBaseUrl}/schedules/solution/apply?date=${targetDate}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sunscreenId: Number(sunscreenId), isApplied }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`솔루션 적용 실패: ${response.status}`)
+  }
+}
+
+// ── POST /solutions/generate ──────────────────────────────────────
+// 선택한 제품에 맞는 맞춤 솔루션을 서버에서 생성받기
+
+export async function generateSolution(sunscreenId) {
+  const response = await fetch(`${apiBaseUrl}/solutions/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sunscreenId: Number(sunscreenId) }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`솔루션 생성 실패: ${response.status}`)
+  }
+
+  const data = await response.json()
+
+  // 응답 정규화: { sunscreenId, message, solutions: [{phase, title, description}] }
+  const solutions = Array.isArray(data.solutions)
+    ? data.solutions.map((sol, index) => ({
+        id: `generated-solution-${index}`,
+        icon: sol.phase === 'BEFORE_OUTING' ? 'sun' : sol.phase === 'DURING_OUTING' ? 'plane' : 'moon',
+        timing: sol.phase === 'BEFORE_OUTING' ? '외출 전' : sol.phase === 'DURING_OUTING' ? '외출 중' : '복귀 후',
+        title: sol.title ?? '',
+        description: sol.description ?? '',
+      }))
+    : []
+
+  return { sunscreenId: data.sunscreenId, message: data.message, solutions }
 }

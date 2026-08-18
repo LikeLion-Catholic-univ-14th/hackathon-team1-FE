@@ -24,15 +24,17 @@ function HomeEmptyState({
       >
         {message}
       </p>
-      <button
-        className={`mt-[10px] border-0 bg-transparent p-0 text-[12px] font-normal leading-[18px] tracking-[-0.64px] underline ${headingFontClass} ${
-          isOnColor ? 'text-white' : 'text-[#8A9EB8]'
-        }`}
-        type="button"
-        onClick={onRegister}
-      >
-        {actionLabel}
-      </button>
+      {onRegister && (
+        <button
+          className={`mt-[10px] border-0 bg-transparent p-0 text-[12px] font-normal leading-[18px] tracking-[-0.64px] underline ${headingFontClass} ${
+            isOnColor ? 'text-white' : 'text-[#8A9EB8]'
+          }`}
+          type="button"
+          onClick={onRegister}
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   )
 }

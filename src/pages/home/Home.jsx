@@ -10,6 +10,7 @@ import SolutionList from './components/SolutionList.jsx'
 import SunscreenSection from './components/SunscreenSection.jsx'
 import UvSummaryCard from './components/UvSummaryCard.jsx'
 import { getFallbackHomeData, loadHomeData } from './utils/homeData.js'
+import { applySolution, generateSolution } from './api/homeApi.js'
 import { ONBOARDING_SUNSCREEN_UPDATED_EVENT } from '../onboarding/storage/onboardingProfileStorage.js'
 
 const stageClass =
@@ -189,6 +190,25 @@ function Home() {
       return
     }
 
+    // 서버에 선크림 도포 기록 저장 (실패해도 UI 진행)
+    applySolution(targetProductId).catch(() => {})
+
+    // 서버에서 해당 제품 맞춤 솔루션 생성
+    generateSolution(targetProductId)
+      .then((result) => {
+        if (result.solutions.length > 0) {
+          setData((prevData) => ({
+            ...prevData,
+            sunscreens: (prevData.sunscreens ?? []).map((s) =>
+              s.id === String(result.sunscreenId) || s.id === targetProductId
+                ? { ...s, solutions: result.solutions }
+                : s,
+            ),
+          }))
+        }
+      })
+      .catch(() => {})
+
     setSolutionProductIds((currentIds) => {
       const existingProductIndex = currentIds.indexOf(targetProductId)
 
@@ -326,6 +346,8 @@ function Home() {
                   onPrevious={goToPreviousSolution}
                   onNext={goToNextSolution}
                   empty={!hasSchedule || !hasRegisteredSunscreens || displayedSolutions.length === 0}
+                  emptyMessage={!hasSchedule && hasRegisteredSunscreens ? '오늘은 비행이 없는 날이에요' : undefined}
+                  hideRegisterButton={!hasSchedule && hasRegisteredSunscreens}
                   onRegisterSunscreen={handleRegisterSunscreen}
                   canNavigate={hasSchedule && hasRegisteredSunscreens && canNavigateSolutions}
                   canGoPrevious={hasSchedule && hasRegisteredSunscreens && canGoPreviousSolution}

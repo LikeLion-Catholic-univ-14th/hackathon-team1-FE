@@ -86,6 +86,8 @@ function SolutionList({
   canGoPrevious = canNavigate,
   canGoNext = canNavigate,
   empty = false,
+  emptyMessage,
+  hideRegisterButton = false,
   onRegisterSunscreen,
 }) {
   return (
@@ -125,7 +127,10 @@ function SolutionList({
 
       {empty ? (
         <div className="flex min-h-[128px] items-center justify-center">
-          <HomeEmptyState onRegister={onRegisterSunscreen} />
+          <HomeEmptyState
+            onRegister={hideRegisterButton ? undefined : onRegisterSunscreen}
+            message={emptyMessage}
+          />
         </div>
       ) : (
         <ul className="m-0 mt-[14px] flex list-none flex-col gap-[8px] p-0">
