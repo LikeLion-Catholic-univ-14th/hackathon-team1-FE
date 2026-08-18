@@ -9,9 +9,14 @@ import MonthCalendar, {
 } from './components/MonthCalendar.jsx'
 import DetailCard from './components/DetailCard.jsx'
 import EmptySchedule from './components/EmptySchedule.jsx'
-import { fetchCalendar, fetchDailyDetail, patchOuting } from './api/scheduleApi.js'
+import {
+  fetchCalendar,
+  fetchDailyDetail,
+  patchOuting,
+  updateSchedule,
+} from './api/scheduleApi.js'
 import { parseMonth } from './utils/calendar.js'
-import { readOuting, THIS_MONTH, TODAY } from './utils/schedule.js'
+import { readTime, THIS_MONTH, TODAY } from './utils/schedule.js'
 
 const stageClass =
   'flex min-h-svh w-full items-start justify-center bg-[#bdbdbd] p-6 max-[520px]:bg-[#f5f7fb] max-[520px]:p-0'
@@ -53,7 +58,18 @@ function SchedulePage() {
   const [registerDraft, setRegisterDraft] = useState({ files: [], schedules: [] })
   const [reloadKey, setReloadKey] = useState(0)
 
+  // 연필로 수정 중인 일정 (서버에 이미 있는 것)
+  const [editTarget, setEditTarget] = useState(null)
+
   const reload = () => setReloadKey((key) => key + 1)
+
+  // 서버가 외출 상태를 명확히 줄 때만 화면을 바꾼다.
+  // 값이 없으면 기존 상태를 유지한다 (방금 누른 토글이 되돌아가면 안 된다)
+  const applyOuting = (data, fallback) => {
+    const value = data?.isOuting ?? data?.departureInfo?.outing
+
+    setOuting(typeof value === 'boolean' ? value : fallback)
+  }
 
   // 달력 — 월이 바뀌거나 일정을 새로 등록했을 때
   useEffect(() => {
@@ -87,7 +103,7 @@ function SchedulePage() {
       .then((data) => {
         if (alive) {
           setDaily(data)
-          setOuting(readOuting(data?.departureInfo))
+          applyOuting(data, true)
         }
       })
       .catch((error) => {
@@ -132,8 +148,25 @@ function SchedulePage() {
     calendar.days.some((day) => day.scheduleId != null)
   const canGoPrev = calendar.month > MIN_MONTH
 
-  // 등록·수정 모두 온보딩의 ScheduleSetup 흐름을 모달로 재사용한다
+  // + 일정 등록 — 새 사진을 올려서 등록하는 흐름
   const goRegister = () => setShowRegister(true)
+
+  // ✏️ — 서버에 이미 있는 이 일정을 바로 수정한다 (PATCH /schedules/{id})
+  const goEditFlight = () => {
+    if (!daily?.scheduleId) {
+      return
+    }
+
+    setEditTarget({
+      id: daily.scheduleId,
+      departureAirport: daily.departureAirport,
+      arrivalAirport: daily.arrivalAirport,
+      departureDate: (daily.departureTime ?? '').slice(0, 10) || selectedDate,
+      arrivalDate: (daily.arrivalTime ?? '').slice(0, 10) || selectedDate,
+      departureTime: readTime(daily.departureTime),
+      arrivalTime: readTime(daily.arrivalTime),
+    })
+  }
 
   // 외출 토글. 화면을 먼저 바꾸고 서버에 알린다 (실패하면 되돌린다).
   // /daily-outing 응답에는 상태만 오므로, 위험도·문구를 갱신하려면 상세를 다시 받는다
@@ -147,7 +180,8 @@ function SchedulePage() {
       .then(() => Promise.all([fetchDailyDetail(selectedDate), fetchCalendar(month)]))
       .then(([detail, nextCalendar]) => {
         setDaily(detail)
-        setOuting(readOuting(detail?.departureInfo))
+        // 서버가 상태를 안 주면 방금 누른 값을 그대로 유지한다
+        applyOuting(detail, next)
         setCalendar({ ...nextCalendar, month })
       })
       .catch((error) => {
@@ -220,7 +254,7 @@ function SchedulePage() {
                     selectedDate={selectedDate}
                     outing={outing}
                     onToggle={toggleOuting}
-                    onEdit={goRegister}
+                    onEdit={goEditFlight}
                   />
                 ) : (
                   <p className="mt-10 text-center text-[13px] text-[#8a9eb8]">
@@ -235,6 +269,44 @@ function SchedulePage() {
         </div>
 
         <BottomNavigation />
+
+        {/* 연필 수정 — 서버에 있는 일정 하나를 고친다 */}
+        {editTarget && (
+          <ScheduleSetup
+            embedded
+            editSchedule={editTarget}
+            onBack={() => setEditTarget(null)}
+            onEditSaved={(draft) => {
+              const toDate = (parts) =>
+                `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
+              const toTime = (parts) => {
+                const hour24 =
+                  parts.period === '오후'
+                    ? (parts.hour % 12) + 12
+                    : parts.hour % 12
+
+                return `${String(hour24).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}:00`
+              }
+
+              updateSchedule(editTarget.id, {
+                flightNumber: '',
+                departureAirport: draft.departureAirport?.match(/[A-Z]{3}/)?.[0] ?? draft.departureAirport,
+                arrivalAirport: draft.arrivalAirport?.match(/[A-Z]{3}/)?.[0] ?? draft.arrivalAirport,
+                departureTime: `${toDate(draft.departureDate)}T${toTime(draft.departureTime)}`,
+                arrivalTime: `${toDate(draft.arrivalDate)}T${toTime(draft.arrivalTime)}`,
+                isQuickTurn: false,
+              })
+                .then(() => {
+                  setEditTarget(null)
+                  reload()
+                })
+                .catch((error) => {
+                  console.error('일정 수정 실패', error)
+                  window.alert('일정 수정에 실패했어요. 잠시 후 다시 시도해주세요.')
+                })
+            }}
+          />
+        )}
 
         {showRegister && (
           <ScheduleSetup

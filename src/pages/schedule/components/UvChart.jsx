@@ -26,12 +26,20 @@ const ROWS = [
 const FIRST_LINE_Y = GRID_TOP + ROW_HEIGHT / 2
 const LAST_LINE_Y = GRID_TOP + (ROWS.length - 1) * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2
 
-// 하루 24시간 기준 가로 위치
-const X_LABELS = [
-  { text: '06시', at: 6 / 24 },
-  { text: '12시', at: 12 / 24 },
-  { text: '18시', at: 18 / 24 },
-]
+const X_LABELS = ['06:00', '12:00', '18:00']
+
+// 라벨 위치는 실제 데이터에서 찾는다.
+// 서버가 00~23시 24개를 주므로 6시는 6/23 지점이지 6/24 지점이 아니다
+const readLabelPosition = (graph, time) => {
+  const points = Array.isArray(graph) ? graph : []
+  const index = points.findIndex((point) => point.time === time)
+
+  if (index < 0 || points.length < 2) {
+    return null
+  }
+
+  return index / (points.length - 1)
+}
 
 const LINE_COLOR = {
   DANGER: '#b55454',
@@ -126,15 +134,23 @@ function UvChart({ graph, level = 'CAUTION' }) {
           top: AREA_HEIGHT * 0.9485,
         }}
       >
-        {X_LABELS.map((item) => (
-          <p
-            key={item.text}
-            className="absolute -translate-x-1/2 text-[10px] font-normal tracking-[-0.8px] whitespace-nowrap text-[#8a9eb8]"
-            style={{ left: `${item.at * 100}%` }}
-          >
-            {item.text}
-          </p>
-        ))}
+        {X_LABELS.map((time) => {
+          const at = readLabelPosition(graph, time)
+
+          if (at === null) {
+            return null
+          }
+
+          return (
+            <p
+              key={time}
+              className="absolute -translate-x-1/2 text-[10px] font-normal tracking-[-0.8px] whitespace-nowrap text-[#8a9eb8]"
+              style={{ left: `${at * 100}%` }}
+            >
+              {`${time.slice(0, 2)}시`}
+            </p>
+          )
+        })}
       </div>
     </div>
   )
